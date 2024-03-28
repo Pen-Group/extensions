@@ -1,0 +1,23 @@
+.theme__Dark {
+    --Theme_Main_1: #101011;
+    --Theme_Main_2: #222225;
+    --Theme_Main_3: #313136;
+
+    --Theme_Accent_1: #10c57a;
+    --Theme_Accent_2: #0fbd8c;
+    --Theme_Accent_3: #0fa792;
+
+    --Theme_Text_1: #e8e8fa;
+}
+
+.theme__Light {
+    --Theme_Main_1: #e8e8fa;
+    --Theme_Main_2: #babace;
+    --Theme_Main_3: #ababc0;
+
+    --Theme_Accent_1: #10c57a;
+    --Theme_Accent_2: #0fbd8c;
+    --Theme_Accent_3: #0fa792;
+
+    --Theme_Text_1: #101011;
+}
