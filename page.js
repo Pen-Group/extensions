@@ -19,7 +19,7 @@ function addExtension(extensionJSON) {
                 ${(function() {
                     if (extensionJSON.unavailable || (!extensionJSON.versions)) return `<p class="prevent-select" style="background-color:#00000000; cursor: default;">Extension Unavailable. Sorry</p>`;
 
-                    let bodyData = `<button id="${extensionJSON.id}_copy" data-copy="${window.location.href}/extensions/${extensionJSON.id}/${latestVersion}">Copy URL</button>
+                    let bodyData = `<button id="${extensionJSON.id}_copy" data-copy="${window.location.href}extensions/${extensionJSON.id}/${latestVersion}">Copy URL</button>
                     <a id="${extensionJSON.id}_open" style="background-color:var(--Theme_Accent_1)" href="https://studio.penguinmod.com/editor.html?extension=${window.location.href}extensions/${extensionJSON.id}/${latestVersion}">Open in Penguinmod</a>`;
 
                     if (extensionJSON.versions.length > 1 && (!extensionJSON.hideVersionSelect)) {
@@ -47,7 +47,7 @@ function addExtension(extensionJSON) {
         const openButton = document.getElementById(`${extensionJSON.id}_open`);
 
         versionSelection.addEventListener("change", (event) => {
-            openButton.href = `https://studio.penguinmod.com/editor.html?extension=${window.location.href}/extensions/${extensionJSON.id}/${versionSelection.value}`;
+            openButton.href = `https://studio.penguinmod.com/editor.html?extension=${window.location.href}extensions/${extensionJSON.id}/${versionSelection.value}`;
             copyButton.setAttribute("data-copy",`${window.location.href}extensions/${extensionJSON.id}/${versionSelection.value}`);
         });
 
