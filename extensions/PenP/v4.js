@@ -1,4 +1,18 @@
 //Fixed up for newer extension loaders
+/*
+$$$$$$$\  $$\   $$\  $$$$$$\   $$$$$$\        $$$$$$$$\  $$$$$$\        $$$$$$$$\ $$$$$$\ $$\   $$\ 
+$$  __$$\ $$ |  $$ |$$  __$$\ $$  __$$\       \__$$  __|$$  __$$\       $$  _____|\_$$  _|$$ |  $$ |
+$$ |  $$ |$$ |  $$ |$$ /  \__|$$ /  \__|         $$ |   $$ /  $$ |      $$ |        $$ |  \$$\ $$  |
+$$$$$$$\ |$$ |  $$ |$$ |$$$$\ \$$$$$$\           $$ |   $$ |  $$ |      $$$$$\      $$ |   \$$$$  / 
+$$  __$$\ $$ |  $$ |$$ |\_$$ | \____$$\          $$ |   $$ |  $$ |      $$  __|     $$ |   $$  $$<  
+$$ |  $$ |$$ |  $$ |$$ |  $$ |$$\   $$ |         $$ |   $$ |  $$ |      $$ |        $$ |  $$  /\$$\ 
+$$$$$$$  |\$$$$$$  |\$$$$$$  |\$$$$$$  |         $$ |    $$$$$$  |      $$ |      $$$$$$\ $$ /  $$ |
+\_______/  \______/  \______/  \______/          \__|    \______/       \__|      \______|\__|  \__|
+                                                                                                    
+Should've Fixed Compile HTML
+Has mixed results Most computers and browsers work but some reject it?                    
+QUICK FIX added clamping because some textures require it?                                                                              
+*/
 (function (Scratch) {
   "use strict";
 
@@ -15,6 +29,7 @@ var Penwidth = 64
 var PenHeight = 64
 var screenwidth = 480
 var screenheight = 360
+var stamprotation = 90
 
 //matrix stuff from webglfundamentals.org
 var m4 = {
@@ -169,19 +184,29 @@ var tempcanvas = document.createElement("canvas");
     var tempcanvas1 = tempcanvas.getContext("2d");  
 
 var canvas = document.getElementById("app")
+if (document.getElementsByClassName("sc-canvas").length > 0)
+{
+  canvas = document.getElementsByClassName("sc-canvas")[0]
+}
+else
+{
+  canvas = canvas.children[0]
 canvas = canvas.children[0]
 canvas = canvas.children[0]
+  canvas = canvas.children[2]
+  canvas = canvas.children[0]
+  canvas = canvas.children[1]
+  canvas = canvas.children[0]
+  canvas = canvas.children[1]
+  canvas = canvas.children[0]
+  canvas = canvas.children[0]
+  canvas = canvas.children[0]
 canvas = canvas.children[0]
-canvas = canvas.children[2]
-canvas = canvas.children[0]
-canvas = canvas.children[1]
-canvas = canvas.children[0]
-canvas = canvas.children[1]
-canvas = canvas.children[0]
-canvas = canvas.children[0]
-canvas = canvas.children[0]
-canvas = canvas.children[0]
+}
 var gl = canvas.getContext("webgl");
+if (!gl){
+  gl = canvas.getContext("experimental-webgl")
+}
 console.log(gl)
 
 var canvaswidth = canvas.width
@@ -193,14 +218,17 @@ var textures = {}
 var vertexshaderCode = [
     'attribute vec4 a_position;',
     'attribute vec2 a_texcoord;',
+    'attribute vec4 aVertexColor;',
     '',
     'uniform mat4 u_matrix;',
     '',
     'varying vec2 v_texcoord;',
+    'varying vec4 vColor;',
     '',
     'void main() {',
     'gl_Position = u_matrix * a_position;',
     'v_texcoord = a_texcoord;',
+    'vColor = aVertexColor;',
     '}'
 ].join('\n');
 
@@ -208,11 +236,12 @@ var fragmentshaderCode = [
     'precision mediump float;',
     '',
     'varying vec2 v_texcoord;',
+    'varying vec4 vColor;',
     '',
     'uniform sampler2D u_texture;',
     '',
     'void main() {',
-    'gl_FragColor = texture2D(u_texture, v_texcoord);',
+    'gl_FragColor = texture2D(u_texture, v_texcoord) * vColor;',
     '}'
 ].join('\n');
 
@@ -233,6 +262,21 @@ var quadcoords = [
     0, 1,
     1, 1,
   ];
+
+var quadcolors = [
+  1.0,  1.0,  1.0,  1.0,
+  1.0,  1.0,  1.0,  1.0,
+  1.0,  1.0,  1.0,  1.0,
+  1.0,  1.0,  1.0,  1.0,
+  1.0,  1.0,  1.0,  1.0,
+  1.0,  1.0,  1.0,  1.0
+  ];
+
+var tricolors = [
+    1.0,  1.0,  1.0,  1.0,
+    1.0,  1.0,  1.0,  1.0,
+    1.0,  1.0,  1.0,  1.0
+    ];
 var quadpositionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, quadpositionBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(quadpositions), gl.STATIC_DRAW);
@@ -241,8 +285,11 @@ var quadtexcoordBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, quadtexcoordBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(quadcoords), gl.STATIC_DRAW);
 
+var quadcolorBuffer = gl.createBuffer();
+
 var triPosBuffer = gl.createBuffer();
 var triUVBuffer = gl.createBuffer();
+var tricolorBuffer = gl.createBuffer();
 //end of stupid code
 
 //compile glsl shaders
@@ -251,6 +298,10 @@ var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
 
 gl.shaderSource(vertexShader, vertexshaderCode)
 gl.shaderSource(fragmentShader, fragmentshaderCode)
+
+gl.enable( gl.BLEND );
+gl.blendEquation( gl.FUNC_ADD );
+gl.blendFunc( gl.ONE_MINUS_CONSTANT_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
 
 gl.compileShader(vertexShader);
 if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
@@ -281,6 +332,7 @@ if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
  // look up where the vertex data needs to go.
  var positionLocation = gl.getAttribLocation(program, "a_position");
  var texcoordLocation = gl.getAttribLocation(program, "a_texcoord");
+ var colorLocation = gl.getAttribLocation(program, "aVertexColor");
 
  // lookup uniforms
  var matrixLocation = gl.getUniformLocation(program, "u_matrix");
@@ -288,7 +340,11 @@ if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
 
 //cool drawing functions
 
-function loadImageAndCreateTextureInfo(url) {
+function degtorad(deg) {
+  return deg * 0.0174533
+}
+
+function loadImageAndCreateTextureInfo(url,clamp) {
     var tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     // Fill the texture with a 1x1 blue pixel.
@@ -296,9 +352,15 @@ function loadImageAndCreateTextureInfo(url) {
                   new Uint8Array([0, 0, 255, 255]));
 
     // let's assume all images are not a power of 2
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    if (clamp == 'true') {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    else{
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 
     var textureInfo = {
       width: 1,   // we don't know the size until it loads
@@ -318,12 +380,15 @@ function loadImageAndCreateTextureInfo(url) {
     return textureInfo;
   }
 
-  function drawImage(tex, texWidth, texHeight, dstX, dstY) {
+  function drawImage(tex, texWidth, texHeight, dstX, dstY ,stamprotation) {
     gl.bindTexture(gl.TEXTURE_2D, tex);
 
     // Tell WebGL to use our shader program pair
     gl.useProgram(program);
 
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadcolorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(quadcolors), gl.STATIC_DRAW);
     // Setup the attributes to pull data from our buffers
     gl.bindBuffer(gl.ARRAY_BUFFER, quadpositionBuffer);
     gl.enableVertexAttribArray(positionLocation);
@@ -331,12 +396,17 @@ function loadImageAndCreateTextureInfo(url) {
     gl.bindBuffer(gl.ARRAY_BUFFER, quadtexcoordBuffer);
     gl.enableVertexAttribArray(texcoordLocation);
     gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadcolorBuffer);
+    gl.enableVertexAttribArray(colorLocation); //
+    gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
 
     // this matrix will convert from pixels to clip space
     var matrix = m4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
 
     // this matrix will translate our quad to dstX, dstY
     matrix = m4.translate(matrix, dstX, dstY, 0);
+
+    matrix = m4.zRotate(matrix,degtorad(stamprotation))
 
     // this matrix will scale our 1 unit quad
     // from 1 unit to texWidth, texHeight units
@@ -362,6 +432,9 @@ function loadImageAndCreateTextureInfo(url) {
     
     gl.bindBuffer(gl.ARRAY_BUFFER, triUVBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleuvs), gl.STATIC_DRAW);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, tricolorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tricolors), gl.STATIC_DRAW); 
     // Tell WebGL to use our shader program pair
     gl.useProgram(program);
 
@@ -370,8 +443,11 @@ function loadImageAndCreateTextureInfo(url) {
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, triUVBuffer);
-    gl.enableVertexAttribArray(texcoordLocation);
+    gl.enableVertexAttribArray(texcoordLocation); //
     gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, tricolorBuffer);
+    gl.enableVertexAttribArray(colorLocation); //
+    gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
 
     // this matrix will convert from pixels to clip space
     var matrix = m4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
@@ -388,7 +464,7 @@ function loadImageAndCreateTextureInfo(url) {
     gl.uniform1i(textureLocation, 0);
 
     // draw the quad (2 triangles, 6 vertices)
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
 
@@ -418,9 +494,24 @@ class BetterPen {
             "color1":'#0e9a6b',
             "color2":'#0e9a6b',
             "color3":'#0e9a6b',
-            //"docsURI": 'https://docs.turbowarp.org/blocks',
+            "docsURI": 'https://www.youtube.com/playlist?list=PLdR2VVCBIN3CceUdgKWOUxFEEbLqWgCC9',
             "blockIconURI": "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIzNy44NjkyMSIgaGVpZ2h0PSI0OC44NTI3MiIgdmlld0JveD0iMCwwLDM3Ljg2OTIxLDQ4Ljg1MjcyIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgY3g9IjIzNy41NDM0IiBjeT0iMTg0LjAwNTYiIHI9IjkuOTg1NDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBpZD0iY29sb3ItMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZmZmZmIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjY2ZkNWU5Ii8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTIyMy4zMDE4MSwtMTYzLjc2MzA5KSI+PGcgZGF0YS1wYXBlci1kYXRhPSJ7JnF1b3Q7aXNQYWludGluZ0xheWVyJnF1b3Q7OnRydWV9IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLWRhc2hhcnJheT0iIiBzdHJva2UtZGFzaG9mZnNldD0iMCIgc3R5bGU9Im1peC1ibGVuZC1tb2RlOiBub3JtYWwiPjxwYXRoIGQ9Ik0yMjUuMTYzNTYsMTkzLjIwMDIxYzAuNTYxNTMsLTEuMTA3NDYgMi4yMzQwNCwtMy4yODU4MyAyLjIzNDA0LC0zLjI4NTgzYzAsMCAwLjU5NDQyLDEuODIzOTEgMS4yMjQ0OSwyLjU5NTc1YzAuNjMyMTIsMC43NzQzNSAyLjA4ODc4LDEuNDc0ODQgMi4wODg3OCwxLjQ3NDg0YzAsMCAtMi4xOTQ0NiwxLjI4MTQxIC0zLjMyNDIxLDEuNzI2OTVjLTEuMTEwMzIsMC40Mzc4NyAtMy4zOTcsMC45MjM2NyAtMy4zOTcsMC45MjM2N2MwLDAgMC41OTk3NCwtMi4zMDI5OSAxLjE3MzksLTMuNDM1Mzh6IiBmaWxsPSIjNGM5N2ZmIiBzdHJva2U9IiM1NzVlNzUiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMjI3LjYxMTMxLDE4OS4yOTIwM2wxNC45NTE1NCwtMTUuMjcxOTNjMCwwIDIuMjA2LDAuODk1MDUgMi45NTc3NiwxLjYzMDQ3YzAuODY4OCwwLjg0OTkxIDEuOTU0ODksMy4xNzUzOCAxLjk1NDg5LDMuMTc1MzhsLTE2LjEyNjMxLDE1LjE2NTE0YzAsMCAtMi4wMDYzOSwtMS4xMjc4NiAtMi42MDkyMSwtMS44ODU2OGMtMC42NDA4MiwtMC44MDU2IC0xLjEyODY4LC0yLjgxMzM3IC0xLjEyODY4LC0yLjgxMzM3eiIgZmlsbD0idXJsKCNjb2xvci0xKSIgc3Ryb2tlPSIjNTc1ZTc1IiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTIzNy43NTY5OSwxNzIuOTUyMTNjMCwwIDAuOTg2MTksMS4wNTA2MiAyLjM5NjA4LC0wLjI3MDcyYzEuODAzLC0xLjY4OTc3IDQuMjMxMDUsLTUuOTAxNDcgNS40NDc0MywtNi41ODcwN2MxLjM3NDgsLTAuNzc0ODkgMy45MDQxNCwwLjIzNjM5IDMuOTA0MTQsMC4yMzYzOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTc1ZTc1IiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0yMzYuMDc5ODEsMTcyLjMxMTM1YzAsLTAuNjkwMzYgMC41NTk2NCwtMS4yNSAxLjI1LC0xLjI1YzAuNjkwMzYsMCAxLjI1LDAuNTU5NjQgMS4yNSwxLjI1YzAsMC42OTAzNiAtMC41NTk2NCwxLjI1IC0xLjI1LDEuMjVjLTAuNjkwMzYsMCAtMS4yNSwtMC41NTk2NCAtMS4yNSwtMS4yNXoiIGZpbGw9IiM1NzVlNzUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIwLjUiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTI1MC45OTk3OSwxNjQuNzI4NzdjMCwwIDEuOTEzOTYsLTEuMDUxOTMgNC4yMDAwOSwxLjMyMzU4YzIuNDI2ODUsMi41MjE3MyAwLjYwNTc2LDQuNDQzNDQgMC42MDU3Niw0LjQ0MzQ0bC04LjMzMDE0LDguMjIzMzVjMCwwIC0wLjc1MDQsLTIuMDcxMTIgLTEuNTYyNDksLTIuNzk0OTRjLTAuODI1MjQsLTAuNzM1NTUgLTMuMzUwMTYsLTEuNTgzNzMgLTMuMzUwMTYsLTEuNTgzNzN6IiBmaWxsPSIjNGM5N2ZmIiBzdHJva2U9IiM1NzVlNzUiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48dGV4dCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMzkuODkzMzcsMjAxLjcxMTE4KSBzY2FsZSgwLjg3MjM3LDAuODcyMzcpIiBmb250LXNpemU9IjQwIiB4bWw6c3BhY2U9InByZXNlcnZlIiBmaWxsPSIjZThlYmY0IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHN0cm9rZT0iIzU3NWU3NSIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2UtZGFzaGFycmF5PSIiIHN0cm9rZS1kYXNob2Zmc2V0PSIwIiBmb250LWZhbWlseT0iU2FucyBTZXJpZiIgZm9udC13ZWlnaHQ9Im5vcm1hbCIgdGV4dC1hbmNob3I9InN0YXJ0IiBzdHlsZT0ibWl4LWJsZW5kLW1vZGU6IG5vcm1hbCI+PHRzcGFuIHg9IjAiIGR5PSIwIj4rPC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L3N2Zz48IS0tcm90YXRpb25DZW50ZXI6MTYuNjk4MTkxNTI3MDE2NDYyOjE2LjIzNjkxNDk5OTk5OTk4Mi0tPg==",
             "blocks": [
+                          {
+                            "opcode": "precachetextures",
+                            "blockType": "command",
+                            "text": "precache texture [uri] clamp the texture? [clamp]",
+                            "arguments": {
+                                "uri": {
+                                    "type": "string",
+                                    "defaultValue": "uri here"
+                                },
+                                "clamp": {
+                                  "type": "string",
+                                  "menu": 'TFmenu'
+                                }
+                            }                    
+                        },
                     {
                         "opcode": "settargetsw",
                         "blockType": "command",
@@ -456,6 +547,28 @@ class BetterPen {
                         }                    
                     },
                     {
+                      "opcode": "rotateStamp",
+                      "blockType": "command",
+                      "text": "Set stamp rotation to [ANGLE]",
+                      "arguments": {
+                        "ANGLE": {
+                          "type": "angle",
+                          "defaultValue": "90"
+                        }
+                      }                    
+                    },
+                    {
+                      "opcode": "getstamprotation",
+                      "blockType": "reporter",
+                      "text": "Stamp Rotation",
+                      "arguments": {
+                        "ANGLE": {
+                          "type": "angle",
+                          "defaultValue": "90"
+                        }
+                      }                    
+                    },
+                    {
                         "opcode": "setpenstrechandsquash",
                         "blockType": "command",
                         "text": "Set stamp width to [width] and height to [height]",
@@ -470,10 +583,39 @@ class BetterPen {
                             }
                         }                    
                     },
-                    /*{
+                    {
+                        "opcode": "getstampwidth",
+                        "blockType": "reporter",
+                        "text": "Stamp Width",
+                        "arguments": {
+                        }                    
+                    },
+                    {
+                        "opcode": "getstampheight",
+                        "blockType": "reporter",
+                        "text": "Stamp Height",
+                        "arguments": {
+                        }                    
+                    },
+                    {
+                      "opcode": "setstampcolor",
+                      "blockType": "command",
+                      "text": "Tint stamp by [color] and transparency[T](0-255)",
+                      "arguments": {
+                        "color": {
+                          "type": "color",
+                          "defaultValue": '#ffffff'
+                        },
+                        "T":{
+                          "type": "number",
+                          "defaultValue": '0'
+                        }
+                      }                    
+                    },
+                    {
                         "opcode": "getcostumedata",
                         "blockType": "reporter",
-                        "text": "Get data uri of costume[costu] in sprite[spr]",
+                        "text": "Get data uri of costume[costu] in sprite[spr] (0 is stage)",
                         "arguments": {
                             "costu": {
                                 "type": "number",
@@ -485,7 +627,7 @@ class BetterPen {
                             }
                         }                    
                     },
-                    {
+                    /*{
                         "opcode": "getimagefromurl",
                         "blockType": "reporter",
                         "text": "Get data uri from url:[url]",
@@ -506,29 +648,169 @@ class BetterPen {
                               "defaultValue": "https://en.scratch-wiki.info/w/images/thumb/ScratchCat-Small.png/200px-ScratchCat-Small.png"
                           },
                           "trianglepoints": {
-                              "type": "number",
+                              "type": "string",
                               "defaultValue": "0,0,10,10,0,10"
                           },
                           "triangleuvs": {
-                              "type": "number",
+                              "type": "string",
                               "defaultValue": "0,0,1,1,0,1"
                           }
                       }                    
+                  },
+                  {
+                    "opcode": "settripointcolour",
+                    "blockType": "command",
+                    "text": "Tint point [pointmenu] by [color] and transparency[T](0-255)",
+                    "arguments": {
+                      "pointmenu": {
+                        "type": "string",
+                        "menu": 'pointmenu'
+                      },
+                      "color": {
+                        "type": "color",
+                        "defaultValue": '#ffffff'
+                      },
+                      "T":{
+                        "type": "number",
+                        "defaultValue": '0'
+                      }
+                    }                    
+                  },
+                  {
+                    "opcode": "gettargetstagewidth",
+                    "blockType": "reporter",
+                    "text": "Target Stage Width",
+                    "arguments": {
+                    }                    
+                  },
+                  {
+                    "opcode": "gettargetstageheight",
+                    "blockType": "reporter",
+                    "text": "Target Stage Height",
+                    "arguments": {
+                    }                    
+                  },
+                  {
+                    "opcode": "converttocanvascoords",
+                    "blockType": "reporter",
+                    "text": "Convert [scrcoord] to [coordTypes] units on the axis [coordmenu]",
+                    "arguments": {
+                      "coordmenu": {
+                        "type": "string",
+                        "menu": 'coordMenu'
+                      },
+                      "scrcoord": {
+                        "type": "number",
+                        "defaultValue": '0'
+                      },
+                      "coordTypes": {
+                        "type": "string",
+                        "menu": 'coordTypes'
+                      }
+                    }                    
+                  },
+                  {
+                    "opcode": "rgbtoSColor",
+                    "blockType": "reporter",
+                    "text": "Convert R[R] G[G] B[B] to Hex",
+                    "arguments": {
+                      "R": {
+                        "type": "number",
+                        "defaultValue": '255'
+                      },
+                      "G": {
+                        "type": "number",
+                        "defaultValue": '255'
+                      },
+                      "B": {
+                        "type": "number",
+                        "defaultValue": '255'
+                      }
+                    }                    
                   }
-            ],           
+            ],        
+            "menus": {
+              "coordMenu": {
+                  "items": ['x', 'y']
+              },
+              "coordTypes": {
+                "items": ['Canvas', 'Scratch']
+              },
+              "pointmenu": {
+                "items": ['1', '2', '3']
+              },
+              "TFmenu": {
+                "items": ['true',"false"]
+              },
+              //Dynamic Menus
+          }   
         };
     }
+
+    rgbtoSColor({R,G,B}) {
+      return (((R*256)+G) *256)+B
+    }
     
+    getstampwidth({}) {
+      return Penwidth;
+    }
+
+    getstampheight({}) {
+      return PenHeight;
+    }
+
+    converttocanvascoords({coordmenu,scrcoord,coordTypes}) {
+      if (coordTypes == 'Canvas')
+      {
+        if (coordmenu == "x")
+        {
+            return scrcoord + (screenwidth/2)
+        }
+        else
+        {
+            return (scrcoord*-1) + (screenheight/2)
+        }
+      }
+      else
+      {
+        if (coordmenu == "x")
+        {
+            return scrcoord - (screenwidth/2)
+        }
+        else
+        {
+            return (scrcoord*-1) - (screenheight/2)
+        }
+      }
+    }
+
+    getstamprotation({}) {
+      return stamprotation
+    }
+
+    rotateStamp({ANGLE}) {
+      stamprotation = ANGLE
+      return "done"
+    }
+
     pendrawspritefromurl({url,x,y}) {
         canvaswidth = canvas.width
         canvasheight =  canvas.height
         var scalemultiplyer = canvaswidth/screenwidth
         if(!textures.hasOwnProperty(url)){
-            textures[url] = loadImageAndCreateTextureInfo(url)
+            textures[url] = loadImageAndCreateTextureInfo(url,'false')
             console.log(textures[url])
         }
-        drawImage(textures[url].texture, Penwidth * scalemultiplyer, PenHeight * scalemultiplyer, x * scalemultiplyer, y * scalemultiplyer);
+        drawImage(textures[url].texture, Penwidth * scalemultiplyer, PenHeight * scalemultiplyer, (x) * scalemultiplyer, (y) * scalemultiplyer,stamprotation - 90);
         return "stamped"
+    }
+
+    gettargetstagewidth({}) {
+      return screenwidth
+    }
+
+    gettargetstageheight({}) {
+      return screenheight
     }
 
     pendrawtexturedtrifromurl({url,trianglepoints,triangleuvs}) {
@@ -536,7 +818,7 @@ class BetterPen {
       canvasheight =  canvas.height
       var scalemultiplyer = canvaswidth/screenwidth
       if(!textures.hasOwnProperty(url)){
-          textures[url] = loadImageAndCreateTextureInfo(url)
+          textures[url] = loadImageAndCreateTextureInfo(url,'false')
           console.log(textures[url])
       }
       var pointsarray = trianglepoints.split(",");
@@ -547,6 +829,13 @@ class BetterPen {
       var uvarray = triangleuvs.split(",");
       drawTexturedTri(textures[url].texture, pointsarray, uvarray);
       return "stamped"
+    }
+
+    async precachetextures({uri,clamp}) {
+      if(!textures.hasOwnProperty(uri)){
+        textures[uri] = await loadImageAndCreateTextureInfo(uri,clamp)
+        console.log(textures[uri])
+    }
     }
 
     setpenstrechandsquash({width,height}) {
@@ -561,15 +850,82 @@ class BetterPen {
         screenheight = height;
         return "done"
     }
-    /*async getcostumedata({spr,costu}) {
-      var result = 'data:image/png;base64,' + btoa(unescape(encodeURIComponent(getspritecostume(spr,costu))))
-      return result;
-    }
+    getcostumedata({spr,costu}) {
+      let fileData = getspritecostume(spr,costu) 
+      console.log(fileData)
+      return fileData;
+    }/*data:image/png;base64,' + 
     async getimagefromurl({url}) {
       var result = await getdatafromimageuri(url)
       return result
     }*/
     //scrapped till I figure this out fully!
+
+    settripointcolour({pointmenu,color,T}) {
+      if(pointmenu == "1") {
+        tricolors[0] = hexToRgb(color).r / 255
+        tricolors[1] = hexToRgb(color).g / 255
+        tricolors[2] = hexToRgb(color).b / 255
+        tricolors[3] = T / 255
+      }
+      else if (pointmenu == "2"){
+        tricolors[4] = hexToRgb(color).r / 255
+        tricolors[5] = hexToRgb(color).g / 255
+        tricolors[6] = hexToRgb(color).b / 255
+        tricolors[7] = T / 255
+      }
+      else{
+        tricolors[8] = hexToRgb(color).r / 255
+        tricolors[9] = hexToRgb(color).g / 255
+        tricolors[10] = hexToRgb(color).b / 255
+        tricolors[11] = T / 255
+      }
+
+      return "done"
+    }
+
+    setstampcolor({color,T}) {
+      console.log(hexToRgb(color))
+      let convertr = hexToRgb(color).r / 255
+      let convertg = hexToRgb(color).g / 255
+      let convertb = hexToRgb(color).b / 255
+      let converta = T / 255
+        quadcolors[0] = convertr
+        quadcolors[1] = convertg
+        quadcolors[2] = convertb
+        quadcolors[3] = converta
+        quadcolors[4] = convertr
+        quadcolors[5] = convertg
+        quadcolors[6] = convertb
+        quadcolors[7] = converta
+        quadcolors[8] = convertr
+        quadcolors[9] = convertg
+        quadcolors[10] = convertb
+        quadcolors[11] = converta
+
+        quadcolors[12] = convertr
+        quadcolors[13] = convertg
+        quadcolors[14] = convertb
+        quadcolors[15] = converta
+        quadcolors[16] = convertr
+        quadcolors[17] = convertg
+        quadcolors[18] = convertb
+        quadcolors[19] = converta
+        quadcolors[20] = convertr
+        quadcolors[21] = convertg
+        quadcolors[22] = convertb
+        quadcolors[23] = converta
+
+      return "done"
+    }
+}
+
+function hexToRgb(hex) {
+  return {
+    r: Math.floor(hex/65536),
+    g: Math.floor(hex/256)%256,
+    b: hex%256
+  }
 }
 
 function getdatafromimageuri(url)
@@ -581,8 +937,8 @@ function getdatafromimageuri(url)
 
 function getspritecostume(t,c)
 {
-  const ps_sp=vm.runtime.targets[t];
-  const ps_cs=ps_sp.sprite.costumes[c].asset.data;
+  let ps_sp=vm.runtime.targets[t];
+  let ps_cs=ps_sp.sprite.costumes[c - 1].asset.encodeDataURI();
   console.log(ps_cs)
   return ps_cs
 }

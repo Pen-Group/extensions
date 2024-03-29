@@ -53,8 +53,8 @@ h2, h3, p {
 /*These panels are from extensions.turbowarp.org*/
 .extension {
 	position: relative;
-	border: 2px solid var(--Theme_Main_2);
-    background-color: var(--Theme_Main_3);
+	border: 2px solid var(--Theme_Main_3);
+    background-color: var(--Theme_Main_2);
 	border-radius: 8px;
 	margin: 4px;
 	overflow: hidden;
@@ -112,4 +112,14 @@ h2, h3, p {
 	pointer-events: auto;
 	transition: filter 0.15s;
 	filter: drop-shadow(0px 1px 3px #00000075);
+}
+
+.prevent-select {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
 }

@@ -1,15 +1,38 @@
 const extensionsGoHere = document.getElementById("extensionsGoHereLol");
 
+document.body.className = (window.matchMedia("(prefers-color-scheme: dark)").matches
+? "theme__Dark"
+: "theme__Light");
+
 function addExtension(extensionJSON) {
     let extensionDiv = document.createElement("div");
+    let hasSelectionDropdown = false;
+
     extensionDiv.className = "extension";
+
+    let latestVersion = (extensionJSON.versions) ? extensionJSON.latestVersion || extensionJSON.versions[extensionJSON.versions.length - 1].filename : "none";
 
     extensionDiv.innerHTML = `
         <div class="extension-banner">
-            <img src="extensions/${extensionJSON.id}/thumbnail.svg" class="extension-image">
+            <img src="extensions/${extensionJSON.id}/thumbnail.${extensionJSON.thumbnailFormat || "svg"}" class="extension-image">
             <div class="extension-buttons">
-                <button class="copy" data-copy="${window.location.href}/extensions/${extensionJSON.id}/${extensionJSON.latestVersion}">Copy URL</button>
-                <a class="open" href="https://turbowarp.org/editor?extension=https://extensions.turbowarp.org/obviousAlexC/SensingPlus.js">Open Extension</a>
+                ${(function() {
+                    if (extensionJSON.unavailable || (!extensionJSON.versions)) return `<p class="prevent-select" style="background-color:#00000000; cursor: default;">Extension Unavailable. Sorry</p>`;
+
+                    let bodyData = `<button id="${extensionJSON.id}_copy" data-copy="${window.location.href}/extensions/${extensionJSON.id}/${latestVersion}">Copy URL</button>
+                    <a id="${extensionJSON.id}_open" style="background-color:var(--Theme_Accent_1)" href="https://studio.penguinmod.com/editor.html?extension=${window.location.href}/extensions/${extensionJSON.id}/${latestVersion}">Open in Penguinmod</a>`;
+
+                    if (extensionJSON.versions.length > 1 && (!extensionJSON.hideVersionSelect)) {
+                        let options = ``;
+                        hasSelectionDropdown = true;
+                        extensionJSON.versions.forEach(version => {
+                            options += `<option value="${version.filename}">${version.name}</option>`
+                        });
+                        bodyData += `\n<select id="${extensionJSON.id}_select" style="background-color:#ff8800; value=${latestVersion}">${options}</select>`;
+                    }
+
+                    return bodyData;
+                })()}
             </div>
         </div>
         <h2 class="extensionName">${extensionJSON.name}</h2>
@@ -17,6 +40,19 @@ function addExtension(extensionJSON) {
     `;
 
     extensionsGoHere.appendChild(extensionDiv);
+
+    if (hasSelectionDropdown) {
+        const versionSelection = document.getElementById(`${extensionJSON.id}_select`);
+        const copyButton = document.getElementById(`${extensionJSON.id}_copy`);
+        const openButton = document.getElementById(`${extensionJSON.id}_open`);
+
+        versionSelection.addEventListener("change", (event) => {
+            openButton.href = `https://studio.penguinmod.com/editor.html?extension=${window.location.href}/extensions/${extensionJSON.id}/${versionSelection.value}`;
+            copyButton.setAttribute("data-copy",`${window.location.href}/extensions/${extensionJSON.id}/${versionSelection.value}`);
+        });
+
+        versionSelection.value = latestVersion;
+    }
 }
 
 fetch("extensions.json").then((response) => response.text())

@@ -8,17 +8,44 @@
             {
                 "name":"version 1",
                 "filename":"v1.js"
+            },
+            {
+                "name":"version 2",
+                "filename":"v2.js"
+            },
+            {
+                "name":"version 3",
+                "filename":"v3.js"
+            },
+            {
+                "name":"version 4",
+                "filename":"v4.js"
+            },
+            {
+                "name":"version 5",
+                "filename":"v5.js"
+            },
+            {
+                "name":"version 6",
+                "filename":"v6.js"
+            },
+            {
+                "name":"version 7 (Beta)",
+                "filename":"v7.js"
             }
         ]
     },
     {
         "name":"Pen+ 3D",
         "id":"Pen3D",
-        "description":"A 3d Addon for Pen+. By ObviousAlexC (Coming Later)"
+        "description":"A 3d Addon for Pen+. By ObviousAlexC (Coming Later)",
+        "unavailable":true
     },
     {
         "name":"Shaded Stamps",
         "id":"ShadedStamps",
-        "description":"Custom shaders for scratch stamps. By ObviousAlexC (Coming Later)"
+        "thumbnailFormat":"png",
+        "description":"Custom shaders for scratch stamps. By ObviousAlexC (Coming Later)",
+        "unavailable":true
     }
 ]
