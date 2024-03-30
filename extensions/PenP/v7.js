@@ -699,13 +699,15 @@
 
         gl.useProgram(penPlusShaders.draw.ProgramInf.program);
 
-        gl.uniform1i(u_depthTexture_Location_draw, 1);
-
         twgl.setBuffersAndAttributes(
           gl,
-          penPlusShaders.untextured.ProgramInf,
+          penPlusShaders.draw.ProgramInf,
           reRenderInfo
         );
+
+        twgl.setUniforms(penPlusShaders.draw.ProgramInf, {
+          u_drawTex: depthBufferTexture
+        });
 
         twgl.drawBufferInfo(gl, reRenderInfo);
 
@@ -735,10 +737,13 @@
         gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
+        gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
           renderer._allSkins[renderer._penSkinId]._framebuffer.framebuffer
         );
+
         gl.useProgram(penPlusShaders.pen.program);
       },
     };
@@ -3208,7 +3213,7 @@
       );
       if (costIndex >= 0) {
         const curCostume =
-          curTarget.sprite.costumes_[costIndex].asset.encodeDataURI();
+          curTarget.sprite.costumes[costIndex].asset.encodeDataURI();
         return curCostume;
       }
     }
@@ -3522,8 +3527,6 @@
     setTextureInShader({ uniformName, shader, texture }, util) {
       if (!this.programs[shader]) return;
 
-      console.log(texture);
-
       const curTarget = util.target;
 
       let curCostume =
@@ -3540,8 +3543,6 @@
       else if(this.penPlusCostumeLibrary[texture]) {
         curCostume = curCostume.texture;
       }
-
-      console.log(curCostume)
 
       this.programs[shader].uniformDat[uniformName] = curCostume;
     }
