@@ -721,5 +721,5 @@ function getspritecostume(t,c)
   return ps_cs
 }
 
-Scratch.extensions.register(new PenPlus());
+Scratch.extensions.register(new BetterPen());
   })(Scratch);
