@@ -6,7 +6,7 @@
 
 (function (Scratch) {
   "use strict";
-
+  console.log(Scratch);
   if (!Scratch.extensions.unsandboxed) {
     throw new Error("Pen+ must run unsandboxed");
   }
