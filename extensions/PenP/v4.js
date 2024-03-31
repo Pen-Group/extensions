@@ -19,11 +19,6 @@ QUICK FIX added clamping because some textures require it?
   if (!Scratch.extensions.unsandboxed) {
     throw new Error("Pen+ must be run unsandboxed");
   }
-if (typeof window === "undefined" || !window.vm) {
-    isSandboxed = true;
-  } else {
-    isSandboxed = false;
-  }
 
 var Penwidth = 64
 var PenHeight = 64
