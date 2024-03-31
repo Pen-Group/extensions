@@ -420,12 +420,6 @@
     ]}
   });
 
-  //?Depth
-  const u_depthTexture_Location_draw = gl.getUniformLocation(
-    penPlusShaders.draw.ProgramInf.program,
-    "u_drawTex"
-  );
-
   let parentExtension = null;
 
   //?Override pen Clear with pen+
@@ -706,7 +700,7 @@
         );
 
         twgl.setUniforms(penPlusShaders.draw.ProgramInf, {
-          u_drawTex: depthBufferTexture
+          u_drawTex: depthBufferTexture,
         });
 
         twgl.drawBufferInfo(gl, reRenderInfo);
@@ -1030,6 +1024,10 @@
       });
 
       parentExtension = this;
+
+      //For addon development. Just something fun I plan to do in the future.
+      //Others are allowed to join!
+      vm.runtime.ext_obviousalexc_penPlus = this;
 
       vm.runtime.on("PROJECT_LOADED", this._setupExtensionStorage);
       this._setupExtensionStorage();
@@ -3082,10 +3080,7 @@
           Scratch.Cast.toString(tex)
         );
         if (costIndex >= 0) {
-          const curCostume = curTarget.sprite.costumes_[costIndex];
-          if (costIndex != curTarget.currentCostume) {
-            curTarget.setCostume(costIndex);
-          }
+          const curCostume = curTarget.sprite.costumes[costIndex];
 
           currentTexture = renderer._allSkins[curCostume.skinId].getTexture();
         }
@@ -3433,7 +3428,7 @@
       if (!this.programs[shader]) return;
       // prettier-ignore
       if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
-      
+
       gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
 
       //Safe to assume they have a buffer;
@@ -3533,14 +3528,13 @@
         this.penPlusCostumeLibrary[texture] ||
         curTarget.getCostumeIndexByName(Scratch.Cast.toString(texture));
       if (!this.penPlusCostumeLibrary[curCostume] && curCostume >= 0) {
-        const curCostumeObject = curTarget.sprite.costumes_[curCostume];
+        const curCostumeObject = curTarget.sprite.costumes[curCostume];
         if (curCostume != curTarget.currentCostume) {
           curTarget.setCostume(curCostume);
         }
 
         curCostume = renderer._allSkins[curCostumeObject.skinId].getTexture();
-      }
-      else if(this.penPlusCostumeLibrary[texture]) {
+      } else if (this.penPlusCostumeLibrary[texture]) {
         curCostume = curCostume.texture;
       }
 
@@ -3654,7 +3648,7 @@
       );
       //if we cannot find it in the pen+ library look for it in the scratch costume library
       if (!foundValue) {
-        const curCostumes = util.target.sprite.costumes_;
+        const curCostumes = util.target.sprite.costumes;
         if (!curCostumes) return "";
         for (let costumeID = 0; costumeID < curCostumes.length; costumeID++) {
           const costume = curCostumes[costumeID];
@@ -4508,7 +4502,7 @@
         } else {
           if (curCostume >= 0) {
             const costumeURI =
-              curTarget.sprite.costumes_[curCostume].asset.encodeDataURI();
+              curTarget.sprite.costumes[curCostume].asset.encodeDataURI();
 
             //Only used for images we got permission to fetch before. Don't need this.
             // eslint-disable-next-line
