@@ -8,6 +8,8 @@
   "use strict";
 
   if (!Scratch.extensions.unsandboxed) {
+    //for those who use the version from pen-group's site
+    alert("Pen+ must be ran unsandboxed!");
     throw new Error("Pen+ must run unsandboxed");
   }
 
@@ -233,6 +235,9 @@
                     {
                       gl_FragColor = v_color;
                       gl_FragColor.rgb *= gl_FragColor.a;
+                      if (gl_FragColor.a == 0.0) {
+                        discard;
+                      }
                     }
                 `,
       },
@@ -267,7 +272,9 @@
                     {
                         gl_FragColor = texture2D(u_texture, v_texCoord) * v_color;
                         gl_FragColor.rgb *= gl_FragColor.a;
-                        
+                        if (gl_FragColor.a == 0.0) {
+                          discard;
+                        }
                     }
                 `,
       },

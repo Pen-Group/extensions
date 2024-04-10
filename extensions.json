@@ -38,8 +38,13 @@
     {
         "name":"Pen+ 3D",
         "id":"Pen3D",
-        "description":"A 3d Addon for Pen+. By ObviousAlexC (Coming Later)",
-        "unavailable":true
+        "description":"A 3d Addon for Pen+. By ObviousAlexC",
+        "versions":[
+            {
+                "name":"version 1",
+                "filename":"extension.js"
+            }
+        ]
     },
     {
         "name":"Shaded Stamps",
