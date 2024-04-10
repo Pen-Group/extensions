@@ -170,6 +170,14 @@
       updateCanvasSize();
       resizeCall = true;
     });
+    
+    let lastCanvasSize = [canvas.width, canvas.height];
+    vm.runtime.on("BEFORE_EXECUTE", () => {
+      if (lastCanvasSize != [canvas.width, canvas.height]) {
+        lastCanvasSize = [canvas.width, canvas.height];
+        updateCanvasSize();
+      }
+    })
 
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
