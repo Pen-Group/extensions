@@ -165,6 +165,7 @@
     //?Call every frame because I don't know of a way to detect when the stage is resized through window resizing (2/7/24) thought I should clarify
 
     window.addEventListener("resize", updateCanvasSize);
+    canvas.addEventListener("resize", updateCanvasSize);
     vm.runtime.on("STAGE_SIZE_CHANGED", () => {
       updateCanvasSize();
       resizeCall = true;
