@@ -1855,7 +1855,7 @@
             arguments: {
               component: {
                 type: Scratch.ArgumentType.STRING,
-                menu: "vec2Component",
+                menu: "vec2Component"
               },
               uniformName: {
                 type: Scratch.ArgumentType.STRING,
@@ -2389,25 +2389,25 @@
           },
           vec2Component: {
             items: [
-              { text: "x", value: 0 },
-              { text: "y", value: 1 },
+              { text: "x", value: "0" },
+              { text: "y", value: "1" },
             ],
             acceptReporters: true,
           },
           vec3Component: {
             items: [
-              { text: "x", value: 0 },
-              { text: "y", value: 1 },
-              { text: "z", value: 2 },
+              { text: "x", value: "0" },
+              { text: "y", value: "1" },
+              { text: "z", value: "2" },
             ],
             acceptReporters: true,
           },
           vec4Component: {
             items: [
-              { text: "x", value: 0 },
-              { text: "y", value: 1 },
-              { text: "z", value: 2 },
-              { text: "w", value: 3 },
+              { text: "x", value: "0" },
+              { text: "y", value: "1" },
+              { text: "z", value: "2" },
+              { text: "w", value: "3" },
             ],
             acceptReporters: true,
           },
