@@ -4088,6 +4088,9 @@
           shaderManager.style.width = width > height ? "auto" : width + "%";
           shaderManager.style.height = height >= width ? "auto" : height + "%";
         },
+        nameFunc: (name) => {
+          topText.innerHTML = name;
+        }
       };
     }
 
