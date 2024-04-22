@@ -3083,7 +3083,11 @@
         if (costIndex >= 0) {
           const curCostume = curTarget.sprite.costumes[costIndex];
 
-          currentTexture = renderer._allSkins[curCostume.skinId].getTexture();
+          if (costIndex != curTarget.currentCostume) {
+            curTarget.setCostume(costIndex);
+          }
+
+          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
         }
       }
 
@@ -3533,11 +3537,8 @@
         curTarget.getCostumeIndexByName(Scratch.Cast.toString(texture));
       if (!this.penPlusCostumeLibrary[curCostume] && curCostume >= 0) {
         const curCostumeObject = curTarget.sprite.costumes[curCostume];
-        if (curCostume != curTarget.currentCostume) {
-          curTarget.setCostume(curCostume);
-        }
 
-        curCostume = renderer._allSkins[curCostumeObject.skinId].getTexture();
+        curCostume = renderer._allSkins[curCostumeObject.skinId]._uniforms.u_skin;
       } else if (this.penPlusCostumeLibrary[texture]) {
         curCostume = curCostume.texture;
       }
