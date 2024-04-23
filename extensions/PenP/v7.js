@@ -2258,10 +2258,10 @@
           {
             opcode: "renderTexturedTrisFromList",
             blockType: Scratch.BlockType.COMMAND,
-            text: "draw textured triangles from list [list] using [texture]",
+            text: "draw textured triangles from list [list] using [tex]",
             arguments: {
               list: {  type: Scratch.ArgumentType.STRING, menu: "listMenu" },
-              texture: { type: Scratch.ArgumentType.STRING, menu: "costumeMenu" },
+              tex: { type: Scratch.ArgumentType.STRING, menu: "costumeMenu" },
             },
             filter: "sprite",
           },
@@ -4805,8 +4805,7 @@
 
       gl.useProgram(penPlusShaders.untextured.ProgramInf.program);
 
-      twgl.setUniforms(penPlusShaders.textured.ProgramInf, {
-        u_texture: texture,
+      twgl.setUniforms(penPlusShaders.untextured.ProgramInf, {
         u_transform: transform_Matrix,
       });
 
@@ -4829,7 +4828,7 @@
       })
     }
 
-    renderTexturedTrisFromList({ list }, util) {
+    renderTexturedTrisFromList({ list, tex }, util) {
       const { triData, listLength, successful} = this._getTriDataFromList(list,util);
       if (!successful) return;
 
@@ -4837,6 +4836,27 @@
       if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
 
       if ((!triData.a_position) || (!triData.a_color) || (!triData.a_texCoord)) return;
+
+      const curTarget = util.target;
+      let currentTexture = null;
+      if (this.penPlusCostumeLibrary[tex]) {
+        currentTexture = this.penPlusCostumeLibrary[tex].texture;
+      } else {
+        const costIndex = curTarget.getCostumeIndexByName(
+          Scratch.Cast.toString(tex)
+        );
+        if (costIndex >= 0) {
+          const curCostume = curTarget.sprite.costumes[costIndex];
+
+          if (costIndex != curTarget.currentCostume) {
+            curTarget.setCostume(costIndex);
+          }
+
+          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
+        }
+      }
+
+      if (!currentTexture) return;
 
       //Make sure we have the triangle data updating accordingly
       this.trianglesDrawn += listLength;
@@ -4871,6 +4891,7 @@
 
       twgl.setUniforms(penPlusShaders.textured.ProgramInf, {
         u_transform: transform_Matrix,
+        u_texture: currentTexture,
       });
 
       twgl.drawBufferInfo(gl, bufferInfo);
