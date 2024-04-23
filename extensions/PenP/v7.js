@@ -2367,7 +2367,8 @@
               "saturation",
               "brightness",
               "transparency",
-              "size",
+              "hex code",
+              "size"
             ],
             acceptReporters: true,
           },
@@ -2594,10 +2595,26 @@
     getPenHSV({ HSV }, util) {
       checkForPen(util);
       const curTarget = util.target;
-      if (HSV == "size") {
-        return curTarget["_customState"]["Scratch.pen"].penAttributes.diameter;
+      switch (HSV) {
+        case "size":
+          return curTarget["_customState"]["Scratch.pen"].penAttributes.diameter;
+
+        case "hex code":
+          //convert the rgb to hex
+          let r = Math.floor(curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[0] * 255).toString(16);
+          r = r.length == 1 ? "0" + r : r;
+          let g = Math.floor(curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[1] * 255).toString(16);
+          g = g.length == 1 ? "0" + g : g;
+          let b = Math.floor(curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[2] * 255).toString(16);
+          b = b.length == 1 ? "0" + b : b;
+          let a = Math.floor(curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[3] * 255).toString(16);
+          a = a.length == 1 ? "0" + a : a;
+
+          return `#${r}${g}${b}${a}`;
+      
+        default:
+          return curTarget["_customState"]["Scratch.pen"][HSV];
       }
-      return curTarget["_customState"]["Scratch.pen"][HSV];
     }
     drawDot({ x, y }, util) {
       checkForPen(util);
