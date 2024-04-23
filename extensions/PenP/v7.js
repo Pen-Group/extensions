@@ -453,6 +453,8 @@
     penPlusCostumeLibrary = {};
     penPlusCubemap = {};
 
+    listCache = {};
+
     attributeEditors = {
       triangle: (targetId, attribute, value, wholeTri, offset) => {
         offset = offset + attribute || attribute;
@@ -2237,6 +2239,81 @@
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "Image",
               },
+            },
+            filter: "sprite",
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: "List Based Rendering",
+          },
+          {
+            opcode: "renderSolidTrisFromList",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "draw solid triangles from list [list]",
+            arguments: {
+              list: {  type: Scratch.ArgumentType.STRING, menu: "listMenu" },
+            },
+            filter: "sprite",
+          },
+          {
+            opcode: "renderTexturedTrisFromList",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "draw textured triangles from list [list] using [texture]",
+            arguments: {
+              list: {  type: Scratch.ArgumentType.STRING, menu: "listMenu" },
+              texture: { type: Scratch.ArgumentType.STRING, menu: "costumeMenu" },
+            },
+            filter: "sprite",
+          },
+          {
+            opcode: "renderShaderTrisFromList",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "draw shader triangles from list [list] using [shader]",
+            arguments: {
+              list: {  type: Scratch.ArgumentType.STRING, menu: "listMenu" },
+              shader: { type: Scratch.ArgumentType.STRING, menu: "penPlusShaders" },
+            },
+            filter: "sprite",
+          },
+          "---",
+          {
+            opcode: "solidTriDef",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "define solid tri [x1] [y1] [c1], [x2] [y2] [c2] and [x3] [y3] [c3]",
+            arguments: {
+              x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              c1: { type: Scratch.ArgumentType.COLOR, defaultValue: "#ff0000" },
+              x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              c2: { type: Scratch.ArgumentType.COLOR, defaultValue: "#00ff00" },
+              x3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              y3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              c3: { type: Scratch.ArgumentType.COLOR, defaultValue: "#0000ff" },
+            },
+            filter: "sprite",
+          },
+          {
+            opcode: "texTriDef",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "define textured tri [x1] [y1] [c1], [x2] [y2] [c2] and [x3] [y3] [c3] with the uv's [u1] [v1], [u2] [v2] and [u3] [v3]",
+            arguments: {
+              x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              c1: { type: Scratch.ArgumentType.COLOR, defaultValue: "#ff0000" },
+              x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              c2: { type: Scratch.ArgumentType.COLOR, defaultValue: "#00ff00" },
+              x3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              y3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              c3: { type: Scratch.ArgumentType.COLOR, defaultValue: "#0000ff" },
+
+              u1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              v1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              u2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              v2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              u3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              v3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
             },
             filter: "sprite",
           },
@@ -4657,6 +4734,167 @@
       if (this.penPlusCubemap[name]) {
         delete this.penPlusCubemap[name];
       }
+    }
+
+    _getTriDataFromList(list,util) {
+      //Might be bad code? I dunno
+      const listREF = this._getVarObjectFromName(list, util, "list");
+
+      this.listCache[listREF.id] = this.listCache[listREF.id] || {};
+
+      const listOBJ = listREF.value;
+      if (!listOBJ) return {successful:false};
+      let merged = {};
+      if (this.listCache[listREF.id].prev != listOBJ) {
+        listOBJ.map(function (str) {
+          const obj = JSON.parse(str);
+          //Check through each object
+          Object.keys(obj).forEach(key => {
+            //Merge the keys if possible
+            //!!No built in function for this to my knowledge!!
+            if (!merged[key]) {
+              merged[key] = obj[key];
+            }
+            else {
+              merged[key].push(...obj[key]);
+            }
+          })
+        });
+        this.listCache[listREF.id] = {prev:listREF.value,dat:merged};
+      }
+      else {
+        merged = this.listCache[listREF.id].dat;
+      }
+      return {triData:merged, listLength:listOBJ.length,successful:true};
+    }
+
+    //?List based rendering
+    renderSolidTrisFromList({ list }, util) {
+      const { triData, listLength, successful} = this._getTriDataFromList(list,util);
+      if (!successful) return;
+
+      // prettier-ignore
+      if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
+
+      if ((!triData.a_position) || (!triData.a_color)) return;
+
+      //Make sure we have the triangle data updating accordingly
+      this.trianglesDrawn += listLength;
+      bufferInfo.numElements = listLength * 3;
+      
+      // prettier-ignore
+      let inputInfo = {
+        a_position: new Float32Array(triData.a_position),
+        a_color: new Float32Array(triData.a_color)
+      };
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
+
+      //? Bind Positional Data
+      twgl.setBuffersAndAttributes(
+        gl,
+        penPlusShaders.untextured.ProgramInf,
+        bufferInfo
+      );
+
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+      gl.useProgram(penPlusShaders.untextured.ProgramInf.program);
+
+      twgl.setUniforms(penPlusShaders.textured.ProgramInf, {
+        u_texture: texture,
+        u_transform: transform_Matrix,
+      });
+
+      twgl.drawBufferInfo(gl, bufferInfo);
+    }
+
+    solidTriDef({x1,y1,c1,x2,y2,c2,x3,y3,c3}) {
+      c1 = Scratch.Cast.toRgbColorObject(c1);
+      c2 = Scratch.Cast.toRgbColorObject(c2);
+      c3 = Scratch.Cast.toRgbColorObject(c3);
+      return JSON.stringify({
+        a_position: [
+          x1,y1,0,1,x2,y2,0,1,x3,y3,0,1
+        ],
+        a_color:[
+          c1.r/255,c1.g/255,c1.b/255,1,
+          c2.r/255,c2.g/255,c2.b/255,1,
+          c3.r/255,c3.g/255,c3.b/255,1
+        ]
+      })
+    }
+
+    renderTexturedTrisFromList({ list }, util) {
+      const { triData, listLength, successful} = this._getTriDataFromList(list,util);
+      if (!successful) return;
+
+      // prettier-ignore
+      if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
+
+      if ((!triData.a_position) || (!triData.a_color) || (!triData.a_texCoord)) return;
+
+      //Make sure we have the triangle data updating accordingly
+      this.trianglesDrawn += listLength;
+      bufferInfo.numElements = listLength * 3;
+      
+      // prettier-ignore
+      let inputInfo = {
+        a_position: new Float32Array(triData.a_position),
+        a_color: new Float32Array(triData.a_color),
+        a_texCoord: new Float32Array(triData.a_texCoord)
+      };
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_texCoord.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.DYNAMIC_DRAW);
+
+      //? Bind Positional Data
+      twgl.setBuffersAndAttributes(
+        gl,
+        penPlusShaders.textured.ProgramInf,
+        bufferInfo
+      );
+
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+      gl.useProgram(penPlusShaders.textured.ProgramInf.program);
+
+      twgl.setUniforms(penPlusShaders.textured.ProgramInf, {
+        u_transform: transform_Matrix,
+      });
+
+      twgl.drawBufferInfo(gl, bufferInfo);
+    }
+
+    texTriDef({x1,y1,c1,x2,y2,c2,x3,y3,c3, u1,v1,u2,v2,u3,v3}) {
+      c1 = Scratch.Cast.toRgbColorObject(c1);
+      c2 = Scratch.Cast.toRgbColorObject(c2);
+      c3 = Scratch.Cast.toRgbColorObject(c3);
+      return JSON.stringify({
+        a_position: [
+          x1,y1,0,1,x2,y2,0,1,x3,y3,0,1
+        ],
+        a_color:[
+          c1.r/255,c1.g/255,c1.b/255,1,
+          c2.r/255,c2.g/255,c2.b/255,1,
+          c3.r/255,c3.g/255,c3.b/255,1
+        ],
+        a_texCoord:[
+          u1,v1,
+          u2,v2,
+          u3,v3
+        ]
+      })
     }
   }
 
