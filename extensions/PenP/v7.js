@@ -3708,7 +3708,7 @@
     }
 
     setTextureInShader({ uniformName, shader, texture }, util) {
-      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader,uniformName)) return;
 
       const curTarget = util.target;
 
@@ -3727,17 +3727,17 @@
     }
 
     setNumberInShader({ uniformName, shader, number }) {
-      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader,uniformName)) return;
       this.programs[shader].uniformDat[uniformName] = number;
     }
 
     setVec2InShader({ uniformName, shader, numberX, numberY }) {
-      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader,uniformName)) return;
       this.programs[shader].uniformDat[uniformName] = [numberX, numberY];
     }
 
     setVec3InShader({ uniformName, shader, numberX, numberY, numberZ }) {
-      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader,uniformName)) return;
       this.programs[shader].uniformDat[uniformName] = [
         numberX,
         numberY,
@@ -3753,7 +3753,7 @@
       numberZ,
       numberW,
     }) {
-      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader,uniformName)) return;
       this.programs[shader].uniformDat[uniformName] = [
         numberX,
         numberY,
@@ -3763,7 +3763,7 @@
     }
 
     setMatrixInShader({ uniformName, shader, list }, util) {
-      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader,uniformName)) return;
       let listOBJ = this._getVarObjectFromName(list, util, "list").value;
       let converted = listOBJ.map(function (str) {
         return parseInt(str);
@@ -3773,7 +3773,7 @@
     }
 
     setMatrixInShaderArray({ uniformName, shader, array }) {
-      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader,uniformName)) return;
       let converted = JSON.parse(array);
       //Make sure its an array
       if (!Array.isArray(converted)) return;
@@ -3785,7 +3785,7 @@
     }
 
     setCubeInShader({ uniformName, shader, cubemap }) {
-      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader,uniformName)) return;
       if (!this.penPlusCubemap[cubemap]) return;
       this.programs[shader].uniformDat[uniformName] =
         this.penPlusCubemap[cubemap];
@@ -3793,12 +3793,14 @@
 
     getNumberInShader({ uniformName, shader }) {
       if (!this.programs[shader]) return 0;
+      if (this._isUniformArray(shader,uniformName)) return 0;
       if (!this.programs[shader].uniformDat[uniformName]) return 0;
       return this.programs[shader].uniformDat[uniformName];
     }
 
     getVec2InShader({ component, uniformName, shader }) {
       if (!this.programs[shader]) return 0;
+      if (this._isUniformArray(shader,uniformName)) return 0;
       if (!this.programs[shader].uniformDat[uniformName]) return 0;
       if (!this.programs[shader].uniformDat[uniformName][component]) return 0;
       return this.programs[shader].uniformDat[uniformName][component];
@@ -3806,6 +3808,7 @@
 
     getVec3InShader({ component, uniformName, shader }) {
       if (!this.programs[shader]) return 0;
+      if (this._isUniformArray(shader,uniformName)) return 0;
       if (!this.programs[shader].uniformDat[uniformName]) return 0;
       if (!this.programs[shader].uniformDat[uniformName][component]) return 0;
       return this.programs[shader].uniformDat[uniformName][component];
@@ -3813,6 +3816,7 @@
 
     getVec4InShader({ component, uniformName, shader }) {
       if (!this.programs[shader]) return 0;
+      if (this._isUniformArray(shader,uniformName)) return 0;
       if (!this.programs[shader].uniformDat[uniformName]) return 0;
       if (!this.programs[shader].uniformDat[uniformName][component]) return 0;
       return this.programs[shader].uniformDat[uniformName][component];
@@ -3820,12 +3824,14 @@
 
     getMatrixInShader({ uniformName, shader }) {
       if (!this.programs[shader]) return 0;
+      if (this._isUniformArray(shader,uniformName)) return 0;
       if (!this.programs[shader].uniformDat[uniformName]) return 0;
       return JSON.stringify(this.programs[shader].uniformDat[uniformName]);
     }
 
     getTextureInShader({ uniformName, shader }, util) {
       if (!this.programs[shader]) return "";
+      if (this._isUniformArray(shader,uniformName)) return "";
       if (!this.programs[shader].uniformDat[uniformName]) return "";
       const text = this.programs[shader].uniformDat[uniformName];
       let foundValue = Object.keys(this.penPlusCostumeLibrary).find(
@@ -3851,15 +3857,16 @@
     }
 
     getCubemapInShader({ uniformName, shader }) {
-      if (!this.programs[shader]) return 0;
-      if (!this.programs[shader].uniformDat[uniformName]) return 0;
+      if (!this.programs[shader]) return "";
+      if (this._isUniformArray(shader,uniformName)) return "";
+      if (!this.programs[shader].uniformDat[uniformName]) return "";
       const text = this.programs[shader].uniformDat[uniformName];
       return Object.keys(this.penPlusCubemap).find(
         (key) => this.penPlusCubemap[key] === text
       );
     }
 
-    isUniformArray(uniformName) {
+    _isUniformArray(shader, uniformName) {
       if (!this.programs[shader]) return false;
       if (!this.programs[shader].uniformDec[uniformName]) return false;
       if (!this.programs[shader].uniformDec[uniformName].isArray) return false;
@@ -3868,14 +3875,14 @@
 
     //For arrays!
     setArrayNumberInShader({ item, uniformName, shader, number }) {
-      if (!isUniformArray(uniformName)) return;
+      if (!this._isUniformArray(shader,uniformName)) return;
       if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
       item = item - 1
       this.programs[shader].uniformDat[uniformName][item] = number
     }
 
     setArrayVec2InShader({ item, uniformName, shader, numberX, numberY }) {
-      if (!isUniformArray(uniformName)) return;
+      if (!this._isUniformArray(shader,uniformName)) return;
       if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
       item -= (item - 1) * 2
       this.programs[shader].uniformDat[uniformName][item] = numberX
@@ -3890,7 +3897,7 @@
       numberY,
       numberZ,
     }) {
-      if (!isUniformArray(uniformName)) return;
+      if (!this._isUniformArray(shader,uniformName)) return;
       if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
       item = (item - 1) * 3
       this.programs[shader].uniformDat[uniformName][item] = numberX
@@ -3907,7 +3914,7 @@
       numberZ,
       numberW,
     }) {
-      if (!isUniformArray(uniformName)) return;
+      if (!this._isUniformArray(shader,uniformName)) return;
       if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
       item = (item - 1) * 4
       this.programs[shader].uniformDat[uniformName][item] = numberX
@@ -3918,54 +3925,34 @@
 
     getArrayNumberInShader({ item, uniformName, shader }) {
       if (!this.programs[shader]) return 0;
-      if (!this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`])
-        return 0;
-      return this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`];
+      if (!this._isUniformArray(shader,uniformName)) return 0;
+      if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      item -= 1;
+      return this.programs[shader].uniformDat[uniformName][item]
     }
 
     getArrayVec2InShader({ item, component, uniformName, shader }) {
       if (!this.programs[shader]) return 0;
-      if (!this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`])
-        return 0;
-      if (
-        !this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`][
-          component
-        ]
-      )
-        return 0;
-      return this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`][
-        component
-      ];
+      if (!this._isUniformArray(shader,uniformName)) return 0;
+      if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      item = (item - 1) * 2;
+      return this.programs[shader].uniformDat[uniformName][item + component] || 0;
     }
 
     getArrayVec3InShader({ item, component, uniformName, shader }) {
       if (!this.programs[shader]) return 0;
-      if (!this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`])
-        return 0;
-      if (
-        !this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`][
-          component
-        ]
-      )
-        return 0;
-      return this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`][
-        component
-      ];
+      if (!this._isUniformArray(shader,uniformName)) return 0;
+      if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      item = (item - 1) * 3;
+      return this.programs[shader].uniformDat[uniformName][item + component] || 0;
     }
 
     getArrayVec4InShader({ item, component, uniformName, shader }) {
       if (!this.programs[shader]) return;
-      if (!this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`])
-        return 0;
-      if (
-        !this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`][
-          component
-        ]
-      )
-        return 0;
-      return this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`][
-        component
-      ];
+      if (!this._isUniformArray(shader,uniformName)) return 0;
+      if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      item = (item - 1) * 4;
+      return this.programs[shader].uniformDat[uniformName][item + component] || 0;
     }
 
     //Attributes
