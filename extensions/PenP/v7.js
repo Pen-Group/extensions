@@ -1111,6 +1111,88 @@
         gl,
         bufferInitilizer
       );
+
+      this.programs[shaderName];
+      //Make sure required info exists
+      if (!shaderDat) return;
+      if (!shaderDat.info) return;
+      if (!shaderDat.info.uniformSetters) return;
+      //Store info
+      const uniformDat = shaderDat.info.uniformSetters;
+      const uniforms = Object.keys(uniformDat);
+
+      //Set this to our program
+      gl.useProgram(this.programs[shaderName].info.program);
+
+      //Loop through every uniforms and add the appropriate data.
+      uniforms.forEach((uniformKey) => {
+        //Create the data
+        this.programs[shaderName].uniformDec[uniformKey] = {
+          type: "unknown",
+          isArray: false,
+          arrayLength: 0,
+          arrayData: [],
+        };
+
+        //Search using regex
+        const regexSearcher = new RegExp(`.*${uniformKey}.*;?`);
+        let searchResult =
+          this.shaders[shaderName].projectData.vertShader.match(
+            regexSearcher
+          )[0];
+
+        //Remove whitespace at the beginning for easy extraction
+        while (searchResult.charAt(0) == " ") {
+          searchResult = searchResult.replace(" ", "");
+        }
+
+        //determine the type of the uniform
+        const split = searchResult.split(" ");
+        const type = split.length < 4 ? split[1] : split[2];
+        //Try to extract array data
+        const arrayLength = Scratch.Cast.toNumber((split.length < 4 ? split[2] : split[3]).replace(uniformKey,"").replaceAll(/[\[\];]/g,""));
+
+        this.programs[shaderName].uniformDec[uniformKey].type = type;
+        //Add data for array stuff
+        this.programs[shaderName].uniformDec[uniformKey].arrayLength = arrayLength;
+        this.programs[shaderName].uniformDec[uniformKey].isArray = (arrayLength > 0);
+
+        if (arrayLength == 0) return;
+        
+        const createArray = (lengthMul) => {
+          return Array.apply(null, Array(arrayLength * lengthMul)).map(() => { return 0; });
+        }
+
+
+        switch (type) {
+          case "float":
+            this.programs[shaderName].uniformDec[uniformKey].arrayData = createArray(1);
+            break;
+
+          case "int":
+            this.programs[shaderName].uniformDec[uniformKey].arrayData = createArray(1);
+            break;
+
+          case "vec2":
+            this.programs[shaderName].uniformDec[uniformKey].arrayData = createArray(2);
+            break;
+
+          case "vec3":
+            this.programs[shaderName].uniformDec[uniformKey].arrayData = createArray(3);
+            break;
+
+          case "vec4":
+            this.programs[shaderName].uniformDec[uniformKey].arrayData = createArray(4);
+            break;
+        
+          default:
+            break;
+        }
+
+        //Data that will be sent to the GPU to initilize the array
+        //But we will keep it in the declaration
+        this.programs[shaderName].uniformDat[uniformKey] = this.programs[shaderName].uniformDec[uniformKey].arrayData;
+      });
     }
 
     _parseProjectShaders() {
@@ -1122,6 +1204,7 @@
             shader.projectData.fragShader,
           ]),
           uniformDat: {},
+          uniformDec: {},
           attribDat: {},
         };
 
@@ -1183,6 +1266,7 @@
       this.programs[name] = {
         info: twgl.createProgramInfo(gl, [data.vertShader, data.fragShader]),
         uniformDat: {},
+        uniformDec: {},
         attribDat: {},
       };
 
@@ -3614,6 +3698,7 @@
       twgl.setBuffersAndAttributes(gl, this.programs[shader].info, buffer);
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      console.log(this.programs[shader].uniformDat)
       twgl.setUniforms(
         this.programs[shader].info,
         this.programs[shader].uniformDat
@@ -3774,20 +3859,27 @@
       );
     }
 
+    isUniformArray(uniformName) {
+      if (!this.programs[shader]) return false;
+      if (!this.programs[shader].uniformDec[uniformName]) return false;
+      if (!this.programs[shader].uniformDec[uniformName].isArray) return false;
+      return true;
+    }
+
     //For arrays!
     setArrayNumberInShader({ item, uniformName, shader, number }) {
-      if (!this.programs[shader]) return;
-      if (item < 1) return;
-      this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`] = number;
+      if (!isUniformArray(uniformName)) return;
+      if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      item = item - 1
+      this.programs[shader].uniformDat[uniformName][item] = number
     }
 
     setArrayVec2InShader({ item, uniformName, shader, numberX, numberY }) {
-      if (!this.programs[shader]) return;
-      if (item < 1) return;
-      this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`] = [
-        numberX,
-        numberY,
-      ];
+      if (!isUniformArray(uniformName)) return;
+      if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      item -= (item - 1) * 2
+      this.programs[shader].uniformDat[uniformName][item] = numberX
+      this.programs[shader].uniformDat[uniformName][item + 1] = numberY
     }
 
     setArrayVec3InShader({
@@ -3798,13 +3890,12 @@
       numberY,
       numberZ,
     }) {
-      if (!this.programs[shader]) return;
-      if (item < 1) return;
-      this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`] = [
-        numberX,
-        numberY,
-        numberZ,
-      ];
+      if (!isUniformArray(uniformName)) return;
+      if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      item = (item - 1) * 3
+      this.programs[shader].uniformDat[uniformName][item] = numberX
+      this.programs[shader].uniformDat[uniformName][item + 1] = numberY
+      this.programs[shader].uniformDat[uniformName][item + 2] = numberZ
     }
 
     setArrayVec4InShader({
@@ -3816,14 +3907,13 @@
       numberZ,
       numberW,
     }) {
-      if (!this.programs[shader]) return;
-      if (item < 1) return;
-      this.programs[shader].uniformDat[`${uniformName}[${item - 1}]`] = [
-        numberX,
-        numberY,
-        numberZ,
-        numberW,
-      ];
+      if (!isUniformArray(uniformName)) return;
+      if (item < 1 || item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      item = (item - 1) * 4
+      this.programs[shader].uniformDat[uniformName][item] = numberX
+      this.programs[shader].uniformDat[uniformName][item + 1] = numberY
+      this.programs[shader].uniformDat[uniformName][item + 2] = numberZ
+      this.programs[shader].uniformDat[uniformName][item + 3] = numberW
     }
 
     getArrayNumberInShader({ item, uniformName, shader }) {
