@@ -230,11 +230,19 @@
                     varying highp vec4 v_color;
 
                     uniform highp mat4 u_transform;
+
+                    highp vec4 rotation(highp vec4 invec4) {
+                      return vec4(
+                        (invec4.y) * u_transform[1][0] + (invec4.x) * u_transform[1][1],
+                        (invec4.y) * u_transform[1][1] - (invec4.x) * u_transform[1][0],
+                        invec4.zw
+                      );
+                    }
                     
                     void main()
                     {
                         v_color = a_color;
-                        gl_Position = a_position * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],-1.0/a_position.w,1);
+                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],-1.0/a_position.w,1);
                     }
                 `,
         frag: `
@@ -263,12 +271,20 @@
                     varying highp vec2 v_texCoord;
 
                     uniform highp mat4 u_transform;
-                    
+
+                    highp vec4 rotation(highp vec4 invec4) {
+                      return vec4(
+                        (invec4.y) * u_transform[1][0] + (invec4.x) * u_transform[1][1],
+                        (invec4.y) * u_transform[1][1] - (invec4.x) * u_transform[1][0],
+                        invec4.zw
+                      );
+                    }
+
                     void main()
                     {
                         v_color = a_color;
                         v_texCoord = a_texCoord;
-                        gl_Position = a_position * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],-1.0/a_position.w,1);
+                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],-1.0/a_position.w,1);
                     }
                 `,
         frag: `
@@ -2729,27 +2745,17 @@
 
     //!Useless square blocks
     squareDown(arg, util) {
-      //Just a simple thing to allow for pen drawing
-      const curTarget = util.target;
-
+      // prettier-ignore
+      if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
       checkForPen(util);
 
-      const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
-      const diam = attrib.diameter;
+      //Make sure we have the triangle data updating accordingly
+      bufferInfo.numElements = 6;
+      this.trianglesDrawn += 2;
 
-      nativeSize = renderer.useHighQualityRender
-        ? [canvas.width, canvas.height]
-        : renderer._nativeSize;
-
-      if (
-        typeof this.triangleAttributesOfAllSprites[
-          "squareStamp_" + curTarget.id
-        ] == "undefined"
-      ) {
-        this.triangleAttributesOfAllSprites["squareStamp_" + curTarget.id] =
-          triangleDefaultAttributes;
-      }
-
+      const curTarget = util.target;
+      
+      //Get triangle attributes
       if (
         typeof this.squareAttributesOfAllSprites[curTarget.id] == "undefined"
       ) {
@@ -2759,124 +2765,83 @@
 
       const myAttributes = this.squareAttributesOfAllSprites[curTarget.id];
 
-      //trying my best to reduce memory usage
-      gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
+      const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
+      const penColor = attrib.color4f;
 
+      //? get triangle attributes for current sprite.
       const spritex = curTarget.x;
-      const spritey = curTarget.y;
+      const spritey = -curTarget.y;
 
-      //Predifine stuff so there aren't as many calculations
-      const wMulX = myAttributes[0];
-      const wMulY = myAttributes[1];
+      const width = attrib.diameter * myAttributes[0]
+      const height = attrib.diameter * myAttributes[1]
 
-      const offDiam = 0.5 * diam;
+      let inputInfo = {
+        a_position: new Float32Array([
+          width * -0.5, height * 0.5,1,myAttributes[11],
+          width * 0.5,  height * 0.5,1,myAttributes[11],
+          width * 0.5,  height * -0.5,1,myAttributes[11],
+          width * -0.5, height * 0.5,1,myAttributes[11],
+          width * -0.5, height * -0.5,1,myAttributes[11],
+          width * 0.5,  height * -0.5,1,myAttributes[11]
+        ]),
+        a_color: new Float32Array([
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10]
+        ])
+      };
 
-      const sprXoff = spritex;
-      const sprYoff = spritey;
-      //Paratheses because I know some obscure browser will screw this up.
-      let x1 = Scratch.Cast.toNumber(-offDiam) * wMulX;
-      let x2 = Scratch.Cast.toNumber(offDiam) * wMulX;
-      let x3 = Scratch.Cast.toNumber(offDiam) * wMulX;
-      let x4 = Scratch.Cast.toNumber(-offDiam) * wMulX;
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
 
-      let y1 = Scratch.Cast.toNumber(offDiam) * wMulY;
-      let y2 = Scratch.Cast.toNumber(offDiam) * wMulY;
-      let y3 = Scratch.Cast.toNumber(-offDiam) * wMulY;
-      let y4 = Scratch.Cast.toNumber(-offDiam) * wMulY;
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
 
-      function rotateTheThings(ox1, oy1, ox2, oy2, ox3, oy3, ox4, oy4) {
-        let sin = Math.sin(myAttributes[2] * d2r);
-        let cos = Math.cos(myAttributes[2] * d2r);
-
-        x1 = ox1 * sin + oy1 * cos;
-        y1 = ox1 * cos - oy1 * sin;
-
-        x2 = ox2 * sin + oy2 * cos;
-        y2 = ox2 * cos - oy2 * sin;
-
-        x3 = ox3 * sin + oy3 * cos;
-        y3 = ox3 * cos - oy3 * sin;
-
-        x4 = ox4 * sin + oy4 * cos;
-        y4 = ox4 * cos - oy4 * sin;
-      }
-
-      rotateTheThings(x1, y1, x2, y2, x3, y3, x4, y4);
-
-      x1 += sprXoff;
-      x2 += sprXoff;
-      x3 += sprXoff;
-      x4 += sprXoff;
-
-      y1 += sprYoff;
-      y2 += sprYoff;
-      y3 += sprYoff;
-      y4 += sprYoff;
-
-      const Attribute_ID = "squareStamp_" + curTarget.id;
-
-      this.triangleAttributesOfAllSprites[Attribute_ID][2] = myAttributes[7];
-      this.triangleAttributesOfAllSprites[Attribute_ID][3] = myAttributes[8];
-      this.triangleAttributesOfAllSprites[Attribute_ID][4] = myAttributes[9];
-      this.triangleAttributesOfAllSprites[Attribute_ID][5] = myAttributes[11];
-      this.triangleAttributesOfAllSprites[Attribute_ID][7] = myAttributes[10];
-      this.triangleAttributesOfAllSprites[Attribute_ID][10] = myAttributes[7];
-      this.triangleAttributesOfAllSprites[Attribute_ID][11] = myAttributes[8];
-      this.triangleAttributesOfAllSprites[Attribute_ID][12] = myAttributes[9];
-      this.triangleAttributesOfAllSprites[Attribute_ID][13] = myAttributes[11];
-      this.triangleAttributesOfAllSprites[Attribute_ID][15] = myAttributes[10];
-      this.triangleAttributesOfAllSprites[Attribute_ID][18] = myAttributes[7];
-      this.triangleAttributesOfAllSprites[Attribute_ID][19] = myAttributes[8];
-      this.triangleAttributesOfAllSprites[Attribute_ID][20] = myAttributes[9];
-      this.triangleAttributesOfAllSprites[Attribute_ID][21] = myAttributes[11];
-      this.triangleAttributesOfAllSprites[Attribute_ID][23] = myAttributes[10];
-
-      this.drawSolidTri(
-        {
-          x1: x1,
-          y1: y1,
-          x2: x2,
-          y2: y2,
-          x3: x3,
-          y3: y3,
-        },
-        util
+      //? Bind Positional Data
+      twgl.setBuffersAndAttributes(
+        gl,
+        penPlusShaders.untextured.ProgramInf,
+        bufferInfo
       );
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-      this.drawSolidTri(
-        {
-          x1: x1,
-          y1: y1,
-          x2: x3,
-          y2: y3,
-          x3: x4,
-          y3: y4,
-        },
-        util
-      );
+      gl.useProgram(penPlusShaders.untextured.ProgramInf.program);
+
+      transform_Matrix[2] = spritex;
+      transform_Matrix[3] = spritey;
+
+      transform_Matrix[4] = Math.cos(myAttributes[2] * d2r);
+      transform_Matrix[5] = Math.sin(myAttributes[2] * d2r);
+
+      twgl.setUniforms(penPlusShaders.untextured.ProgramInf, {
+        u_transform: transform_Matrix,
+      });
+
+      transform_Matrix[2] = 0;
+      transform_Matrix[3] = 0;
+
+      transform_Matrix[4] = 0;
+      transform_Matrix[5] = 1;
+
+      twgl.drawBufferInfo(gl, bufferInfo);
+
+      bufferInfo.numElements = 3;
     }
     squareTexDown({ tex }, util) {
-      //Just a simple thing to allow for pen drawing
-      const curTarget = util.target;
-
+      // prettier-ignore
+      if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
       checkForPen(util);
 
-      const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
-      const diam = attrib.diameter;
+      //Make sure we have the triangle data updating accordingly
+      bufferInfo.numElements = 6;
+      this.trianglesDrawn += 2;
 
-      nativeSize = renderer.useHighQualityRender
-        ? [canvas.width, canvas.height]
-        : renderer._nativeSize;
-
-      if (
-        typeof this.triangleAttributesOfAllSprites[
-          "squareStamp_" + curTarget.id
-        ] == "undefined"
-      ) {
-        this.triangleAttributesOfAllSprites["squareStamp_" + curTarget.id] =
-          triangleDefaultAttributes;
-      }
-
+      const curTarget = util.target;
+      
+      //Get triangle attributes
       if (
         typeof this.squareAttributesOfAllSprites[curTarget.id] == "undefined"
       ) {
@@ -2886,132 +2851,100 @@
 
       const myAttributes = this.squareAttributesOfAllSprites[curTarget.id];
 
-      //trying my best to reduce memory usage
-      gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
+      const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
+      
+      let currentTexture = null;
+      if (this.penPlusCostumeLibrary[tex]) {
+        currentTexture = this.penPlusCostumeLibrary[tex].texture;
+      } else {
+        const costIndex = curTarget.getCostumeIndexByName(
+          Scratch.Cast.toString(tex)
+        );
+        if (costIndex >= 0) {
+          const curCostume = curTarget.sprite.costumes[costIndex];
 
-      const spritex = curTarget.x;
-      const spritey = curTarget.y;
+          if (costIndex != curTarget.currentCostume) {
+            curTarget.setCostume(costIndex);
+          }
 
-      //Predifine stuff so there aren't as many calculations
-      const wMulX = myAttributes[0];
-      const wMulY = myAttributes[1];
-
-      const offDiam = 0.5 * diam;
-
-      const sprXoff = spritex;
-      const sprYoff = spritey;
-      //Paratheses because I know some obscure browser will screw this up.
-      let x1 = Scratch.Cast.toNumber(-offDiam) * wMulX;
-      let x2 = Scratch.Cast.toNumber(offDiam) * wMulX;
-      let x3 = Scratch.Cast.toNumber(offDiam) * wMulX;
-      let x4 = Scratch.Cast.toNumber(-offDiam) * wMulX;
-
-      let y1 = Scratch.Cast.toNumber(offDiam) * wMulY;
-      let y2 = Scratch.Cast.toNumber(offDiam) * wMulY;
-      let y3 = Scratch.Cast.toNumber(-offDiam) * wMulY;
-      let y4 = Scratch.Cast.toNumber(-offDiam) * wMulY;
-
-      function rotateTheThings(ox1, oy1, ox2, oy2, ox3, oy3, ox4, oy4) {
-        let sin = Math.sin(myAttributes[2] * d2r);
-        let cos = Math.cos(myAttributes[2] * d2r);
-
-        x1 = ox1 * sin + oy1 * cos;
-        y1 = ox1 * cos - oy1 * sin;
-
-        x2 = ox2 * sin + oy2 * cos;
-        y2 = ox2 * cos - oy2 * sin;
-
-        x3 = ox3 * sin + oy3 * cos;
-        y3 = ox3 * cos - oy3 * sin;
-
-        x4 = ox4 * sin + oy4 * cos;
-        y4 = ox4 * cos - oy4 * sin;
+          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
+        }
       }
 
-      rotateTheThings(x1, y1, x2, y2, x3, y3, x4, y4);
+      //? get triangle attributes for current sprite.
+      const spritex = curTarget.x;
+      const spritey = -curTarget.y;
 
-      x1 += sprXoff;
-      x2 += sprXoff;
-      x3 += sprXoff;
-      x4 += sprXoff;
+      const width = attrib.diameter * myAttributes[0]
+      const height = attrib.diameter * myAttributes[1]
 
-      y1 += sprYoff;
-      y2 += sprYoff;
-      y3 += sprYoff;
-      y4 += sprYoff;
-      const Attribute_ID = "squareStamp_" + curTarget.id;
-      this.triangleAttributesOfAllSprites[Attribute_ID][0] =
-        (0 + myAttributes[4]) * myAttributes[3];
-      this.triangleAttributesOfAllSprites[Attribute_ID][1] =
-        (1 + myAttributes[6]) * myAttributes[5];
+      let inputInfo = {
+        a_position: new Float32Array([
+          width * -0.5, height * 0.5,1,myAttributes[11],
+          width * 0.5,  height * 0.5,1,myAttributes[11],
+          width * 0.5,  height * -0.5,1,myAttributes[11],
+          width * -0.5, height * 0.5,1,myAttributes[11],
+          width * -0.5, height * -0.5,1,myAttributes[11],
+          width * 0.5,  height * -0.5,1,myAttributes[11]
+        ]),
+        a_color: new Float32Array([
+          //Wow that was very cool
+          myAttributes[7],myAttributes[8],myAttributes[9],myAttributes[10],
+          myAttributes[7],myAttributes[8],myAttributes[9],myAttributes[10],
+          myAttributes[7],myAttributes[8],myAttributes[9],myAttributes[10],
+          myAttributes[7],myAttributes[8],myAttributes[9],myAttributes[10],
+          myAttributes[7],myAttributes[8],myAttributes[9],myAttributes[10],
+          myAttributes[7],myAttributes[8],myAttributes[9],myAttributes[10]
+        ]),
+        a_texCoord: new Float32Array([
+          myAttributes[4], myAttributes[5] + myAttributes[6],
+          myAttributes[3] + myAttributes[4], myAttributes[5] + myAttributes[6],
+          myAttributes[3] + myAttributes[4], myAttributes[6],
+          myAttributes[4], myAttributes[5] + myAttributes[6],
+          myAttributes[4], myAttributes[6],
+          myAttributes[3] + myAttributes[4], myAttributes[6]
+        ])
+      };
 
-      this.triangleAttributesOfAllSprites[Attribute_ID][2] = myAttributes[7];
-      this.triangleAttributesOfAllSprites[Attribute_ID][3] = myAttributes[8];
-      this.triangleAttributesOfAllSprites[Attribute_ID][4] = myAttributes[9];
-      this.triangleAttributesOfAllSprites[Attribute_ID][5] = myAttributes[11];
-      this.triangleAttributesOfAllSprites[Attribute_ID][8] = myAttributes[10];
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
 
-      this.triangleAttributesOfAllSprites[Attribute_ID][8] =
-        (1 + myAttributes[4]) * myAttributes[3];
-      this.triangleAttributesOfAllSprites[Attribute_ID][9] =
-        (1 + myAttributes[6]) * myAttributes[5];
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
 
-      this.triangleAttributesOfAllSprites[Attribute_ID][10] = myAttributes[7];
-      this.triangleAttributesOfAllSprites[Attribute_ID][11] = myAttributes[8];
-      this.triangleAttributesOfAllSprites[Attribute_ID][12] = myAttributes[9];
-      this.triangleAttributesOfAllSprites[Attribute_ID][13] = myAttributes[11];
-      this.triangleAttributesOfAllSprites[Attribute_ID][16] = myAttributes[10];
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_texCoord.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.DYNAMIC_DRAW);
 
-      this.triangleAttributesOfAllSprites[Attribute_ID][16] =
-        (1 + myAttributes[4]) * myAttributes[3];
-      this.triangleAttributesOfAllSprites[Attribute_ID][17] =
-        (0 + myAttributes[6]) * myAttributes[5];
-
-      this.triangleAttributesOfAllSprites[Attribute_ID][18] = myAttributes[7];
-      this.triangleAttributesOfAllSprites[Attribute_ID][19] = myAttributes[8];
-      this.triangleAttributesOfAllSprites[Attribute_ID][20] = myAttributes[9];
-      this.triangleAttributesOfAllSprites[Attribute_ID][21] = myAttributes[11];
-      this.triangleAttributesOfAllSprites[Attribute_ID][24] = myAttributes[10];
-
-      this.drawTexTri(
-        {
-          x1: x1,
-          y1: y1,
-          x2: x2,
-          y2: y2,
-          x3: x3,
-          y3: y3,
-          tex: tex,
-        },
-        util
+      //? Bind Positional Data
+      twgl.setBuffersAndAttributes(
+        gl,
+        penPlusShaders.textured.ProgramInf,
+        bufferInfo
       );
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-      this.triangleAttributesOfAllSprites[Attribute_ID][0] =
-        (0 + myAttributes[4]) * myAttributes[3];
-      this.triangleAttributesOfAllSprites[Attribute_ID][1] =
-        (1 + myAttributes[6]) * myAttributes[5];
+      gl.useProgram(penPlusShaders.textured.ProgramInf.program);
 
-      this.triangleAttributesOfAllSprites[Attribute_ID][8] =
-        (1 + myAttributes[4]) * myAttributes[3];
-      this.triangleAttributesOfAllSprites[Attribute_ID][9] =
-        (0 + myAttributes[6]) * myAttributes[5];
+      transform_Matrix[2] = spritex;
+      transform_Matrix[3] = spritey;
 
-      this.triangleAttributesOfAllSprites[Attribute_ID][16] =
-        (0 + myAttributes[4]) * myAttributes[3];
-      this.triangleAttributesOfAllSprites[Attribute_ID][17] =
-        (0 + myAttributes[6]) * myAttributes[5];
-      this.drawTexTri(
-        {
-          x1: x1,
-          y1: y1,
-          x2: x3,
-          y2: y3,
-          x3: x4,
-          y3: y4,
-          tex: tex,
-        },
-        util
-      );
+      transform_Matrix[4] = Math.cos(myAttributes[2] * d2r);
+      transform_Matrix[5] = Math.sin(myAttributes[2] * d2r);
+
+      twgl.setUniforms(penPlusShaders.textured.ProgramInf, {
+        u_transform: transform_Matrix,
+        u_texture: currentTexture,
+      });
+
+      transform_Matrix[2] = 0;
+      transform_Matrix[3] = 0;
+
+      transform_Matrix[4] = 0;
+      transform_Matrix[5] = 1;
+
+      twgl.drawBufferInfo(gl, bufferInfo);
+
+      bufferInfo.numElements = 3;
     }
     setStampAttribute({ target, number }, util) {
       const curTarget = util.target;
