@@ -187,7 +187,6 @@
       runtime.extensionManager.loadExtensionIdSync("pen");
     }
   }
-  let penPlusImportWrapMode = gl.CLAMP_TO_EDGE;
 
   const checkForPen = (util) => {
     const curTarget = util.target;
@@ -295,7 +294,7 @@
                     
                     void main()
                     {
-                        gl_FragColor = texture2D(u_texture, v_texCoord) * v_color;
+                        gl_FragColor = texture2D(u_texture, mod(v_texCoord,1.0)) * v_color;
                         gl_FragColor.rgb *= gl_FragColor.a;
                         if (gl_FragColor.a == 0.0) {
                           discard;
@@ -1601,11 +1600,13 @@
             blockType: Scratch.BlockType.LABEL,
             text: "Images",
           },
+          //Useless block keep for compat
           {
             disableMonitor: true,
             opcode: "setDURIclampmode",
             blockType: Scratch.BlockType.COMMAND,
             text: "set imported image wrap mode to [clampMode]",
+            hideFromPallete:true,
             arguments: {
               clampMode: {
                 type: Scratch.ArgumentType.STRING,
@@ -3282,7 +3283,7 @@
 
     //?Image/costume Api
     setDURIclampmode({ clampMode }) {
-      penPlusImportWrapMode = clampMode;
+      return;
     }
 
     addBlankIMG({ color, width, height, name }) {
@@ -3292,7 +3293,7 @@
         height,
         color,
         "!" + name,
-        penPlusImportWrapMode
+        gl.CLAMP_TO_EDGE
       );
     }
 
@@ -3301,7 +3302,7 @@
       this.textureFunctions.createPenPlusTextureInfo(
         dataURI,
         "!" + name,
-        penPlusImportWrapMode
+        gl.CLAMP_TO_EDGE
       );
     }
 
