@@ -302,7 +302,7 @@
                     
                     void main()
                     {
-                        gl_Position = a_position;
+                        gl_Position = a_position * vec4(a_position.w,a_position.w,0,1);
                         v_texCoord = (a_position.xy / 2.0) + vec2(0.5,0.5);
                     }
                 `,
