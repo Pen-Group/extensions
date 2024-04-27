@@ -405,12 +405,12 @@
   // prettier-ignore
   let reRenderInfo = twgl.createBufferInfoFromArrays(gl, {
     a_position:    { numComponents: 4, data: [
-      -1, -1, 0, 1,
-      1, -1, 0, 1,
-      1, 1, 0, 1,
-      -1, -1, 0, 1,
-      1, 1, 0, 1,
-      -1, 1, 0, 1
+      -1, -1, 1, 1,
+      1, -1, 1, 1,
+      1, 1, 1, 1,
+      -1, -1, 1, 1,
+      1, 1, 1, 1,
+      -1, 1, 1, 1
     ]},
     a_texCoord: { numComponents: 2, data: [
       0,1,
@@ -421,6 +421,12 @@
       1,0
     ]}
   });
+
+  twgl.setBuffersAndAttributes(
+    gl,
+    penPlusShaders.draw.ProgramInf,
+    reRenderInfo
+  );
 
   let parentExtension = null;
 
@@ -693,24 +699,13 @@
       //? many of curse words where exchanged between me and a pillow while writing this extension
       //? but I have previaled!
       reRenderPenLayer: () => {
-        //console.log("test")
-        gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
-
         gl.useProgram(penPlusShaders.draw.ProgramInf.program);
-
-        twgl.setBuffersAndAttributes(
-          gl,
-          penPlusShaders.draw.ProgramInf,
-          reRenderInfo
-        );
 
         twgl.setUniforms(penPlusShaders.draw.ProgramInf, {
           u_drawTex: depthBufferTexture,
         });
 
         twgl.drawBufferInfo(gl, reRenderInfo);
-
-        gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
       },
     };
 
@@ -733,17 +728,20 @@
         this.renderFunctions.reRenderPenLayer();
 
         //Quick clear the pen+ frame buffer
+        const lastCC = gl.getParameter(gl.COLOR_CLEAR_VALUE);
         gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+        gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clearColor(lastCC[0], lastCC[1], lastCC[2], lastCC[3]);
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+        /*gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
 
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
           renderer._allSkins[renderer._penSkinId]._framebuffer.framebuffer
         );
 
-        gl.useProgram(penPlusShaders.pen.program);
+        gl.useProgram(penPlusShaders.pen.program);*/
       },
     };
 
@@ -2713,7 +2711,6 @@
         x,
         y
       );
-      runtime.requestRedraw();
     }
     drawLine({ x1, y1, x2, y2 }, util) {
       checkForPen(util);
@@ -2728,7 +2725,6 @@
         x2,
         y2
       );
-      runtime.requestRedraw();
     }
 
     _getDefaultTriAttributes() {
