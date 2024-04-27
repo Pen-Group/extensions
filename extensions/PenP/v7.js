@@ -3975,6 +3975,25 @@
         numberW;
     }
 
+    //Doing this just because the penguinmod UI doesn't have this sort of stuff and I'm feeling nice today.
+    //Don't bother me with this stuff in the future.
+    //I cannot support every mod under the sun.
+    //if you want support in the future make a couple of variables
+    // --ui-modal-overlay --> your menu overlay color including transparency
+    // --menu-bar-background --> your menu colors
+    _handlePMvsEM(variableName) {
+      switch (variableName) {
+        case "--menu-bar-background":
+          return (Scratch.extensions.isElectraMod) ? "hsla(244, 23%, 48%, 1)" : "#009CCC";
+
+        case "--ui-modal-overlay":
+          return (Scratch.extensions.isElectraMod) ? "var(--ui-modal-overlay, hsla(244, 23%, 48%, 0.9))" : "var(--ui-modal-overlay, hsla(194, 100%, 65%, 0.9))";
+      
+        default:
+          break;
+      }
+    }
+
     //! HEED THY WARNING LOTS OF JAVASCRIPT BASED HTML AHEAD !//
     //Modal themes
     _setupTheme() {
@@ -3993,7 +4012,7 @@
       //I support friendly competition!
       this._menuBarBackground = Scratch.extensions.isPenguinMod
         ? //This is penguinmod blue
-          "#009CCC"
+          this._handlePMvsEM("--menu-bar-background")
         : //Turbowarp
           "var(--menu-bar-background)";
 
@@ -4018,7 +4037,7 @@
         ? "hsla(0, 0%, 0%, 0.15)"
         : "var(--ui-black-transparent)";
 
-      this.fade = "var(--ui-modal-overlay, hsla(194, 100%, 65%, 0.9))";
+      this.fade = this._handlePMvsEM("--ui-modal-overlay");
 
       this._shadowBorder = Scratch.extensions.isPenguinMod
         ? "hsla(0, 100%, 100%, 0.25)"
