@@ -207,18 +207,6 @@
     }
   };
 
-  //*Define PEN+ variables >:)
-  const triangleDefaultAttributes = [
-    // U V  TINT R G B  Z W transparency U V  TINT R G B  Z W transparency U V  TINT R G B  Z W transparency
-    0,
-    0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1,
-    1,
-  ];
-  const squareDefaultAttributes = [
-    // width* height*  rotation  u-mul u     v-mul   v    r g b transparency
-    1, 1, 90, 1, 0, 1, 0, 1, 1, 1, 1, 1,
-  ];
-
   //?Get Shaders
   const penPlusShaders = {
     untextured: {
@@ -2743,6 +2731,20 @@
       runtime.requestRedraw();
     }
 
+    _getDefaultTriAttributes() {
+      return [
+        // U V  TINT R G B  Z W transparency U V  TINT R G B  Z W transparency U V  TINT R G B  Z W transparency
+        0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1,
+      ];
+    }
+
+    _getDefaultSquareAttributes() {
+      return [
+        // width* height*  rotation  u-mul u     v-mul   v    r g b transparency
+        1, 1, 90, 1, 0, 1, 0, 1, 1, 1, 1, 1,
+      ];
+    }
+
     //!Useless square blocks
     squareDown(arg, util) {
       // prettier-ignore
@@ -2760,7 +2762,7 @@
         typeof this.squareAttributesOfAllSprites[curTarget.id] == "undefined"
       ) {
         this.squareAttributesOfAllSprites[curTarget.id] =
-          squareDefaultAttributes;
+          this._getDefaultSquareAttributes();
       }
 
       const myAttributes = this.squareAttributesOfAllSprites[curTarget.id];
@@ -2846,7 +2848,7 @@
         typeof this.squareAttributesOfAllSprites[curTarget.id] == "undefined"
       ) {
         this.squareAttributesOfAllSprites[curTarget.id] =
-          squareDefaultAttributes;
+          this._getDefaultSquareAttributes();
       }
 
       const myAttributes = this.squareAttributesOfAllSprites[curTarget.id];
@@ -2950,7 +2952,7 @@
       const curTarget = util.target;
       if (!this.squareAttributesOfAllSprites[curTarget.id]) {
         this.squareAttributesOfAllSprites[curTarget.id] =
-          squareDefaultAttributes;
+          this._getDefaultSquareAttributes();
       }
 
       let valuetoSet = number;
@@ -2981,7 +2983,7 @@
       const curTarget = util.target;
       if (!this.squareAttributesOfAllSprites[curTarget.id]) {
         this.squareAttributesOfAllSprites[curTarget.id] =
-          squareDefaultAttributes;
+          this._getDefaultSquareAttributes();
       }
 
       return this.squareAttributesOfAllSprites[curTarget.id][
@@ -2993,7 +2995,7 @@
 
       if (!this.squareAttributesOfAllSprites[curTarget.id]) {
         this.squareAttributesOfAllSprites[curTarget.id] =
-          squareDefaultAttributes;
+          this._getDefaultSquareAttributes();
       }
 
       const calcColor = Scratch.Cast.toRgbColorObject(color);
@@ -3004,9 +3006,7 @@
     }
     resetSquareAttributes(args, util) {
       const curTarget = util.target;
-      this.squareAttributesOfAllSprites[curTarget.id] = [
-        1, 1, 90, 1, 0, 1, 0, 1, 1, 1, 1, 0,
-      ];
+      this.squareAttributesOfAllSprites[curTarget.id] = this._getDefaultSquareAttributes();
     }
 
     //?Triangle stuffs
@@ -3020,7 +3020,7 @@
 
       if (!this.triangleAttributesOfAllSprites[targetId]) {
         this.triangleAttributesOfAllSprites[targetId] =
-          triangleDefaultAttributes;
+          this._getDefaultTriAttributes();
       }
       this.attributeEditors.triangle(
         targetId,
@@ -3035,7 +3035,7 @@
 
       if (!this.triangleAttributesOfAllSprites[targetId]) {
         this.triangleAttributesOfAllSprites[targetId] =
-          triangleDefaultAttributes;
+          this._getDefaultTriAttributes();
       }
       this.attributeEditors.triangle(
         targetId,
@@ -3052,7 +3052,7 @@
 
       if (!this.triangleAttributesOfAllSprites[targetId]) {
         this.triangleAttributesOfAllSprites[targetId] =
-          triangleDefaultAttributes;
+          this._getDefaultTriAttributes();
       }
 
       const calcColor = Scratch.Cast.toRgbColorObject(color);
@@ -3088,7 +3088,7 @@
 
       if (!this.triangleAttributesOfAllSprites[targetId]) {
         this.triangleAttributesOfAllSprites[targetId] =
-          triangleDefaultAttributes;
+          this._getDefaultTriAttributes();
       }
 
       const calcColor = Scratch.Cast.toRgbColorObject(color);
@@ -3124,7 +3124,7 @@
 
       if (!this.triangleAttributesOfAllSprites[targetId]) {
         this.triangleAttributesOfAllSprites[targetId] =
-          triangleDefaultAttributes;
+          this._getDefaultTriAttributes();
       }
       let value =
         this.triangleAttributesOfAllSprites[targetId][
