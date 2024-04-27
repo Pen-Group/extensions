@@ -73,7 +73,7 @@
     gl.bindRenderbuffer(gl.RENDERBUFFER, depthColorBuffer);
     gl.renderbufferStorage(
       gl.RENDERBUFFER,
-      gl.RGBA8 || gl.RGBA4,
+      gl.RGBA4,
       nativeSize[0],
       nativeSize[1]
     );
@@ -705,6 +705,7 @@
       //? many of curse words where exchanged between me and a pillow while writing this extension
       //? but I have previaled!
       reRenderPenLayer: () => {
+        //console.log("test")
         gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
 
         gl.useProgram(penPlusShaders.draw.ProgramInf.program);
@@ -2724,6 +2725,7 @@
         x,
         y
       );
+      runtime.requestRedraw();
     }
     drawLine({ x1, y1, x2, y2 }, util) {
       checkForPen(util);
@@ -2738,6 +2740,7 @@
         x2,
         y2
       );
+      runtime.requestRedraw();
     }
 
     //!Useless square blocks
