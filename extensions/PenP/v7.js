@@ -432,7 +432,6 @@
 
   //?Override pen Clear with pen+
   renderer.penClear = (penSkinID) => {
-    const lastCC = gl.getParameter(gl.COLOR_CLEAR_VALUE);
     lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
     //Pen+ Overrides default pen Clearing
     gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
@@ -441,7 +440,7 @@
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
-    gl.clearColor(lastCC[0], lastCC[1], lastCC[2], lastCC[3]);
+    gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
 
     //Reset the undo/redo stuff
     if (parentExtension) parentExtension.highestStrokeCount = 0;
@@ -716,7 +715,9 @@
         this.inDrawRegion = true;
         gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
         gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
+        gl.clearColor(0, 0, 0, 0);
         renderer.dirty = true;
+        gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
       },
       exit: () => {
         this.inDrawRegion = false;
@@ -728,11 +729,8 @@
         this.renderFunctions.reRenderPenLayer();
 
         //Quick clear the pen+ frame buffer
-        const lastCC = gl.getParameter(gl.COLOR_CLEAR_VALUE);
         gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
-        gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.clearColor(lastCC[0], lastCC[1], lastCC[2], lastCC[3]);
 
         /*gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
 
