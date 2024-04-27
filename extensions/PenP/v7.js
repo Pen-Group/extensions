@@ -127,7 +127,7 @@
       gl.bindRenderbuffer(gl.RENDERBUFFER, depthColorBuffer);
       gl.renderbufferStorage(
         gl.RENDERBUFFER,
-        gl.RGBA8 || gl.RGBA4,
+        gl.RGBA4,
         nativeSize[0],
         nativeSize[1]
       );
@@ -3628,7 +3628,6 @@
       twgl.setBuffersAndAttributes(gl, this.programs[shader].info, buffer);
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      console.log(this.programs[shader].uniformDat)
       twgl.setUniforms(
         this.programs[shader].info,
         this.programs[shader].uniformDat
@@ -4941,6 +4940,62 @@
           u3,v3
         ]
       })
+    }
+
+    renderShaderTrisFromList({ list, shader }, util) {
+      const { triData, listLength, successful} = this._getTriDataFromList(list,util);
+      if (!successful) return;
+
+      // prettier-ignore
+      if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
+
+      if ((!triData.a_position) || (!triData.a_color) || (!triData.a_texCoord)) return;
+
+      if (!this.programs[shader]) return;
+
+      //Make sure we have the triangle data updating accordingly
+      this.trianglesDrawn += listLength;
+      bufferInfo.numElements = listLength * 3;
+      
+      // prettier-ignore
+      let inputInfo = {
+        a_position: new Float32Array(triData.a_position),
+        a_color: new Float32Array(triData.a_color),
+        a_texCoord: new Float32Array(triData.a_texCoord)
+      };
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_texCoord.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.DYNAMIC_DRAW);
+
+      //? Bind Positional Data
+      twgl.setBuffersAndAttributes(
+        gl,
+        penPlusShaders.textured.ProgramInf,
+        bufferInfo
+      );
+
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      
+      //Just use the real scratch timer.
+      this.programs[shader].uniformDat.u_timer =
+        runtime.ext_scratch3_sensing.getTimer({}, util);
+      this.programs[shader].uniformDat.u_transform = transform_Matrix;
+      this.programs[shader].uniformDat.u_res = nativeSize;
+
+      gl.useProgram(this.programs[shader].info.program);
+
+      twgl.setUniforms(
+        this.programs[shader].info,
+        this.programs[shader].uniformDat
+      );
+
+      twgl.drawBufferInfo(gl, bufferInfo);
     }
   }
 
