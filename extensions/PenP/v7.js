@@ -1352,10 +1352,6 @@
             text: "Square Pen Blocks",
           },
           {
-            blockType: Scratch.BlockType.LABEL,
-            text: "(Temporarily broken)",
-          },
-          {
             disableMonitor: true,
             opcode: "squareDown",
             blockType: Scratch.BlockType.COMMAND,
@@ -3700,7 +3696,7 @@
       if (this._isUniformArray(shader,uniformName)) return;
       let listOBJ = this._getVarObjectFromName(list, util, "list").value;
       let converted = listOBJ.map(function (str) {
-        return parseInt(str);
+        return parseFloat(str);
       });
 
       this.programs[shader].uniformDat[uniformName] = converted;
