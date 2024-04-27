@@ -717,7 +717,6 @@
         gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
         gl.clearColor(0, 0, 0, 0);
         renderer.dirty = true;
-        gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
       },
       exit: () => {
         this.inDrawRegion = false;
@@ -731,6 +730,7 @@
         //Quick clear the pen+ frame buffer
         gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
         gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
 
         /*gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
 
