@@ -33,12 +33,12 @@
 
   //?create the depth buffer's texture
   //*Create it in scratch's gl so that we have it stored in there!
-  let depthBufferTexture = gl.createTexture();
+  let triBufferTexture = gl.createTexture();
 
   //?Make a function for updating the depth canvas to fit the scratch stage
   const triFrameBuffer = gl.createFramebuffer();
-  const depthColorBuffer = gl.createRenderbuffer();
-  const depthDepthBuffer = gl.createRenderbuffer();
+  const triColorBuffer = gl.createRenderbuffer();
+  const triDepthBuffer = gl.createRenderbuffer();
 
   let lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
 
@@ -47,7 +47,7 @@
 
   //?Buffer handling and pen loading
   {
-    gl.bindTexture(gl.TEXTURE_2D, depthBufferTexture);
+    gl.bindTexture(gl.TEXTURE_2D, triBufferTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -65,12 +65,12 @@
     );
 
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, depthBufferTexture);
+    gl.bindTexture(gl.TEXTURE_2D, triBufferTexture);
     gl.activeTexture(gl.TEXTURE0);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
 
-    gl.bindRenderbuffer(gl.RENDERBUFFER, depthColorBuffer);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, triColorBuffer);
     gl.renderbufferStorage(
       gl.RENDERBUFFER,
       gl.RGBA4,
@@ -81,31 +81,33 @@
       gl.FRAMEBUFFER,
       gl.COLOR_ATTACHMENT0,
       gl.RENDERBUFFER,
-      depthColorBuffer
+      triColorBuffer
     );
 
-    gl.bindRenderbuffer(gl.RENDERBUFFER, depthDepthBuffer);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, triDepthBuffer);
     gl.renderbufferStorage(
-      gl.RENDERBUFFER,
-      gl.DEPTH_COMPONENT16,
+      gl.RENDERBUFFER, 
+      gl.DEPTH_COMPONENT16, 
       nativeSize[0],
       nativeSize[1]
     );
     gl.framebufferRenderbuffer(
-      gl.FRAMEBUFFER,
-      gl.DEPTH_ATTACHMENT,
-      gl.RENDERBUFFER,
-      depthDepthBuffer
+      gl.FRAMEBUFFER, 
+      gl.DEPTH_ATTACHMENT, 
+      gl.RENDERBUFFER, 
+      triDepthBuffer
     );
 
     gl.framebufferTexture2D(
       gl.FRAMEBUFFER,
       gl.COLOR_ATTACHMENT0,
       gl.TEXTURE_2D,
-      depthBufferTexture,
+      triBufferTexture,
       0
     );
+
     gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
 
@@ -122,7 +124,7 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
 
       gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-      gl.bindRenderbuffer(gl.RENDERBUFFER, depthColorBuffer);
+      gl.bindRenderbuffer(gl.RENDERBUFFER, triColorBuffer);
       gl.renderbufferStorage(
         gl.RENDERBUFFER,
         gl.RGBA4,
@@ -130,13 +132,8 @@
         nativeSize[1]
       );
 
-      gl.bindRenderbuffer(gl.RENDERBUFFER, depthDepthBuffer);
-      gl.renderbufferStorage(
-        gl.RENDERBUFFER,
-        gl.DEPTH_COMPONENT16,
-        nativeSize[0],
-        nativeSize[1]
-      );
+      gl.bindRenderbuffer(gl.RENDERBUFFER, triDepthBuffer);
+      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, nativeSize[0],nativeSize[1]);
 
       gl.activeTexture(gl.TEXTURE1);
 
@@ -176,9 +173,6 @@
         updateCanvasSize();
       }
     })
-
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
 
     //?Make sure pen is loaded!
     if (!Scratch.vm.extensionManager.isExtensionLoaded("pen")) {
@@ -227,7 +221,7 @@
                     void main()
                     {
                         v_color = a_color;
-                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],-1.0/a_position.w,1);
+                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],1,1);
                     }
                 `,
         frag: `
@@ -269,7 +263,7 @@
                     {
                         v_color = a_color;
                         v_texCoord = a_texCoord;
-                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],-1.0/a_position.w,1);
+                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],1,1);
                     }
                 `,
         frag: `
@@ -434,16 +428,10 @@
     //Pen+ Overrides default pen Clearing
     gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
     gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.DEPTH_BUFFER_BIT);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
     gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
-
-    //Reset the undo/redo stuff
-    if (parentExtension) parentExtension.highestStrokeCount = 0;
-
-    //? ^ just clear the depth buffer for when its added.
 
     //Old clearing
     renderer.dirty = true;
@@ -584,6 +572,8 @@
           };
         }
 
+        bufferInfo.numElements = 3;
+
         gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
 
@@ -603,7 +593,6 @@
         twgl.setUniforms(penPlusShaders.untextured.ProgramInf, {
           u_transform: transform_Matrix,
         });
-
         twgl.drawBufferInfo(gl, bufferInfo);
       },
 
@@ -660,6 +649,8 @@
           };
         }
 
+        bufferInfo.numElements = 3;
+
         gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
 
@@ -698,8 +689,14 @@
       reRenderPenLayer: () => {
         gl.useProgram(penPlusShaders.draw.ProgramInf.program);
 
+        twgl.setBuffersAndAttributes(
+          gl,
+          penPlusShaders.draw.ProgramInf,
+          reRenderInfo
+        );
+
         twgl.setUniforms(penPlusShaders.draw.ProgramInf, {
-          u_drawTex: depthBufferTexture,
+          u_drawTex: triBufferTexture,
         });
 
         twgl.drawBufferInfo(gl, reRenderInfo);
@@ -713,7 +710,6 @@
         this.inDrawRegion = true;
         gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
         gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
-        gl.clearColor(0, 0, 0, 0);
         renderer.dirty = true;
       },
       exit: () => {
@@ -726,6 +722,7 @@
         this.renderFunctions.reRenderPenLayer();
 
         //Quick clear the pen+ frame buffer
+        gl.clearColor(0, 0, 0, 0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
@@ -4994,7 +4991,7 @@
       //? Bind Positional Data
       twgl.setBuffersAndAttributes(
         gl,
-        penPlusShaders.textured.ProgramInf,
+        this.programs[shader].info,
         bufferInfo
       );
 
