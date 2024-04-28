@@ -42,10 +42,9 @@
   const triColorBuffer = gl.createRenderbuffer();
   const triDepthBuffer = gl.createRenderbuffer();
   const triFrameBufferInfo = twgl.createFramebufferInfo(gl, [
-    { format: gl.RGBA4, type: gl.UNSIGNED_BYTE, min: gl.LINEAR, wrap: gl.CLAMP_TO_EDGE },
-    { format: gl.DEPTH_COMPONENT16, },
-    { format: gl.DEPTH_STENCIL, },
-  ]);
+    { format: gl.RGBA, type: gl.UNSIGNED_BYTE, min: gl.LINEAR, wrap: gl.CLAMP_TO_EDGE },
+    //{ format: gl.DEPTH_ATTACHMENT, },
+  ],480,360);
 
   console.log(triFrameBufferInfo);
 
@@ -91,7 +90,7 @@
     gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
 
     const updateCanvasSize = () => {
-      nativeSize = renderer.useHighQualityRender
+      /*nativeSize = renderer.useHighQualityRender
         ? [canvas.width, canvas.height]
         : renderer._nativeSize;
 
@@ -130,7 +129,7 @@
 
       gl.activeTexture(gl.TEXTURE0);
 
-      gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);*/
     };
 
     //?Call it to have it consistant
@@ -2812,19 +2811,6 @@
       this.trianglesDrawn += 2;
 
       const curTarget = util.target;
-      
-      //Get triangle attributes
-      if (
-        typeof this.squareAttributesOfAllSprites[curTarget.id] == "undefined"
-      ) {
-        this.squareAttributesOfAllSprites[curTarget.id] =
-          this._getDefaultSquareAttributes();
-      }
-
-      const myAttributes = this.squareAttributesOfAllSprites[curTarget.id];
-
-      const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
-      
       let currentTexture = null;
       if (this.penPlusCostumeLibrary[tex]) {
         currentTexture = this.penPlusCostumeLibrary[tex].texture;
@@ -2842,6 +2828,20 @@
           currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
         }
       }
+
+      if (currentTexture == null || typeof currentTexture == "undefined") return;
+      
+      //Get triangle attributes
+      if (
+        typeof this.squareAttributesOfAllSprites[curTarget.id] == "undefined"
+      ) {
+        this.squareAttributesOfAllSprites[curTarget.id] =
+          this._getDefaultSquareAttributes();
+      }
+
+      const myAttributes = this.squareAttributesOfAllSprites[curTarget.id];
+
+      const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
 
       //? get triangle attributes for current sprite.
       const spritex = curTarget.x;
