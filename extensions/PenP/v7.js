@@ -41,6 +41,13 @@
   const triFrameBuffer = gl.createFramebuffer();
   const triColorBuffer = gl.createRenderbuffer();
   const triDepthBuffer = gl.createRenderbuffer();
+  const triFrameBufferInfo = twgl.createFramebufferInfo(gl, [
+    { format: gl.RGBA4, type: gl.UNSIGNED_BYTE, min: gl.LINEAR, wrap: gl.CLAMP_TO_EDGE },
+    { format: gl.DEPTH_COMPONENT16, },
+    { format: gl.DEPTH_STENCIL, },
+  ]);
+
+  console.log(triFrameBufferInfo);
 
   let lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
 
@@ -69,36 +76,6 @@
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, triBufferTexture);
     gl.activeTexture(gl.TEXTURE0);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
-
-    gl.bindRenderbuffer(gl.RENDERBUFFER, triColorBuffer);
-    gl.renderbufferStorage(
-      gl.RENDERBUFFER,
-      gl.RGBA4,
-      nativeSize[0],
-      nativeSize[1]
-    );
-    gl.framebufferRenderbuffer(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.RENDERBUFFER,
-      triColorBuffer
-    );
-
-    gl.bindRenderbuffer(gl.RENDERBUFFER, triDepthBuffer);
-    gl.renderbufferStorage(
-      gl.RENDERBUFFER, 
-      gl.DEPTH_COMPONENT16, 
-      nativeSize[0],
-      nativeSize[1]
-    );
-    gl.framebufferRenderbuffer(
-      gl.FRAMEBUFFER, 
-      gl.DEPTH_ATTACHMENT, 
-      gl.RENDERBUFFER, 
-      triDepthBuffer
-    );
 
     gl.framebufferTexture2D(
       gl.FRAMEBUFFER,
@@ -428,7 +405,7 @@
   renderer.penClear = (penSkinID) => {
     lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
     //Pen+ Overrides default pen Clearing
-    gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBufferInfo.framebuffer);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
@@ -710,7 +687,7 @@
       enter: () => {
         this.trianglesDrawn = 0;
         this.inDrawRegion = true;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBufferInfo.framebuffer);
         gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
         renderer.dirty = true;
       },
