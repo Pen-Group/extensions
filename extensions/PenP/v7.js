@@ -782,8 +782,7 @@
         width,
         height,
         color,
-        name,
-        clamp
+        name
       ) {
         const texture = parentExtension.penPlusCostumeLibrary[name]
           ? parentExtension.penPlusCostumeLibrary[name].texture
@@ -802,8 +801,8 @@
           pixelData[pixelID * 4 + 3] = 255;
         }
 
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, clamp);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, clamp);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
         gl.texImage2D(
           gl.TEXTURE_2D,
@@ -823,7 +822,7 @@
           height: height,
         };
       },
-      createPenPlusTextureInfo: function (url, name, clamp) {
+      createPenPlusTextureInfo: function (url, name) {
         const texture = parentExtension.penPlusCostumeLibrary[name]
           ? parentExtension.penPlusCostumeLibrary[name].texture
           : gl.createTexture();
@@ -843,8 +842,8 @@
         );
 
         // Let's assume all images are not a power of 2
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, clamp);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, clamp);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         return new Promise((resolve, reject) => {
           Scratch.canFetch(url).then((allowed) => {
             if (!allowed) {
@@ -1584,7 +1583,7 @@
             opcode: "setDURIclampmode",
             blockType: Scratch.BlockType.COMMAND,
             text: "set imported image wrap mode to [clampMode]",
-            hideFromPallete:true,
+            hideFromPalette: true,
             arguments: {
               clampMode: {
                 type: Scratch.ArgumentType.STRING,
@@ -2423,7 +2422,7 @@
             text: "Erase Depth",
           },
           {
-            hideFromPallete: true,
+            hideFromPalette: true,
             opcode: "setAdvancedOptionValueTo",
             blockType: Scratch.BlockType.COMMAND,
             text: "set [setting] to [value]",
