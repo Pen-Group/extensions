@@ -31,6 +31,8 @@
     ? [canvas.width, canvas.height]
     : renderer._nativeSize;
 
+  let resizeCall = false;
+
   //?create the depth buffer's texture
   //*Create it in scratch's gl so that we have it stored in there!
   let triBufferTexture = gl.createTexture();
