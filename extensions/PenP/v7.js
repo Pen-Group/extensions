@@ -41,6 +41,11 @@
   const triFrameBuffer = gl.createFramebuffer();
   const triColorBuffer = gl.createRenderbuffer();
   const triDepthBuffer = gl.createRenderbuffer();
+  
+  const triBufferInfo = twgl.createFramebufferInfo(gl, [
+    { format: gl.RGBA, type: gl.UNSIGNED_BYTE, min: gl.LINEAR, wrap: gl.CLAMP_TO_EDGE },
+    { format: gl.DEPTH_STENCIL, },
+  ]);
 
   let lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
 
@@ -49,69 +54,8 @@
 
   //?Buffer handling and pen loading
   {
-    gl.bindTexture(gl.TEXTURE_2D, triBufferTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      nativeSize[0],
-      nativeSize[1],
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
-    );
-
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, triBufferTexture);
-    gl.activeTexture(gl.TEXTURE0);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
-
-    gl.bindRenderbuffer(gl.RENDERBUFFER, triColorBuffer);
-    gl.renderbufferStorage(
-      gl.RENDERBUFFER,
-      gl.RGBA4,
-      nativeSize[0],
-      nativeSize[1]
-    );
-    gl.framebufferRenderbuffer(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.RENDERBUFFER,
-      triColorBuffer
-    );
-
-    gl.bindRenderbuffer(gl.RENDERBUFFER, triDepthBuffer);
-    gl.renderbufferStorage(
-      gl.RENDERBUFFER, 
-      gl.DEPTH_COMPONENT16, 
-      nativeSize[0],
-      nativeSize[1]
-    );
-    gl.framebufferRenderbuffer(
-      gl.FRAMEBUFFER, 
-      gl.DEPTH_ATTACHMENT, 
-      gl.RENDERBUFFER, 
-      triDepthBuffer
-    );
-
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      triBufferTexture,
-      0
-    );
-
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
 
     const updateCanvasSize = () => {
       nativeSize = renderer.useHighQualityRender
@@ -120,40 +64,6 @@
 
       transform_Matrix[0] = 2 / renderer._nativeSize[0];
       transform_Matrix[1] = 2 / renderer._nativeSize[1];
-
-      lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
-
-      gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
-
-      gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-      gl.bindRenderbuffer(gl.RENDERBUFFER, triColorBuffer);
-      gl.renderbufferStorage(
-        gl.RENDERBUFFER,
-        gl.RGBA4,
-        nativeSize[0],
-        nativeSize[1]
-      );
-
-      gl.bindRenderbuffer(gl.RENDERBUFFER, triDepthBuffer);
-      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, nativeSize[0],nativeSize[1]);
-
-      gl.activeTexture(gl.TEXTURE1);
-
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        nativeSize[0],
-        nativeSize[1],
-        0,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        null
-      );
-
-      gl.activeTexture(gl.TEXTURE0);
-
-      gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
     };
 
     //?Call it to have it consistant
@@ -170,7 +80,7 @@
     
     let lastCanvasSize = [canvas.clientWidth, canvas.clientHeight];
     vm.runtime.on("BEFORE_EXECUTE", () => {
-      if (lastCanvasSize != [canvas.clientWidth, canvas.clientHeight]) {
+      if (lastCanvasSize[0] != canvas.clientWidth || lastCanvasSize[1] != canvas.clientHeight) {
         lastCanvasSize = [canvas.clientWidth, canvas.clientHeight];
         updateCanvasSize();
       }
@@ -399,12 +309,12 @@
   // prettier-ignore
   let reRenderInfo = twgl.createBufferInfoFromArrays(gl, {
     a_position:    { numComponents: 4, data: [
-      -1, -1, 1, 1,
-      1, -1, 1, 1,
-      1, 1, 1, 1,
-      -1, -1, 1, 1,
-      1, 1, 1, 1,
-      -1, 1, 1, 1
+      -1, -1, 0, 1,
+      1, -1, 0, 1,
+      1, 1, 0, 1,
+      -1, -1, 0, 1,
+      1, 1, 0, 1,
+      -1, 1, 0, 1
     ]},
     a_texCoord: { numComponents: 2, data: [
       0,1,
@@ -428,7 +338,7 @@
   renderer.penClear = (penSkinID) => {
     lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
     //Pen+ Overrides default pen Clearing
-    gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, triBufferInfo.framebuffer);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
@@ -698,7 +608,7 @@
         );
 
         twgl.setUniforms(penPlusShaders.draw.ProgramInf, {
-          u_drawTex: triBufferTexture,
+          u_drawTex: triBufferInfo.attachments[0],
         });
 
         twgl.drawBufferInfo(gl, reRenderInfo);
@@ -710,7 +620,7 @@
       enter: () => {
         this.trianglesDrawn = 0;
         this.inDrawRegion = true;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, triBufferInfo.framebuffer);
         gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
         renderer.dirty = true;
       },
@@ -725,7 +635,7 @@
 
         //Quick clear the pen+ frame buffer
         gl.clearColor(0, 0, 0, 0);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, triBufferInfo.framebuffer);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
 
