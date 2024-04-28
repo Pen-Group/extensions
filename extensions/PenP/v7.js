@@ -1626,6 +1626,7 @@
               },
             },
           },
+          "---",
           {
             disableMonitor: true,
             opcode: "removeIMGfromDURI",
@@ -1652,6 +1653,7 @@
             },
             filter: "sprite",
           },
+          "---",
           {
             disableMonitor: true,
             opcode: "getCostumeDataURI",
@@ -1682,6 +1684,7 @@
             },
             filter: "sprite",
           },
+          "---",
           {
             disableMonitor: true,
             opcode: "setpixelcolor",
