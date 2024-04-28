@@ -4850,6 +4850,8 @@
       });
 
       twgl.drawBufferInfo(gl, bufferInfo);
+
+      bufferInfo.numElements = 3;
     }
 
     solidTriDef({x1,y1,c1,x2,y2,c2,x3,y3,c3}) {
@@ -4935,6 +4937,8 @@
       });
 
       twgl.drawBufferInfo(gl, bufferInfo);
+
+      bufferInfo.numElements = 3;
     }
 
     texTriDef({x1,y1,c1,x2,y2,c2,x3,y3,c3, u1,v1,u2,v2,u3,v3}) {
@@ -5012,6 +5016,8 @@
       );
 
       twgl.drawBufferInfo(gl, bufferInfo);
+
+      bufferInfo.numElements = 3;
     }
   }
 
