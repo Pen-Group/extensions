@@ -109,8 +109,6 @@
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
 
-    let resizeCall = false;
-
     const updateCanvasSize = () => {
       nativeSize = renderer.useHighQualityRender
         ? [canvas.width, canvas.height]
@@ -171,10 +169,10 @@
       resizeCall = true;
     });
     
-    let lastCanvasSize = [canvas.width, canvas.height];
+    let lastCanvasSize = [canvas.clientWidth, canvas.clientHeight];
     vm.runtime.on("BEFORE_EXECUTE", () => {
-      if (lastCanvasSize != [canvas.width, canvas.height]) {
-        lastCanvasSize = [canvas.width, canvas.height];
+      if (lastCanvasSize != [canvas.clientWidth, canvas.clientHeight]) {
+        lastCanvasSize = [canvas.clientWidth, canvas.clientHeight];
         updateCanvasSize();
       }
     })
