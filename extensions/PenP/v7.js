@@ -33,15 +33,7 @@
 
   let resizeCall = false;
 
-  //?create the depth buffer's texture
-  //*Create it in scratch's gl so that we have it stored in there!
-  let triBufferTexture = gl.createTexture();
-
-  //?Make a function for updating the depth canvas to fit the scratch stage
-  const triFrameBuffer = gl.createFramebuffer();
-  const triColorBuffer = gl.createRenderbuffer();
-  const triDepthBuffer = gl.createRenderbuffer();
-  
+  //?create the depth buffer's texture  
   const triBufferInfo = twgl.createFramebufferInfo(gl, [
     { format: gl.RGBA, type: gl.UNSIGNED_BYTE, min: gl.LINEAR, wrap: gl.CLAMP_TO_EDGE },
     { format: gl.DEPTH_STENCIL, },
@@ -64,6 +56,8 @@
 
       transform_Matrix[0] = 2 / renderer._nativeSize[0];
       transform_Matrix[1] = 2 / renderer._nativeSize[1];
+
+      twgl.resizeFramebufferInfo(gl, triBufferInfo);
     };
 
     //?Call it to have it consistant
@@ -133,7 +127,7 @@
                     void main()
                     {
                         v_color = a_color;
-                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],1,1);
+                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],0.001,1);
                     }
                 `,
         frag: `
@@ -175,7 +169,7 @@
                     {
                         v_color = a_color;
                         v_texCoord = a_texCoord;
-                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],1,1);
+                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],0.001,1);
                     }
                 `,
         frag: `
@@ -360,6 +354,8 @@
     penPlusCubemap = {};
 
     listCache = {};
+
+    
 
     attributeEditors = {
       triangle: (targetId, attribute, value, wholeTri, offset) => {
@@ -618,6 +614,9 @@
     //?The Draw region! extra cool!
     penPlusDrawRegion = {
       enter: () => {
+        if (this.culling) {
+          gl.enable(gl.CULL_FACE);
+        }
         this.trianglesDrawn = 0;
         this.inDrawRegion = true;
         gl.bindFramebuffer(gl.FRAMEBUFFER, triBufferInfo.framebuffer);
@@ -625,6 +624,9 @@
         renderer.dirty = true;
       },
       exit: () => {
+        if (this.culling) {
+          gl.disable(gl.CULL_FACE);
+        }
         this.inDrawRegion = false;
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
@@ -896,6 +898,9 @@
     inDrawRegion = false;
 
     IFrame = undefined;
+
+    culling = false;
+    cullMode = 0;
 
     shaders = {};
     programs = {};
@@ -2317,6 +2322,19 @@
             blockType: Scratch.BlockType.REPORTER,
             text: "Triangles Drawn",
           },
+          "---",
+          {
+            opcode: "setCullMode",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "hide triangles that turn [direction]",
+            arguments: {
+              direction: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "cullMode",
+              },
+            },
+          },
+          "---",
           {
             opcode: "turnAdvancedSettingOff",
             blockType: Scratch.BlockType.COMMAND,
@@ -2477,6 +2495,14 @@
               { text: "y", value: "1" },
               { text: "z", value: "2" },
               { text: "w", value: "3" },
+            ],
+            acceptReporters: true,
+          },
+          cullMode: {
+            items: [
+              { text: "neither way", value: "0" },
+              { text: "clock-wise", value: "1028" },
+              { text: "counter clock-wise", value: "1029" },
             ],
             acceptReporters: true,
           },
@@ -3324,7 +3350,7 @@
     clearDepth() {
       lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
       //Pen+ Overrides default pen Clearing
-      gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, triBufferInfo.framebuffer);
       gl.clear(gl.DEPTH_BUFFER_BIT);
       gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
       renderer.dirty = true;
@@ -4927,6 +4953,22 @@
       twgl.drawBufferInfo(gl, bufferInfo);
 
       bufferInfo.numElements = 3;
+    }
+
+    setCullMode({ direction }) {
+      if (direction == 0) {
+        this.culling = false;
+        if (this.inDrawRegion) {
+          gl.disable(gl.CULL_FACE);
+        }
+        return;
+      }
+      this.culling = true;
+      this.cullMode = direction;
+      if (this.inDrawRegion) {
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(this.cullMode);
+      }
     }
   }
 
