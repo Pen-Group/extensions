@@ -41,7 +41,7 @@
   let lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
 
   //?Neato uniform for universally transforming triangles to fit the screen
-  let transform_Matrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  let transform_Matrix = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   //?Buffer handling and pen loading
   {
