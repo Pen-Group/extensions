@@ -1686,6 +1686,25 @@
             },
             filter: "sprite",
           },
+          {
+            disableMonitor: true,
+            opcode: "drawShaderSquare",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "draw square using [shader]",
+            arguments: {
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "penPlusShaders",
+              },
+              x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              x3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              y3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+            filter: "sprite",
+          },
           "---",
           {
             opcode: "setTextureInShader",
@@ -3565,6 +3584,101 @@
       );
 
       twgl.drawBufferInfo(gl, bufferInfo);
+    }
+
+    drawShaderSquare({ shader },util) {
+      if (!this.programs[shader]) return;
+      // prettier-ignore
+      if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
+      checkForPen(util);
+
+      //Safe to assume they have a buffer;
+      const buffer = this.programs[shader].buffer;
+
+      //Make sure we have the triangle data updating accordingly
+      buffer.numElements = 6;
+      this.trianglesDrawn += 2;
+
+      const curTarget = util.target;
+      
+      //Get triangle attributes
+      if (
+        typeof this.squareAttributesOfAllSprites[curTarget.id] == "undefined"
+      ) {
+        this.squareAttributesOfAllSprites[curTarget.id] =
+          this._getDefaultSquareAttributes();
+      }
+
+      const myAttributes = this.squareAttributesOfAllSprites[curTarget.id];
+
+      const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
+      const penColor = attrib.color4f;
+
+      //? get triangle attributes for current sprite.
+      const spritex = curTarget.x;
+      const spritey = -curTarget.y;
+
+      const width = attrib.diameter * myAttributes[0]
+      const height = attrib.diameter * myAttributes[1]
+
+      let inputInfo = {
+        a_position: new Float32Array([
+          width * -0.5, height * 0.5,1,myAttributes[11],
+          width * 0.5,  height * 0.5,1,myAttributes[11],
+          width * 0.5,  height * -0.5,1,myAttributes[11],
+          width * -0.5, height * 0.5,1,myAttributes[11],
+          width * -0.5, height * -0.5,1,myAttributes[11],
+          width * 0.5,  height * -0.5,1,myAttributes[11]
+        ]),
+        a_color: new Float32Array([
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
+          penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10]
+        ])
+      };
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_position.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_color.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
+
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(this.programs[shader].info.program);
+
+      //Just use the real scratch timer.
+      this.programs[shader].uniformDat.u_timer =
+        runtime.ext_scratch3_sensing.getTimer({}, util);
+      this.programs[shader].uniformDat.u_transform = transform_Matrix;
+      this.programs[shader].uniformDat.u_res = nativeSize;
+
+      transform_Matrix[2] = spritex;
+      transform_Matrix[3] = spritey;
+
+      transform_Matrix[4] = Math.cos(myAttributes[2] * d2r);
+      transform_Matrix[5] = Math.sin(myAttributes[2] * d2r);
+
+      //? Bind Positional Data
+      twgl.setBuffersAndAttributes(gl, this.programs[shader].info, buffer);
+
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      twgl.setUniforms(
+        this.programs[shader].info,
+        this.programs[shader].uniformDat
+      );
+
+      transform_Matrix[2] = 0;
+      transform_Matrix[3] = 0;
+
+      transform_Matrix[4] = 0;
+      transform_Matrix[5] = 1;
+
+      twgl.drawBufferInfo(gl, buffer);
+
+      buffer.numElements = 3;
     }
 
     setTextureInShader({ uniformName, shader, texture }, util) {
