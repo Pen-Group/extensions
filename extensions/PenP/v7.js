@@ -902,6 +902,13 @@
     shaders = {};
     programs = {};
 
+    extensionVersion = "7.0.0 B1";
+
+    prefixes = {
+      penPlusTextures:"",
+      renderTextures:"",
+    }
+
     renderTextures = {};
     currentRenderTexture = triBufferInfo;
 
@@ -1123,17 +1130,43 @@
       });
     }
 
+    //So I can track and fix potentially extension breaking problems
+    _updateRelevantInfo(oldInfo) {
+      //pre 7.0.0B1 detection
+      if (!oldInfo.version) {
+        this.prefixes.penPlusTextures = "!";
+        if (!Scratch.extensions.isPenguinMod) runtime.extensionStorage["penP"].prefixes = this.prefixes;
+        console.log("Loaded patch for pre Version 7.0.0B1 texture prefixes");
+      }
+    }
+
     //Stolen from lily :3
     _setupExtensionStorage() {
       //Penguinmod saving support
       if (Scratch.extensions.isPenguinMod) {
         parentExtension.serialize = () => {
-          return JSON.stringify(parentExtension.shaders);
+          return JSON.stringify({
+            shaders:parentExtension.shaders,
+            version:parentExtension.extensionVersion,
+            prefixes:parentExtension.prefixes
+          });
         };
 
         parentExtension.deserialize = (serialized) => {
+          let deserializedData = JSON.parse(serialized);
           this.programs = {};
-          parentExtension.shaders = JSON.parse(serialized) || {};
+          if (deserializedData.version) {
+            parentExtension.shaders = deserializedData.shaders;
+            parentExtension.prefixes = deserializedData.prefixes;
+
+            if (parentExtension.extensionVersion != deserializedData.version) {
+              parentExtension._updateRelevantInfo(deserializedData);
+            }
+          }
+          else {
+            parentExtension.shaders = deserializedData || {};
+            parentExtension._updateRelevantInfo(deserializedData);
+          }
           parentExtension._parseProjectShaders();
         };
 
@@ -1146,10 +1179,19 @@
         if (!runtime.extensionStorage["penP"]) {
           runtime.extensionStorage["penP"] = Object.create(null);
           runtime.extensionStorage["penP"].shaders = Object.create(null);
+          runtime.extensionStorage["penP"].version = parentExtension.extensionVersion;
+          runtime.extensionStorage["penP"].prefixes = parentExtension.prefixes;
+        }
+
+        if (parentExtension.extensionVersion != runtime.extensionStorage["penP"].version) {
+          parentExtension._updateRelevantInfo(runtime.extensionStorage["penP"]);
+          console.log(runtime.extensionStorage["penP"]);
+          runtime.extensionStorage["penP"].version = parentExtension.extensionVersion;
         }
 
         //For some reason tw saving just doesn't work lol
         parentExtension.shaders = runtime.extensionStorage["penP"].shaders;
+        parentExtension.prefixes = runtime.extensionStorage["penP"].prefixes;
 
         //Remedy for the turbowarp saving system being jank.
         parentExtension.getShaders = () => {
