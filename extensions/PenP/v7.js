@@ -1242,6 +1242,8 @@
             },
             filter: "sprite",
           },
+
+
           {
             blockType: Scratch.BlockType.LABEL,
             text: "Square Pen Blocks",
@@ -1314,6 +1316,8 @@
             arguments: {},
             filter: "sprite",
           },
+
+
           {
             blockType: Scratch.BlockType.LABEL,
             text: "Triangle Blocks",
@@ -1461,6 +1465,8 @@
             },
             filter: "sprite",
           },
+
+
           {
             blockType: Scratch.BlockType.LABEL,
             text: "Color",
@@ -1643,10 +1649,14 @@
               },
             },
           },
+
+
           {
             blockType: Scratch.BlockType.LABEL,
             text: "Advanced",
           },
+
+          
           //Custom Shader Blocks
           {
             blockType: Scratch.BlockType.LABEL,
@@ -2256,6 +2266,8 @@
             },
             filter: "sprite",
           },
+
+
           {
             blockType: Scratch.BlockType.LABEL,
             text: "List Based Rendering",
@@ -2331,6 +2343,55 @@
             },
             filter: "sprite",
           },
+
+
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: "Render Textures",
+          },
+          {
+            opcode: "createRenderTexture",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "create render texture named [name]",
+            arguments: {
+              name: {  type: Scratch.ArgumentType.STRING, defaultValue:"render texture" },
+            },
+          },
+          {
+            opcode: "removeRenderTexture",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "remove render texture named [name]",
+            arguments: {
+              name: {  type: Scratch.ArgumentType.STRING, defaultValue:"render texture" },
+            },
+          },
+          {
+            opcode: "doesRenderTextureExist",
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: "does render texture named [name] exist?",
+            arguments: {
+              name: {  type: Scratch.ArgumentType.STRING, defaultValue:"render texture" },
+            },
+          },
+          {
+            opcode: "getRenderTextures",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "render textures",
+            arguments: {
+              name: {  type: Scratch.ArgumentType.STRING, defaultValue:"render texture" },
+            },
+          },
+          "---",
+          {
+            opcode: "targetRenderTexture",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "render tris and squares to [name]",
+            arguments: {
+              name: {  type: Scratch.ArgumentType.STRING, menu:"renderTextures" },
+            },
+          },
+
+
           {
             blockType: Scratch.BlockType.LABEL,
             text: "Extras",
@@ -2459,6 +2520,10 @@
           costumeMenu: { items: "costumeMenuFunction", acceptReporters: true },
           penPlusCostumes: {
             items: "penPlusCostumesFunction",
+            acceptReporters: true,
+          },
+          renderTextures: {
+            items: "getRenderTexturesAndStage",
             acceptReporters: true,
           },
           penPlusShaders: {
@@ -5082,6 +5147,18 @@
       if (this.inDrawRegion) {
         gl.enable(gl.CULL_FACE);
       }
+    }
+
+    getRenderTextures() {
+      let renderTextures = ["Scratch Stage"];
+      
+      return renderTextures;
+    }
+
+    getRenderTexturesAndStage() {
+      let renderTextures = ["Scratch Stage"];
+      
+      return renderTextures;
     }
   }
 
