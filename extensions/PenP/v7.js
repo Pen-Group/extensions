@@ -2438,9 +2438,6 @@
             opcode: "getRenderTextures",
             blockType: Scratch.BlockType.REPORTER,
             text: "render textures",
-            arguments: {
-              name: {  type: Scratch.ArgumentType.STRING, defaultValue:"render texture" },
-            },
           },
           "---",
           {
@@ -2456,7 +2453,7 @@
             blockType: Scratch.BlockType.COMMAND,
             text: "clear pen from [name]",
             arguments: {
-              name: {  type: Scratch.ArgumentType.STRING, menu:"renderTextures" },
+              name: {  type: Scratch.ArgumentType.STRING, menu:"renderTexturesOnly" },
             },
           },
 
@@ -2614,6 +2611,10 @@
             items: "getRenderTexturesAndStage",
             acceptReporters: true,
           },
+          renderTexturesOnly: {
+            items: "getRenderTexturesWarning",
+            acceptReporters: true,
+          },
           penPlusShaders: {
             items: "shaderMenu",
             acceptReporters: true,
@@ -2703,9 +2704,17 @@
 
       let penPlusCostumes = this.penPlusCostumesFunction();
 
-      return penPlusCostumes[0] != "no pen+ costumes!"
-        ? readCostumes.concat(penPlusCostumes)
-        : readCostumes;
+      if (penPlusCostumes[0] != "no pen+ costumes!") {
+        readCostumes = readCostumes.concat(penPlusCostumes);
+      }
+
+      let penplusRenderTextures = this.getRenderTexturesMenu();
+
+      if (penPlusCostumes.length > 0) {
+        readCostumes = readCostumes.concat(penplusRenderTextures);
+      }
+
+      return readCostumes;
     }
 
     penPlusCostumesFunction() {
@@ -2743,6 +2752,16 @@
       if (Object.keys(this.penPlusCubemap).length == 0)
         return ["No cubemaps yet!"];
       return Object.keys(this.penPlusCubemap);
+    }
+    getRenderTexturesMenu() {
+      return Object.keys(this.renderTextures);
+    }
+    getRenderTexturesWarning() {
+      return Object.keys(this.renderTextures).length > 0 ? Object.keys(this.renderTextures) : ["No Render Textures Yet!"];
+    }
+    getRenderTexturesAndStage() {
+      let renderTextures = ["Scratch Stage"];
+      return renderTextures;
     }
     //From lily's list tools... With permission of course.
     _getLists() {
@@ -4983,6 +5002,7 @@
     _getTriDataFromList(list,util) {
       //Might be bad code? I dunno
       const listREF = this._getVarObjectFromName(list, util, "list");
+      if (!listREF) return {successful:false};
       const refinedID = listREF.id + util.target.id;
       
       this.listCache[refinedID] = this.listCache[refinedID] || {};
@@ -5227,12 +5247,6 @@
 
     getRenderTextures() {
       return JSON.stringify(Object.keys(this.renderTextures));
-    }
-
-    getRenderTexturesAndStage() {
-      let renderTextures = ["Scratch Stage"];
-      renderTextures.push(...Object.keys(this.renderTextures));
-      return renderTextures;
     }
 
     createRenderTexture({ name }) {
