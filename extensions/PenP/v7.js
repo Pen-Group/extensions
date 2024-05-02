@@ -2468,7 +2468,12 @@
           {
             opcode: "getTrianglesDrawn",
             blockType: Scratch.BlockType.REPORTER,
-            text: "Triangles Drawn",
+            text: "triangles drawn",
+          },
+          {
+            opcode: "getPenRenderLayer",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "data uri of pen layer"
           },
           "---",
           {
@@ -2698,23 +2703,21 @@
 
       let penPlusCostumes = this.penPlusCostumesFunction();
 
-      return penPlusCostumes != ["no pen+ costumes!"]
+      return penPlusCostumes[0] != "no pen+ costumes!"
         ? readCostumes.concat(penPlusCostumes)
         : readCostumes;
     }
+
     penPlusCostumesFunction() {
       const readCostumes = [];
       const keys = Object.keys(this.penPlusCostumeLibrary);
       if (keys.length > 0) {
-        for (let curCostumeID = 0; curCostumeID < keys.length; curCostumeID++) {
-          const currentCostume = keys[curCostumeID];
-          readCostumes.push(currentCostume);
-        }
-        return readCostumes;
+        return keys;
       }
 
       return ["no pen+ costumes!"];
     }
+
     shaderMenu() {
       //!Pain.json
       return Object.keys(this.shaders).length == 0
