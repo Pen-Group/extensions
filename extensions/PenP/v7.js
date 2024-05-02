@@ -54,7 +54,7 @@
         : renderer._nativeSize;
 
       transform_Matrix[0] = 2 / renderer._nativeSize[0];
-      transform_Matrix[1] = 2 / renderer._nativeSize[1];
+      transform_Matrix[1] = -2 / renderer._nativeSize[1];
       let lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
       twgl.resizeFramebufferInfo(gl, triBufferInfo, triBufferAttachments, Scratch.Cast.toNumber(nativeSize[0]),Scratch.Cast.toNumber(nativeSize[1]));
       gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
@@ -450,9 +450,9 @@
           // prettier-ignore
           inputInfo = {
             a_position: new Float32Array([
-              x1,-y1,triAttribs[5],triAttribs[6],
-              x2,-y2,triAttribs[13],triAttribs[14],
-              x3,-y3,triAttribs[21],triAttribs[22]
+              x1,y1,triAttribs[5],triAttribs[6],
+              x2,y2,triAttribs[13],triAttribs[14],
+              x3,y3,triAttribs[21],triAttribs[22]
             ]),
             a_color: new Float32Array([
               penColor[0] * triAttribs[2],penColor[1] * triAttribs[3],penColor[2] * triAttribs[4],penColor[3] * triAttribs[7],
@@ -465,9 +465,9 @@
           // prettier-ignore
           inputInfo = {
             a_position: new Float32Array([
-              x1,-y1,1,1,
-              x2,-y2,1,1,
-              x3,-y3,1,1
+              x1,y1,1,1,
+              x2,y2,1,1,
+              x3,y3,1,1
             ]),
             a_color: new Float32Array([
               penColor[0],penColor[1],penColor[2],penColor[3],
@@ -517,9 +517,9 @@
           // prettier-ignore
           inputInfo = {
             a_position: new Float32Array([
-              x1,-y1,triAttribs[5],triAttribs[6],
-              x2,-y2,triAttribs[13],triAttribs[14],
-              x3,-y3,triAttribs[21],triAttribs[22]
+              x1,y1,triAttribs[5],triAttribs[6],
+              x2,y2,triAttribs[13],triAttribs[14],
+              x3,y3,triAttribs[21],triAttribs[22]
             ]),
             a_color: new Float32Array([
               triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
@@ -537,9 +537,9 @@
           // prettier-ignore
           inputInfo = {
             a_position: new Float32Array([
-              x1,-y1,1,1,
-              x2,-y2,1,1,
-              x3,-y3,1,1
+              x1,y1,1,1,
+              x2,y2,1,1,
+              x3,y3,1,1
             ]),
             a_color: new Float32Array([
               1,1,1,1,
@@ -958,6 +958,19 @@
       vm.runtime.ext_obviousalexc_penPlus = this;
 
       vm.runtime.on("PROJECT_LOADED", this._setupExtensionStorage);
+      
+      //Remove clone data from cache;
+      vm.runtime.on("targetWasRemoved", (clone) => {
+        const cloneID = clone.id
+        Object.keys(clone.variables).forEach(key => {
+          //Yeah this is me. You are probably wondering how I got here?
+          //Welp it all started on 3DGAS
+          if (this.listCache[key+cloneID]) {
+            delete this.listCache[key+cloneID];
+          }
+        })
+      });
+
       this._setupExtensionStorage();
 
       this._setupTheme();
@@ -2894,12 +2907,12 @@
 
       let inputInfo = {
         a_position: new Float32Array([
-          width * -0.5, height * 0.5,1,myAttributes[11],
-          width * 0.5,  height * 0.5,1,myAttributes[11],
-          width * 0.5,  height * -0.5,1,myAttributes[11],
-          width * -0.5, height * 0.5,1,myAttributes[11],
           width * -0.5, height * -0.5,1,myAttributes[11],
-          width * 0.5,  height * -0.5,1,myAttributes[11]
+          width * 0.5,  height * -0.5,1,myAttributes[11],
+          width * 0.5,  height * 0.5,1,myAttributes[11],
+          width * -0.5, height * -0.5,1,myAttributes[11],
+          width * -0.5, height * 0.5,1,myAttributes[11],
+          width * 0.5,  height * 0.5,1,myAttributes[11]
         ]),
         a_color: new Float32Array([
           penColor[0] * myAttributes[7],penColor[1] * myAttributes[8],penColor[2] * myAttributes[9],penColor[3] * myAttributes[10],
@@ -2982,12 +2995,12 @@
 
       let inputInfo = {
         a_position: new Float32Array([
-          width * -0.5, height * 0.5,1,myAttributes[11],
-          width * 0.5,  height * 0.5,1,myAttributes[11],
-          width * 0.5,  height * -0.5,1,myAttributes[11],
-          width * -0.5, height * 0.5,1,myAttributes[11],
           width * -0.5, height * -0.5,1,myAttributes[11],
-          width * 0.5,  height * -0.5,1,myAttributes[11]
+          width * 0.5,  height * -0.5,1,myAttributes[11],
+          width * 0.5,  height * 0.5,1,myAttributes[11],
+          width * -0.5, height * -0.5,1,myAttributes[11],
+          width * -0.5, height * 0.5,1,myAttributes[11],
+          width * 0.5,  height * 0.5,1,myAttributes[11]
         ]),
         a_color: new Float32Array([
           //Wow that was very cool
@@ -3673,9 +3686,9 @@
         //Just for our eyes sakes
         // prettier-ignore
         inputInfo.a_position = {data: [
-          x1,-y1,1,1,
-          x2,-y2,1,1,
-          x3,-y3,1,1
+          x1,y1,1,1,
+          x2,y2,1,1,
+          x3,y3,1,1
         ]}
         // prettier-ignore
         inputInfo.a_color = {data: [
@@ -4956,13 +4969,16 @@
     _getTriDataFromList(list,util) {
       //Might be bad code? I dunno
       const listREF = this._getVarObjectFromName(list, util, "list");
-
-      this.listCache[listREF.id] = this.listCache[listREF.id] || {};
+      const refinedID = listREF.id + util.target.id;
+      
+      this.listCache[refinedID] = this.listCache[refinedID] || {};
 
       const listOBJ = listREF.value;
       if (!listOBJ) return {successful:false};
       let merged = {};
-      if (this.listCache[listREF.id].prev != listOBJ) {
+
+      if (this.listCache[refinedID].prev != listOBJ) {
+        //Map the list object if we can't find something
         listOBJ.map(function (str) {
           const obj = JSON.parse(str);
           //Check through each object
@@ -4977,10 +4993,10 @@
             }
           })
         });
-        this.listCache[listREF.id] = {prev:listREF.value,dat:merged};
+        this.listCache[refinedID] = {prev:listREF.value,dat:merged};
       }
       else {
-        merged = this.listCache[listREF.id].dat;
+        merged = this.listCache[refinedID].dat;
       }
       return {triData:merged, listLength:listOBJ.length,successful:true};
     }
