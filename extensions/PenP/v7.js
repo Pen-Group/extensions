@@ -567,10 +567,6 @@
 
         gl.useProgram(penPlusShaders.textured.ProgramInf.program);
 
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, currentFilter);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, currentFilter);
-
         //? Bind Positional Data
         twgl.setBuffersAndAttributes(
           gl,
@@ -620,9 +616,17 @@
           if (this.currentRenderTexture.resizing && (this.currentRenderTexture.width != nativeSize[0] || this.currentRenderTexture.height != nativeSize[1])) {
             twgl.resizeFramebufferInfo(gl, this.currentRenderTexture, triBufferAttachments, Scratch.Cast.toNumber(nativeSize[0]),Scratch.Cast.toNumber(nativeSize[1]));
           }
+          //Resize our variables to be viewport accurate
+          gl.viewport(0,0,this.currentRenderTexture.width,this.currentRenderTexture.height);
+          transform_Matrix[0] = 2 / this.currentRenderTexture.width;
+          transform_Matrix[1] = -2 / this.currentRenderTexture.width;
+        }
+        else {
+          gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
+          transform_Matrix[0] = 2 / nativeSize[0];
+          transform_Matrix[1] = -2 / nativeSize[1];
         }
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.currentRenderTexture.framebuffer);
-        gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
         renderer.dirty = true;
       },
       exit: () => {
@@ -2798,6 +2802,13 @@
 
           currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
         }
+      }
+
+      if (currentTexture) {
+        //Set the filter mode
+        gl.bindTexture(gl.TEXTURE_2D, currentTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, currentFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, currentFilter);
       }
 
       return currentTexture;
@@ -5072,8 +5083,6 @@
 
       if ((!triData.a_position) || (!triData.a_color) || (!triData.a_texCoord)) return;
 
-      const curTarget = util.target;
-
       let currentTexture = this._locateTextureObject(tex,util);
       if (!currentTexture) return;
 
@@ -5283,6 +5292,9 @@
       }
 
       if (this.inDrawRegion) {
+        gl.viewport(0,0,this.currentRenderTexture.width,this.currentRenderTexture.height);
+        transform_Matrix[0] = 2 / this.currentRenderTexture.width;
+        transform_Matrix[1] = -2 / this.currentRenderTexture.width;
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.currentRenderTexture.framebuffer);
       }
     }
