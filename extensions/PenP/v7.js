@@ -330,18 +330,18 @@
   //?Override pen Clear with pen+
   renderer.penClear = (penSkinID) => {
     lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
-    //Pen+ Overrides default pen Clearing
-    gl.bindFramebuffer(gl.FRAMEBUFFER, triBufferInfo.framebuffer);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+      //Pen+ Overrides default pen Clearing
+      gl.bindFramebuffer(gl.FRAMEBUFFER, triBufferInfo.framebuffer);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
-    gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
+      gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
 
-    //Old clearing
-    renderer.dirty = true;
-    const skin = /** @type {PenSkin} */ renderer._allSkins[penSkinID];
-    skin.clear();
+      //Old clearing
+      renderer.dirty = true;
+      const skin = /** @type {PenSkin} */ renderer._allSkins[penSkinID];
+      skin.clear();
   };
 
   class extension {
@@ -616,6 +616,11 @@
         }
         this.trianglesDrawn = 0;
         this.inDrawRegion = true;
+        if (this.currentRenderTexture != triBufferInfo) {
+          if (this.currentRenderTexture.resizing) {
+            twgl.resizeFramebufferInfo(gl, this.currentRenderTexture, triBufferAttachments, Scratch.Cast.toNumber(nativeSize[0]),Scratch.Cast.toNumber(nativeSize[1]));
+          }
+        }
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.currentRenderTexture.framebuffer);
         gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
         renderer.dirty = true;
@@ -2750,6 +2755,33 @@
       gl.deleteFramebuffer(fbi.framebuffer);
     }
 
+    _locateTextureObject(name,util) {
+      const curTarget = util.target;
+      let currentTexture = null;
+      if (this.penPlusCostumeLibrary[name]) {
+        currentTexture = this.penPlusCostumeLibrary[name].texture;
+      } 
+      else if (this.renderTextures[name] && (name != this.currentRenderTexture.name)) {
+        currentTexture = this.renderTextures[name].attachments[0];
+      }
+      else {
+        const costIndex = curTarget.getCostumeIndexByName(
+          Scratch.Cast.toString(name)
+        );
+        if (costIndex >= 0) {
+          const curCostume = curTarget.sprite.costumes[costIndex];
+
+          if (costIndex != curTarget.currentCostume) {
+            curTarget.setCostume(costIndex);
+          }
+
+          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
+        }
+      }
+
+      return currentTexture;
+    }
+
     //?Default pen helpers
     isPenDown(args, util) {
       checkForPen(util);
@@ -2930,23 +2962,8 @@
 
       const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
       
-      let currentTexture = null;
-      if (this.penPlusCostumeLibrary[tex]) {
-        currentTexture = this.penPlusCostumeLibrary[tex].texture;
-      } else {
-        const costIndex = curTarget.getCostumeIndexByName(
-          Scratch.Cast.toString(tex)
-        );
-        if (costIndex >= 0) {
-          const curCostume = curTarget.sprite.costumes[costIndex];
-
-          if (costIndex != curTarget.currentCostume) {
-            curTarget.setCostume(costIndex);
-          }
-
-          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
-        }
-      }
+      let currentTexture = this._locateTextureObject(tex,util);
+      if (!currentTexture) return;
 
       //? get triangle attributes for current sprite.
       const spritex = curTarget.x;
@@ -3260,23 +3277,7 @@
     }
     drawTexTri({ x1, y1, x2, y2, x3, y3, tex }, util) {
       const curTarget = util.target;
-      let currentTexture = null;
-      if (this.penPlusCostumeLibrary[tex]) {
-        currentTexture = this.penPlusCostumeLibrary[tex].texture;
-      } else {
-        const costIndex = curTarget.getCostumeIndexByName(
-          Scratch.Cast.toString(tex)
-        );
-        if (costIndex >= 0) {
-          const curCostume = curTarget.sprite.costumes[costIndex];
-
-          if (costIndex != curTarget.currentCostume) {
-            curTarget.setCostume(costIndex);
-          }
-
-          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
-        }
-      }
+      let currentTexture = this._locateTextureObject(tex,util);
 
       nativeSize = renderer.useHighQualityRender
         ? [canvas.width, canvas.height]
@@ -3366,7 +3367,7 @@
         width,
         height,
         color,
-        "!" + name,
+        this.prefixes.penPlusTextures + name,
         gl.CLAMP_TO_EDGE
       );
     }
@@ -3375,21 +3376,21 @@
       //Just a simple thing to allow for pen drawing
       this.textureFunctions.createPenPlusTextureInfo(
         dataURI,
-        "!" + name,
+        this.prefixes.penPlusTextures + name,
         gl.CLAMP_TO_EDGE
       );
     }
 
     removeIMGfromDURI({ name }, util) {
       //Just a simple thing to allow for pen drawing
-      if (this.penPlusCostumeLibrary["!" + name]) {
-        delete this.penPlusCostumeLibrary["!" + name];
+      if (this.penPlusCostumeLibrary[this.prefixes.penPlusTextures + name]) {
+        delete this.penPlusCostumeLibrary[this.prefixes.penPlusTextures + name];
       }
     }
 
     doesIMGexist({ name }, util) {
       //Just a simple thing to allow for pen drawing
-      return typeof this.penPlusCostumeLibrary["!" + name] != "undefined";
+      return typeof this.penPlusCostumeLibrary[this.prefixes.penPlusTextures + name] != "undefined";
     }
 
     getCostumeDataURI({ costume }, util) {
@@ -3814,16 +3815,8 @@
 
       const curTarget = util.target;
 
-      let curCostume =
-        this.penPlusCostumeLibrary[texture] ||
-        curTarget.getCostumeIndexByName(Scratch.Cast.toString(texture));
-      if (!this.penPlusCostumeLibrary[curCostume] && curCostume >= 0) {
-        const curCostumeObject = curTarget.sprite.costumes[curCostume];
-
-        curCostume = renderer._allSkins[curCostumeObject.skinId]._uniforms.u_skin;
-      } else if (this.penPlusCostumeLibrary[texture]) {
-        curCostume = curCostume.texture;
-      }
+      let curCostume = this._locateTextureObject(texture,util);
+      if (!curCostume) return;
 
       this.programs[shader].uniformDat[uniformName] = curCostume;
     }
@@ -5056,24 +5049,8 @@
       if ((!triData.a_position) || (!triData.a_color) || (!triData.a_texCoord)) return;
 
       const curTarget = util.target;
-      let currentTexture = null;
-      if (this.penPlusCostumeLibrary[tex]) {
-        currentTexture = this.penPlusCostumeLibrary[tex].texture;
-      } else {
-        const costIndex = curTarget.getCostumeIndexByName(
-          Scratch.Cast.toString(tex)
-        );
-        if (costIndex >= 0) {
-          const curCostume = curTarget.sprite.costumes[costIndex];
 
-          if (costIndex != curTarget.currentCostume) {
-            curTarget.setCostume(costIndex);
-          }
-
-          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
-        }
-      }
-
+      let currentTexture = this._locateTextureObject(tex,util);
       if (!currentTexture) return;
 
       //Make sure we have the triangle data updating accordingly
@@ -5224,23 +5201,23 @@
 
     createRenderTexture({ name }) {
       if (name == "Scratch Stage") return;
-      if (this.renderTextures[name]) {
-        this._deleteFramebuffer(this.renderTextures[name]);
+      if (this.renderTextures[this.prefixes.renderTextures + name]) {
+        this._deleteFramebuffer(this.renderTextures[this.prefixes.renderTextures + name]);
       }
-      this.renderTextures[name] = twgl.createFramebufferInfo(gl, triBufferAttachments);
-      this.renderTextures[name].resizing = true;
-      this.renderTextures[name].name = name;
+      this.renderTextures[this.prefixes.renderTextures + name] = twgl.createFramebufferInfo(gl, triBufferAttachments);
+      this.renderTextures[this.prefixes.renderTextures + name].resizing = true;
+      this.renderTextures[this.prefixes.renderTextures + name].name = name;
     }
 
     createRenderTextureOfSize({ name, width, height }) {
       if (name == "Scratch Stage") return;
-      if (this.renderTextures[name]) {
-        this._deleteFramebuffer(this.renderTextures[name]);
+      if (this.renderTextures[this.prefixes.renderTextures + name]) {
+        this._deleteFramebuffer(this.renderTextures[this.prefixes.renderTextures + name]);
       }
-      this.renderTextures[name] = twgl.createFramebufferInfo(gl, triBufferAttachments);
-      twgl.resizeFramebufferInfo(gl, this.renderTextures[name], triBufferAttachments, width, height)
-      this.renderTextures[name].resizing = false;
-      this.renderTextures[name].name = name;
+      this.renderTextures[this.prefixes.renderTextures + name] = twgl.createFramebufferInfo(gl, triBufferAttachments);
+      twgl.resizeFramebufferInfo(gl, this.renderTextures[this.prefixes.renderTextures + name], triBufferAttachments, width, height)
+      this.renderTextures[this.prefixes.renderTextures + name].resizing = false;
+      this.renderTextures[this.prefixes.renderTextures + name].name = name;
     }
 
     removeRenderTexture({ name }) {
