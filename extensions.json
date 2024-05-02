@@ -3,7 +3,7 @@
         "name":"Pen+",
         "id":"PenP",
         "description":"More pen related functions that allow for advanced rendering. By ObviousAlexC",
-        "latestVersion":"v6.js",
+        "latestVersion":"v7.js",
         "versions":[
             {
                 "name":"version 1",
@@ -30,7 +30,7 @@
                 "filename":"v6.js"
             },
             {
-                "name":"version 7 (Beta)",
+                "name":"version 7",
                 "filename":"v7.js"
             }
         ]
@@ -39,12 +39,7 @@
         "name":"Pen+ 3D",
         "id":"Pen3D",
         "description":"A 3d Addon for Pen+. By ObviousAlexC",
-        "versions":[
-            {
-                "name":"version 1",
-                "filename":"extension.js"
-            }
-        ]
+        "unavailable":true
     },
     {
         "name":"Shaded Stamps",
@@ -52,5 +47,16 @@
         "thumbnailFormat":"png",
         "description":"Custom shaders for scratch stamps. By ObviousAlexC (Coming Later)",
         "unavailable":true
+    },
+    {
+        "name":"Render Control",
+        "id":"RenderControl",
+        "description":"Modify the pen layer through various blocks. By SharkPool-SP",
+        "versions":[
+            {
+                "name":"version 1",
+                "filename":"main.js"
+            }
+        ]
     }
 ]

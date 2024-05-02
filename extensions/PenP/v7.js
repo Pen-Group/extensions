@@ -4,6 +4,9 @@
 // By: ObviousAlexC <https://scratch.mit.edu/users/pinksheep2917/>
 // License: MIT
 
+// With permission from Sharkpool-SP to use his pen layer data uri block!
+// Thanks dude!
+
 (function (Scratch) {
   "use strict";
 
@@ -911,7 +914,7 @@
     shaders = {};
     programs = {};
 
-    extensionVersion = "7.0.0 B1";
+    extensionVersion = "7.0.0";
 
     prefixes = {
       penPlusTextures:"",
@@ -1306,6 +1309,18 @@
               y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
             },
             filter: "sprite",
+          },
+          {
+            disableMonitor: true,
+            opcode: "stampSprite",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "stamp [sprite]",
+            arguments: {
+              sprite: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "spriteMenu",
+              },
+            }
           },
 
 
@@ -2463,6 +2478,11 @@
             text: "Extras",
           },
           {
+            opcode: "getPenPVersion",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "Pen+ version",
+          },
+          {
             opcode: "getTrianglesDrawn",
             blockType: Scratch.BlockType.REPORTER,
             text: "triangles drawn",
@@ -2470,7 +2490,8 @@
           {
             opcode: "getPenRenderLayer",
             blockType: Scratch.BlockType.REPORTER,
-            text: "data uri of pen layer"
+            text: "data uri of pen layer",
+            disableMonitor: true,
           },
           "---",
           {
@@ -2529,6 +2550,21 @@
               value: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "1000",
+              },
+            },
+          },
+          {
+            opcode: "setPrefix",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set the prefix for [prefix] to [value]",
+            arguments: {
+              prefix: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "prefixTypes",
+              },
+              value: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "!",
               },
             },
           },
@@ -2678,6 +2714,23 @@
             ],
             acceptReporters: true,
           },
+          spriteMenu: {
+            items: "getSprites",
+            acceptReporters: true,
+          },
+          prefixTypes: {
+            items: [
+              {
+                text:"Pen+ Costumes",
+                value:"penPlusTextures"
+              },
+              {
+                text:"Render Textures",
+                value:"renderTextures"
+              }
+            ],
+            acceptReporters: true,
+          }
         },
         name: "Pen+ V7",
         id: "penP",
@@ -2762,6 +2815,23 @@
     getRenderTexturesAndStage() {
       let renderTextures = ["Scratch Stage"];
       return renderTextures;
+    }
+    getSprites() {
+      const sprites = [];
+      for (const target of vm.runtime.targets) {
+        if (target.isOriginal && !target.isStage) {
+          sprites.push(target.getName());
+        }
+      }
+      if (sprites.length === 0) {
+        return [
+          {
+            text: "No sprites exist!",
+            value: " ",
+          },
+        ];
+      }
+      return sprites;
     }
     //From lily's list tools... With permission of course.
     _getLists() {
@@ -2890,6 +2960,13 @@
         x2,
         y2
       );
+    }
+    stampSprite({ sprite }) {
+      const originalTarget = vm.runtime.getSpriteTargetByName(sprite);
+      if (!originalTarget) {
+        return;
+      }
+      runtime.ext_pen._stamp(originalTarget)
     }
 
     _getDefaultTriAttributes() {
@@ -3557,6 +3634,10 @@
       renderer.dirty = true;
     }
 
+    getPenPVersion() {
+      return this.extensionVersion;
+    }
+
     getTrianglesDrawn() {
       return this.trianglesDrawn;
     }
@@ -3578,6 +3659,11 @@
         default:
           break;
       }
+    }
+
+    setPrefix({ prefix, value }) {
+      //That simple
+      this.prefixes[prefix] = value;
     }
 
     //?Custom Shaders
@@ -5314,6 +5400,23 @@
         transform_Matrix[1] = -2 / this.currentRenderTexture.width;
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.currentRenderTexture.framebuffer);
       }
+    }
+
+    //By Sharkpool-SP commented by Alex
+    getPenRenderLayer() {
+      //Grabbing the drawable for the pen layer
+      const penID = vm.runtime.ext_pen?._penDrawableId;
+      if (!penID) return "";
+
+      //If we can grab it create a canvas and parse the image data into a data uri
+      const imageData = vm.runtime.renderer.extractDrawableScreenSpace(penID).imageData;
+      var canvas = document.createElement("canvas");
+      canvas.width = imageData.width;
+      canvas.height = imageData.height;
+      canvas.getContext("2d").putImageData(imageData, 0, 0);
+
+      //Return it as a png? Why png specifically I dunno.
+      return canvas.toDataURL("image/png");
     }
   }
 
