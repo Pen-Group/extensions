@@ -617,7 +617,7 @@
         this.trianglesDrawn = 0;
         this.inDrawRegion = true;
         if (this.currentRenderTexture != triBufferInfo) {
-          if (this.currentRenderTexture.resizing) {
+          if (this.currentRenderTexture.resizing && (this.currentRenderTexture.width != nativeSize[0] || this.currentRenderTexture.height != nativeSize[1])) {
             twgl.resizeFramebufferInfo(gl, this.currentRenderTexture, triBufferAttachments, Scratch.Cast.toNumber(nativeSize[0]),Scratch.Cast.toNumber(nativeSize[1]));
           }
         }
@@ -2444,6 +2444,14 @@
             opcode: "targetRenderTexture",
             blockType: Scratch.BlockType.COMMAND,
             text: "render tris and squares to [name]",
+            arguments: {
+              name: {  type: Scratch.ArgumentType.STRING, menu:"renderTextures" },
+            },
+          },
+          {
+            opcode: "clearRenderTexture",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "clear pen from [name]",
             arguments: {
               name: {  type: Scratch.ArgumentType.STRING, menu:"renderTextures" },
             },
@@ -5218,6 +5226,17 @@
       twgl.resizeFramebufferInfo(gl, this.renderTextures[this.prefixes.renderTextures + name], triBufferAttachments, width, height)
       this.renderTextures[this.prefixes.renderTextures + name].resizing = false;
       this.renderTextures[this.prefixes.renderTextures + name].name = name;
+    }
+
+    clearRenderTexture({ name }) {
+      if (this.renderTextures[name]) {
+        this.currentRenderTexture = this.renderTextures[name];
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.currentRenderTexture.framebuffer);
+        gl.clearColor(0,0,0,0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.clearColor(renderer._backgroundColor4f[0], renderer._backgroundColor4f[1], renderer._backgroundColor4f[2], renderer._backgroundColor4f[3]);
+      }
     }
 
     removeRenderTexture({ name }) {
