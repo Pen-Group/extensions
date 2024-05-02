@@ -1389,20 +1389,6 @@
           },
           {
             disableMonitor: true,
-            opcode: "setTriangleFilterMode",
-            blockType: Scratch.BlockType.COMMAND,
-            text: "set triangle filter mode to [filter]",
-            arguments: {
-              filter: {
-                type: Scratch.ArgumentType.NUMBER,
-                defaultValue: 9728,
-                menu: "filterType",
-              },
-            },
-            filter: "sprite",
-          },
-          {
-            disableMonitor: true,
             opcode: "setTrianglePointAttribute",
             blockType: Scratch.BlockType.COMMAND,
             text: "set triangle point [point]'s [attribute] to [value]",
@@ -2495,6 +2481,20 @@
                 menu: "cullMode",
               },
             },
+          },
+          {
+            disableMonitor: true,
+            opcode: "setTriangleFilterMode",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set texture filter mode to [filter]",
+            arguments: {
+              filter: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 9728,
+                menu: "filterType",
+              },
+            },
+            filter: "sprite",
           },
           "---",
           {
