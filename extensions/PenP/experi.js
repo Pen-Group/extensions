@@ -69,7 +69,7 @@
         triBufferInfo,
         triBufferAttachments,
         Scratch.Cast.toNumber(nativeSize[0]),
-        Scratch.Cast.toNumber(nativeSize[1]),
+        Scratch.Cast.toNumber(nativeSize[1])
       );
       gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
     };
@@ -126,111 +126,111 @@
     untextured: {
       Shaders: {
         vert: `
-                      attribute highp vec4 a_position;
-                      attribute highp vec4 a_color;
-                      varying highp vec4 v_color;
-  
-                      uniform highp mat4 u_transform;
-  
-                      highp vec4 rotation(highp vec4 invec4) {
-                        return vec4(
-                          (invec4.y) * u_transform[1][0] + (invec4.x) * u_transform[1][1],
-                          (invec4.y) * u_transform[1][1] - (invec4.x) * u_transform[1][0],
-                          invec4.zw
-                        );
-                      }
-                      
-                      void main()
-                      {
-                          v_color = a_color;
-                          gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],0.001,1);
-                      }
-                  `,
+                    attribute highp vec4 a_position;
+                    attribute highp vec4 a_color;
+                    varying highp vec4 v_color;
+
+                    uniform highp mat4 u_transform;
+
+                    highp vec4 rotation(highp vec4 invec4) {
+                      return vec4(
+                        (invec4.y) * u_transform[1][0] + (invec4.x) * u_transform[1][1],
+                        (invec4.y) * u_transform[1][1] - (invec4.x) * u_transform[1][0],
+                        invec4.zw
+                      );
+                    }
+                    
+                    void main()
+                    {
+                        v_color = a_color;
+                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],0.001,1);
+                    }
+                `,
         frag: `
-                      varying highp vec4 v_color;
-      
-                      void main()
-                      {
-                        gl_FragColor = v_color;
-                        gl_FragColor.rgb *= gl_FragColor.a;
-                        if (gl_FragColor.a == 0.0) {
-                          discard;
-                        }
+                    varying highp vec4 v_color;
+    
+                    void main()
+                    {
+                      gl_FragColor = v_color;
+                      gl_FragColor.rgb *= gl_FragColor.a;
+                      if (gl_FragColor.a == 0.0) {
+                        discard;
                       }
-                  `,
+                    }
+                `,
       },
       ProgramInf: null,
     },
     textured: {
       Shaders: {
         vert: `
-                      attribute highp vec4 a_position;
-                      attribute highp vec4 a_color;
-                      attribute highp vec2 a_texCoord;
-                      
-                      varying highp vec4 v_color;
-                      varying highp vec2 v_texCoord;
-  
-                      uniform highp mat4 u_transform;
-  
-                      highp vec4 rotation(highp vec4 invec4) {
-                        return vec4(
-                          (invec4.y) * u_transform[1][0] + (invec4.x) * u_transform[1][1],
-                          (invec4.y) * u_transform[1][1] - (invec4.x) * u_transform[1][0],
-                          invec4.zw
-                        );
-                      }
-  
-                      void main()
-                      {
-                          v_color = a_color;
-                          v_texCoord = a_texCoord;
-                          gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],0.001,1);
-                      }
-                  `,
+                    attribute highp vec4 a_position;
+                    attribute highp vec4 a_color;
+                    attribute highp vec2 a_texCoord;
+                    
+                    varying highp vec4 v_color;
+                    varying highp vec2 v_texCoord;
+
+                    uniform highp mat4 u_transform;
+
+                    highp vec4 rotation(highp vec4 invec4) {
+                      return vec4(
+                        (invec4.y) * u_transform[1][0] + (invec4.x) * u_transform[1][1],
+                        (invec4.y) * u_transform[1][1] - (invec4.x) * u_transform[1][0],
+                        invec4.zw
+                      );
+                    }
+
+                    void main()
+                    {
+                        v_color = a_color;
+                        v_texCoord = a_texCoord;
+                        gl_Position = (rotation(a_position) + vec4(u_transform[0][2],u_transform[0][3],0,0)) * vec4(a_position.w * u_transform[0][0],a_position.w * u_transform[0][1],0.001,1);
+                    }
+                `,
         frag: `
-                      uniform sampler2D u_texture;
-      
-                      varying highp vec2 v_texCoord;
-                      varying highp vec4 v_color;
-                      
-                      void main()
-                      {
-                          gl_FragColor = texture2D(u_texture, mod(v_texCoord,1.0)) * v_color;
-                          gl_FragColor.rgb *= gl_FragColor.a;
-                          if (gl_FragColor.a == 0.0) {
-                            discard;
-                          }
-                      }
-                  `,
+                    uniform sampler2D u_texture;
+    
+                    varying highp vec2 v_texCoord;
+                    varying highp vec4 v_color;
+                    
+                    void main()
+                    {
+                        gl_FragColor = texture2D(u_texture, mod(v_texCoord,1.0)) * v_color;
+                        gl_FragColor.rgb *= gl_FragColor.a;
+                        if (gl_FragColor.a == 0.0) {
+                          discard;
+                        }
+                    }
+                `,
       },
       ProgramInf: null,
     },
     draw: {
       Shaders: {
         vert: `
-                      attribute highp vec4 a_position;
-      
-                      varying highp vec2 v_texCoord;
-                      attribute highp vec2 a_texCoord;
-                      
-                      void main()
-                      {
-                          gl_Position = a_position * vec4(a_position.w,a_position.w,0,1);
-                          v_texCoord = (a_position.xy / 2.0) + vec2(0.5,0.5);
-                      }
-                  `,
+                    attribute highp vec4 a_position;
+    
+                    varying highp vec2 v_texCoord;
+                    attribute highp vec2 a_texCoord;
+                    
+                    void main()
+                    {
+                        gl_Position = a_position * vec4(a_position.w,a_position.w,0,1);
+                        v_texCoord = (a_position.xy / 2.0) + vec2(0.5,0.5);
+                    }
+                `,
         frag: `
-                      varying highp vec2 v_texCoord;
-      
-                      uniform sampler2D u_drawTex;
-                      
-                      void main()
-                      {
-                        gl_FragColor = texture2D(u_drawTex, v_texCoord);
-                        gl_FragColor.rgb *= gl_FragColor.a;
-                      }
-                  `,
+                    varying highp vec2 v_texCoord;
+    
+                    uniform sampler2D u_drawTex;
+                    
+                    void main()
+                    {
+                      gl_FragColor = texture2D(u_drawTex, v_texCoord);
+                      gl_FragColor.rgb *= gl_FragColor.a;
+                    }
+                `,
       },
       ProgramInf: null,
     },
@@ -318,28 +318,28 @@
   //Just for our eyes sakes
   // prettier-ignore
   let reRenderInfo = twgl.createBufferInfoFromArrays(gl, {
-      a_position:    { numComponents: 4, data: [
-        -1, -1, 0, 1,
-        1, -1, 0, 1,
-        1, 1, 0, 1,
-        -1, -1, 0, 1,
-        1, 1, 0, 1,
-        -1, 1, 0, 1
-      ]},
-      a_texCoord: { numComponents: 2, data: [
-        0,1,
-        0,0,
-        1,0,
-        0,1,
-        0,0,
-        1,0
-      ]}
-    });
+    a_position:    { numComponents: 4, data: [
+      -1, -1, 0, 1,
+      1, -1, 0, 1,
+      1, 1, 0, 1,
+      -1, -1, 0, 1,
+      1, 1, 0, 1,
+      -1, 1, 0, 1
+    ]},
+    a_texCoord: { numComponents: 2, data: [
+      0,1,
+      0,0,
+      1,0,
+      0,1,
+      0,0,
+      1,0
+    ]}
+  });
 
   twgl.setBuffersAndAttributes(
     gl,
     penPlusShaders.draw.ProgramInf,
-    reRenderInfo,
+    reRenderInfo
   );
 
   let parentExtension = null;
@@ -357,7 +357,7 @@
       renderer._backgroundColor4f[0],
       renderer._backgroundColor4f[1],
       renderer._backgroundColor4f[2],
-      renderer._backgroundColor4f[3],
+      renderer._backgroundColor4f[3]
     );
 
     //Old clearing
@@ -471,32 +471,32 @@
           //Just for our eyes sakes
           // prettier-ignore
           inputInfo = {
-              a_position: new Float32Array([
-                x1,y1,triAttribs[5],triAttribs[6],
-                x2,y2,triAttribs[13],triAttribs[14],
-                x3,y3,triAttribs[21],triAttribs[22]
-              ]),
-              a_color: new Float32Array([
-                penColor[0] * triAttribs[2],penColor[1] * triAttribs[3],penColor[2] * triAttribs[4],penColor[3] * triAttribs[7],
-                penColor[0] * triAttribs[10],penColor[1] * triAttribs[11],penColor[2] * triAttribs[12],penColor[3] * triAttribs[15],
-                penColor[0] * triAttribs[18],penColor[1] * triAttribs[19],penColor[2] * triAttribs[20],penColor[3] * triAttribs[23]
-              ])
-            };
+            a_position: new Float32Array([
+              x1,y1,triAttribs[5],triAttribs[6],
+              x2,y2,triAttribs[13],triAttribs[14],
+              x3,y3,triAttribs[21],triAttribs[22]
+            ]),
+            a_color: new Float32Array([
+              penColor[0] * triAttribs[2],penColor[1] * triAttribs[3],penColor[2] * triAttribs[4],penColor[3] * triAttribs[7],
+              penColor[0] * triAttribs[10],penColor[1] * triAttribs[11],penColor[2] * triAttribs[12],penColor[3] * triAttribs[15],
+              penColor[0] * triAttribs[18],penColor[1] * triAttribs[19],penColor[2] * triAttribs[20],penColor[3] * triAttribs[23]
+            ])
+          };
         } else {
           //Just for our eyes sakes
           // prettier-ignore
           inputInfo = {
-              a_position: new Float32Array([
-                x1,y1,1,1,
-                x2,y2,1,1,
-                x3,y3,1,1
-              ]),
-              a_color: new Float32Array([
-                penColor[0],penColor[1],penColor[2],penColor[3],
-                penColor[0],penColor[1],penColor[2],penColor[3],
-                penColor[0],penColor[1],penColor[2],penColor[3]
-              ])
-            };
+            a_position: new Float32Array([
+              x1,y1,1,1,
+              x2,y2,1,1,
+              x3,y3,1,1
+            ]),
+            a_color: new Float32Array([
+              penColor[0],penColor[1],penColor[2],penColor[3],
+              penColor[0],penColor[1],penColor[2],penColor[3],
+              penColor[0],penColor[1],penColor[2],penColor[3]
+            ])
+          };
         }
 
         bufferInfo.numElements = 3;
@@ -511,7 +511,7 @@
         twgl.setBuffersAndAttributes(
           gl,
           penPlusShaders.untextured.ProgramInf,
-          bufferInfo,
+          bufferInfo
         );
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -538,42 +538,42 @@
           //Just for our eyes sakes
           // prettier-ignore
           inputInfo = {
-              a_position: new Float32Array([
-                x1,y1,triAttribs[5],triAttribs[6],
-                x2,y2,triAttribs[13],triAttribs[14],
-                x3,y3,triAttribs[21],triAttribs[22]
-              ]),
-              a_color: new Float32Array([
-                triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
-                triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
-                triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
-              ]),
-              a_texCoord: new Float32Array([
-                triAttribs[0],triAttribs[1],
-                triAttribs[8],triAttribs[9],
-                triAttribs[16],triAttribs[17]
-              ])
-            };
+            a_position: new Float32Array([
+              x1,y1,triAttribs[5],triAttribs[6],
+              x2,y2,triAttribs[13],triAttribs[14],
+              x3,y3,triAttribs[21],triAttribs[22]
+            ]),
+            a_color: new Float32Array([
+              triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
+              triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
+              triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
+            ]),
+            a_texCoord: new Float32Array([
+              triAttribs[0],triAttribs[1],
+              triAttribs[8],triAttribs[9],
+              triAttribs[16],triAttribs[17]
+            ])
+          };
         } else {
           //Just for our eyes sakes
           // prettier-ignore
           inputInfo = {
-              a_position: new Float32Array([
-                x1,y1,1,1,
-                x2,y2,1,1,
-                x3,y3,1,1
-              ]),
-              a_color: new Float32Array([
-                1,1,1,1,
-                1,1,1,1,
-                1,1,1,1
-              ]),
-              a_texCoord: new Float32Array([
-                0,0,
-                0,1,
-                1,1
-              ])
-            };
+            a_position: new Float32Array([
+              x1,y1,1,1,
+              x2,y2,1,1,
+              x3,y3,1,1
+            ]),
+            a_color: new Float32Array([
+              1,1,1,1,
+              1,1,1,1,
+              1,1,1,1
+            ]),
+            a_texCoord: new Float32Array([
+              0,0,
+              0,1,
+              1,1
+            ])
+          };
         }
 
         bufferInfo.numElements = 3;
@@ -593,7 +593,7 @@
         twgl.setBuffersAndAttributes(
           gl,
           penPlusShaders.textured.ProgramInf,
-          bufferInfo,
+          bufferInfo
         );
 
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -615,7 +615,7 @@
         twgl.setBuffersAndAttributes(
           gl,
           penPlusShaders.draw.ProgramInf,
-          reRenderInfo,
+          reRenderInfo
         );
 
         twgl.setUniforms(penPlusShaders.draw.ProgramInf, {
@@ -645,7 +645,7 @@
               this.currentRenderTexture,
               triBufferAttachments,
               Scratch.Cast.toNumber(nativeSize[0]),
-              Scratch.Cast.toNumber(nativeSize[1]),
+              Scratch.Cast.toNumber(nativeSize[1])
             );
           }
           //Resize our variables to be viewport accurate
@@ -653,7 +653,7 @@
             0,
             0,
             this.currentRenderTexture.width,
-            this.currentRenderTexture.height,
+            this.currentRenderTexture.height
           );
           transform_Matrix[0] = 2 / this.currentRenderTexture.width;
           transform_Matrix[1] = -2 / this.currentRenderTexture.width;
@@ -664,7 +664,7 @@
         }
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
-          this.currentRenderTexture.framebuffer,
+          this.currentRenderTexture.framebuffer
         );
         renderer.dirty = true;
       },
@@ -675,7 +675,7 @@
         this.inDrawRegion = false;
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
-          renderer._allSkins[renderer._penSkinId]._framebuffer.framebuffer,
+          renderer._allSkins[renderer._penSkinId]._framebuffer.framebuffer
         );
 
         this.renderFunctions.reRenderPenLayer();
@@ -688,17 +688,17 @@
           renderer._backgroundColor4f[0],
           renderer._backgroundColor4f[1],
           renderer._backgroundColor4f[2],
-          renderer._backgroundColor4f[3],
+          renderer._backgroundColor4f[3]
         );
 
         /*gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
-  
-          gl.bindFramebuffer(
-            gl.FRAMEBUFFER,
-            renderer._allSkins[renderer._penSkinId]._framebuffer.framebuffer
-          );
-  
-          gl.useProgram(penPlusShaders.pen.program);*/
+
+        gl.bindFramebuffer(
+          gl.FRAMEBUFFER,
+          renderer._allSkins[renderer._penSkinId]._framebuffer.framebuffer
+        );
+
+        gl.useProgram(penPlusShaders.pen.program);*/
       },
     };
 
@@ -707,7 +707,7 @@
       hexToRgb: (hex) => {
         if (typeof hex == "string") {
           const splitHex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
-            hex,
+            hex
           );
           return {
             r: parseInt(splitHex[1], 16),
@@ -770,7 +770,7 @@
           0,
           gl.RGBA,
           gl.UNSIGNED_BYTE,
-          pixelData,
+          pixelData
         );
 
         parentExtension.penPlusCostumeLibrary[name] = {
@@ -795,7 +795,7 @@
           0,
           gl.RGBA,
           gl.UNSIGNED_BYTE,
-          new Uint8Array([0, 0, 255, 255]),
+          new Uint8Array([0, 0, 255, 255])
         );
 
         // Let's assume all images are not a power of 2
@@ -817,7 +817,7 @@
                 gl.RGBA,
                 gl.RGBA,
                 gl.UNSIGNED_BYTE,
-                image,
+                image
               );
               parentExtension.penPlusCostumeLibrary[name] = {
                 texture: texture,
@@ -845,7 +845,7 @@
           gl.COLOR_ATTACHMENT0,
           gl.TEXTURE_2D,
           texture,
-          0,
+          0
         );
 
         //?make sure to unbind the framebuffer and delete it!
@@ -866,7 +866,7 @@
             height,
             gl.RGBA,
             gl.UNSIGNED_BYTE,
-            dataArray,
+            dataArray
           );
 
           //?Remove Buffer data and return data
@@ -892,7 +892,7 @@
           gl.COLOR_ATTACHMENT0,
           gl.TEXTURE_2D,
           texture,
-          0,
+          0
         );
 
         //?make sure to unbind the framebuffer and delete it!
@@ -913,7 +913,7 @@
             height,
             gl.RGBA,
             gl.UNSIGNED_BYTE,
-            dataArray,
+            dataArray
           );
 
           //Make an invisible canvas
@@ -1043,7 +1043,7 @@
         const regexSearcher = new RegExp(`.*${attributeKey}.*\n?`);
         let searchResult =
           this.shaders[shaderName].projectData.vertShader.match(
-            regexSearcher,
+            regexSearcher
           )[0];
 
         //Remove whitespace at the beginning for easy extraction
@@ -1088,7 +1088,7 @@
 
       this.programs[shaderName].buffer = twgl.createBufferInfoFromArrays(
         gl,
-        bufferInitilizer,
+        bufferInitilizer
       );
 
       this.programs[shaderName];
@@ -1117,7 +1117,7 @@
         const regexSearcher = new RegExp(`.*${uniformKey}.*;?`);
         let searchResult =
           this.shaders[shaderName].projectData.vertShader.match(
-            regexSearcher,
+            regexSearcher
           )[0];
 
         //Remove whitespace at the beginning for easy extraction
@@ -1132,7 +1132,7 @@
         const arrayLength = Scratch.Cast.toNumber(
           (split.length < 4 ? split[2] : split[3])
             .replace(uniformKey, "")
-            .replaceAll(/[[\];]/g, ""),
+            .replaceAll(/[[\];]/g, "")
         );
 
         this.programs[shaderName].uniformDec[uniformKey].type = type;
@@ -1314,10 +1314,6 @@
     getInfo() {
       return {
         blocks: [
-          {
-            blockType: Scratch.BlockType.LABEL,
-            text: "EXPERIMENTAL",
-          },
           {
             blockType: Scratch.BlockType.LABEL,
             text: "Pen Properties",
@@ -2464,6 +2460,31 @@
             },
             filter: "sprite",
           },
+          "---",
+
+          {
+            opcode: "editTriDef",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "set the [attribute] of point [id] to [value] in [def]",
+            arguments: {
+              attribute: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "depth value",
+                menu: "defAttribMenu",
+              },
+              id: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "1",
+                menu: "pointMenu",
+              },
+              value: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              def: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "tri definition here",
+              },
+            },
+            filter: "sprite",
+          },
 
           {
             blockType: Scratch.BlockType.LABEL,
@@ -2802,8 +2823,23 @@
             ],
             acceptReporters: true,
           },
+          defAttribMenu: {
+            items: [
+              "x",
+              "y",
+              "depth value",
+              "corner pinch",
+              "U value",
+              "V value",
+              "red tint",
+              "green tint",
+              "blue tint",
+              "transparency",
+            ],
+            acceptReporters: true,
+          },
         },
-        name: "Pen+ EXPERIMENTAL",
+        name: "Pen+ V7",
         id: "penP",
         docsURI:
           "https://pen-group.github.io/docs/?page=extensions%2FpenPlus%2Fmain",
@@ -2835,7 +2871,7 @@
 
       let penplusRenderTextures = this.getRenderTexturesMenu();
 
-      if (penPlusCostumes.length > 0) {
+      if (penplusRenderTextures.length > 0) {
         readCostumes = readCostumes.concat(penplusRenderTextures);
       }
 
@@ -2957,7 +2993,7 @@
         currentTexture = this.renderTextures[name].attachments[0];
       } else {
         const costIndex = curTarget.getCostumeIndexByName(
-          Scratch.Cast.toString(name),
+          Scratch.Cast.toString(name)
         );
         if (costIndex >= 0) {
           const curCostume = curTarget.sprite.costumes[costIndex];
@@ -2999,22 +3035,22 @@
           //convert the rgb to hex
           let r = Math.floor(
             curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[0] *
-              255,
+              255
           ).toString(16);
           r = r.length == 1 ? "0" + r : r;
           let g = Math.floor(
             curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[1] *
-              255,
+              255
           ).toString(16);
           g = g.length == 1 ? "0" + g : g;
           let b = Math.floor(
             curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[2] *
-              255,
+              255
           ).toString(16);
           b = b.length == 1 ? "0" + b : b;
           let a = Math.floor(
             curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[3] *
-              255,
+              255
           ).toString(16);
           a = a.length == 1 ? "0" + a : a;
 
@@ -3033,7 +3069,7 @@
         Scratch.vm.renderer._penSkinId,
         attrib,
         x,
-        y,
+        y
       );
     }
     drawLine({ x1, y1, x2, y2 }, util) {
@@ -3047,7 +3083,7 @@
         x1,
         y1,
         x2,
-        y2,
+        y2
       );
     }
     stampSprite({ sprite }) {
@@ -3171,7 +3207,7 @@
       twgl.setBuffersAndAttributes(
         gl,
         penPlusShaders.untextured.ProgramInf,
-        bufferInfo,
+        bufferInfo
       );
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -3313,7 +3349,7 @@
       twgl.setBuffersAndAttributes(
         gl,
         penPlusShaders.textured.ProgramInf,
-        bufferInfo,
+        bufferInfo
       );
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -3355,7 +3391,7 @@
           if (this.AdvancedSettings._ClampZ) {
             Math.min(
               Math.max(valuetoSet / this.AdvancedSettings._maxDepth, 0),
-              1,
+              1
             );
             return;
           }
@@ -3420,7 +3456,7 @@
         Scratch.Cast.toNumber(attribute),
         value,
         false,
-        trianglePointStart,
+        trianglePointStart
       );
     }
     setWholeTrianglePointAttribute({ wholeAttribute, value }, util) {
@@ -3435,7 +3471,7 @@
         Scratch.Cast.toNumber(wholeAttribute),
         value,
         true,
-        0,
+        0
       );
     }
     tintTriPoint({ point, color }, util) {
@@ -3455,7 +3491,7 @@
         2,
         calcColor.r / 2.55,
         false,
-        trianglePointStart,
+        trianglePointStart
       );
 
       this.attributeEditors.triangle(
@@ -3463,7 +3499,7 @@
         3,
         calcColor.g / 2.55,
         false,
-        trianglePointStart,
+        trianglePointStart
       );
 
       this.attributeEditors.triangle(
@@ -3471,7 +3507,7 @@
         4,
         calcColor.b / 2.55,
         false,
-        trianglePointStart,
+        trianglePointStart
       );
     }
     tintTri({ point, color }, util) {
@@ -3491,7 +3527,7 @@
         2,
         calcColor.r / 2.55,
         true,
-        trianglePointStart,
+        trianglePointStart
       );
 
       this.attributeEditors.triangle(
@@ -3499,7 +3535,7 @@
         3,
         calcColor.g / 2.55,
         true,
-        trianglePointStart,
+        trianglePointStart
       );
 
       this.attributeEditors.triangle(
@@ -3507,7 +3543,7 @@
         4,
         calcColor.b / 2.55,
         true,
-        trianglePointStart,
+        trianglePointStart
       );
     }
     getTrianglePointAttribute({ point, attribute }, util) {
@@ -3573,7 +3609,7 @@
         x3,
         y3,
         attrib.color4f,
-        curTarget.id,
+        curTarget.id
       );
     }
     drawTexTri({ x1, y1, x2, y2, x3, y3, tex }, util) {
@@ -3607,7 +3643,7 @@
           x3,
           y3,
           curTarget.id,
-          currentTexture,
+          currentTexture
         );
       }
     }
@@ -3669,7 +3705,7 @@
         height,
         color,
         this.prefixes.penPlusTextures + name,
-        gl.CLAMP_TO_EDGE,
+        gl.CLAMP_TO_EDGE
       );
     }
 
@@ -3678,7 +3714,7 @@
       this.textureFunctions.createPenPlusTextureInfo(
         dataURI,
         this.prefixes.penPlusTextures + name,
-        gl.CLAMP_TO_EDGE,
+        gl.CLAMP_TO_EDGE
       );
     }
 
@@ -3702,7 +3738,7 @@
       //Just a simple thing to allow for pen drawing
       const curTarget = util.target;
       const costIndex = curTarget.getCostumeIndexByName(
-        Scratch.Cast.toString(costume),
+        Scratch.Cast.toString(costume)
       );
       if (costIndex >= 0) {
         const curCostume =
@@ -3725,7 +3761,7 @@
         const textureData = this.textureFunctions.getTextureData(
           curCostume.texture,
           curCostume.width,
-          curCostume.height,
+          curCostume.height
         );
         if (textureData) {
           x = Math.floor(x - 1);
@@ -3752,7 +3788,7 @@
               0,
               gl.RGBA,
               gl.UNSIGNED_BYTE,
-              textureData,
+              textureData
             );
           }
         }
@@ -3765,7 +3801,7 @@
         const textureData = this.textureFunctions.getTextureData(
           curCostume.texture,
           curCostume.width,
-          curCostume.height,
+          curCostume.height
         );
         if (textureData) {
           x = Math.floor(x - 1);
@@ -3789,7 +3825,7 @@
         const textureData = this.textureFunctions.getTextureAsURI(
           curCostume.texture,
           curCostume.width,
-          curCostume.height,
+          curCostume.height
         );
         if (textureData) {
           return textureData;
@@ -3890,13 +3926,13 @@
                 return (
                   txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
                 );
-              },
+              }
             )}`,
             exportText: `Export to ${hostname.replace(/\w\S*/g, function (txt) {
               return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
             })}`,
           },
-          this.IFrame.src,
+          this.IFrame.src
         );
       };
 
@@ -3957,49 +3993,49 @@
       const triAttribs = this.triangleAttributesOfAllSprites[targetID];
 
       let inputInfo = JSON.parse(
-        JSON.stringify(this.programs[shader].attribDat),
+        JSON.stringify(this.programs[shader].attribDat)
       );
 
       if (triAttribs) {
         //Just for our eyes sakes
         // prettier-ignore
         inputInfo.a_position = {data: [
-            x1,-y1,triAttribs[5],triAttribs[6],
-            x2,-y2,triAttribs[13],triAttribs[14],
-            x3,-y3,triAttribs[21],triAttribs[22]
-          ]}
+          x1,-y1,triAttribs[5],triAttribs[6],
+          x2,-y2,triAttribs[13],triAttribs[14],
+          x3,-y3,triAttribs[21],triAttribs[22]
+        ]}
         // prettier-ignore
         inputInfo.a_color = {data: [
-            triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
-            triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
-            triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
-          ]}
+          triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
+          triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
+          triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
+        ]}
         // prettier-ignore
         inputInfo.a_texCoord = {data:[
-            triAttribs[0],triAttribs[1],
-            triAttribs[8],triAttribs[9],
-            triAttribs[16],triAttribs[17]
-          ]}
+          triAttribs[0],triAttribs[1],
+          triAttribs[8],triAttribs[9],
+          triAttribs[16],triAttribs[17]
+        ]}
       } else {
         //Just for our eyes sakes
         // prettier-ignore
         inputInfo.a_position = {data: [
-            x1,y1,1,1,
-            x2,y2,1,1,
-            x3,y3,1,1
-          ]}
+          x1,y1,1,1,
+          x2,y2,1,1,
+          x3,y3,1,1
+        ]}
         // prettier-ignore
         inputInfo.a_color = {data: [
-            1,1,1,1,
-            1,1,1,1,
-            1,1,1,1
-          ]}
+          1,1,1,1,
+          1,1,1,1,
+          1,1,1,1
+        ]}
         // prettier-ignore
         inputInfo.a_texCoord = {data: [
-            0,0,
-            0,1,
-            1,1
-          ]}
+          0,0,
+          0,1,
+          1,1
+        ]}
       }
 
       const keys = Object.keys(inputInfo);
@@ -4010,7 +4046,7 @@
         gl.bufferData(
           gl.ARRAY_BUFFER,
           new Float32Array(inputInfo[key].data),
-          gl.DYNAMIC_DRAW,
+          gl.DYNAMIC_DRAW
         );
       });
 
@@ -4028,7 +4064,7 @@
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       twgl.setUniforms(
         this.programs[shader].info,
-        this.programs[shader].uniformDat,
+        this.programs[shader].uniformDat
       );
 
       twgl.drawBufferInfo(gl, bufferInfo);
@@ -4151,7 +4187,7 @@
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       twgl.setUniforms(
         this.programs[shader].info,
-        this.programs[shader].uniformDat,
+        this.programs[shader].uniformDat
       );
 
       transform_Matrix[2] = 0;
@@ -4283,7 +4319,7 @@
       if (!this.programs[shader].uniformDat[uniformName]) return "";
       const text = this.programs[shader].uniformDat[uniformName];
       let foundValue = Object.keys(this.penPlusCostumeLibrary).find(
-        (key) => this.penPlusCostumeLibrary[key] === text,
+        (key) => this.penPlusCostumeLibrary[key] === text
       );
       //if we cannot find it in the pen+ library look for it in the scratch costume library
       if (!foundValue) {
@@ -4310,7 +4346,7 @@
       if (!this.programs[shader].uniformDat[uniformName]) return "";
       const text = this.programs[shader].uniformDat[uniformName];
       return Object.keys(this.penPlusCubemap).find(
-        (key) => this.penPlusCubemap[key] === text,
+        (key) => this.penPlusCubemap[key] === text
       );
     }
 
@@ -4625,39 +4661,39 @@
       document.body.appendChild(bgFade);
 
       /*
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠀⢀⡔⣻⠁⠀⢀⣀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⢀⣾⠳⢶⣦⠤⣀⠀⠀⠀⠀⠀⠀⠀⣾⢀⡇⡴⠋⣀⠴⣊⣩⣤⠶⠞⢹⣄⠀⠀⠀
-  ⠀⠀⠀⠀⢸⠀⠀⢠⠈⠙⠢⣙⠲⢤⠤⠤⠀⠒⠳⡄⣿⢀⠾⠓⢋⠅⠛⠉⠉⠝⠀⠼⠀⠀⠀
-  ⠀⠀⠀⠀⢸⠀⢰⡀⠁⠀⠀⠈⠑⠦⡀⠀⠀⠀⠀⠈⠺⢿⣂⠀⠉⠐⠲⡤⣄⢉⠝⢸⠀⠀⠀
-  ⠀⠀⠀⠀⢸⠀⢀⡹⠆⠀⠀⠀⠀⡠⠃⠀⠀⠀⠀⠀⠀⠀⠉⠙⠲⣄⠀⠀⠙⣷⡄⢸⠀⠀⠀
-  ⠀⠀⠀⠀⢸⡀⠙⠂⢠⠀⠀⡠⠊⠀⠀⠀⠀⢠⠀⠀⠀⠀⠘⠄⠀⠀⠑⢦⣔⠀⢡⡸⠀⠀⠀
-  ⠀⠀⠀⠀⢀⣧⠀⢀⡧⣴⠯⡀⠀⠀⠀⠀⠀⡎⠀⠀⠀⠀⠀⢸⡠⠔⠈⠁⠙⡗⡤⣷⡀⠀⠀
-  ⠀⠀⠀⠀⡜⠈⠚⠁⣬⠓⠒⢼⠅⠀⠀⠀⣠⡇⠀⠀⠀⠀⠀⠀⣧⠀⠀⠀⡀⢹⠀⠸⡄⠀⠀
-  ⠀⠀⠀⡸⠀⠀⠀⠘⢸⢀⠐⢃⠀⠀⠀⡰⠋⡇⠀⠀⠀⢠⠀⠀⡿⣆⠀⠀⣧⡈⡇⠆⢻⠀⠀
-  ⠀⠀⢰⠃⠀⠀⢀⡇⠼⠉⠀⢸⡤⠤⣶⡖⠒⠺⢄⡀⢀⠎⡆⣸⣥⠬⠧⢴⣿⠉⠁⠸⡀⣇⠀
-  ⠀⠀⠇⠀⠀⠀⢸⠀⠀⠀⣰⠋⠀⢸⣿⣿⠀⠀⠀⠙⢧⡴⢹⣿⣿⠀⠀⠀⠈⣆⠀⠀⢧⢹⡄
-  ⠀⣸⠀⢠⠀⠀⢸⡀⠀⠀⢻⡀⠀⢸⣿⣿⠀⠀⠀⠀⡼⣇⢸⣿⣿⠀⠀⠀⢀⠏⠀⠀⢸⠀⠇
-  ⠀⠓⠈⢃⠀⠀⠀⡇⠀⠀⠀⣗⠦⣀⣿⡇⠀⣀⠤⠊⠀⠈⠺⢿⣃⣀⠤⠔⢸⠀⠀⠀⣼⠑⢼
-  ⠀⠀⠀⢸⡀⣀⣾⣷⡀⠀⢸⣯⣦⡀⠀⠀⠀⢇⣀⣀⠐⠦⣀⠘⠀⠀⢀⣰⣿⣄⠀⠀⡟⠀⠀
-  ⠀⠀⠀⠀⠛⠁⣿⣿⣧⠀⣿⣿⣿⣿⣦⣀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣴⣿⣿⡿⠈⠢⣼⡇⠀⠀           Bryunyeuuuuuu
-  ⠀⠀⠀⠀⠀⠀⠈⠁⠈⠻⠈⢻⡿⠉⣿⠿⠛⡇⠒⠒⢲⠺⢿⣿⣿⠉⠻⡿⠁⠀⠀⠈⠁⠀⠀          Smooth criminal
-  ⢀⠤⠒⠦⡀⠀⠀⠀⠀⠀⠀⠀⢀⠞⠉⠆⠀⠀⠉⠉⠉⠀⠀⡝⣍⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-  ⡎⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⡰⠋⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⢡⠈⢦⠀⠀⠀⠀⠀⠀⠀⠀⠀
-  ⡇⠀⠀⠸⠁⠀⠀⠀⠀⢀⠜⠁⠀⠀⠀⡸⠀⠀⠀⠀⠀⠀⠀⠘⡄⠈⢳⡀⠀⠀⠀⠀⠀⠀⠀
-  ⡇⠀⠀⢠⠀⠀⠀⠀⠠⣯⣀⠀⠀⠀⡰⡇⠀⠀⠀⠀⠀⠀⠀⠀⢣⠀⢀⡦⠤⢄⡀⠀⠀⠀⠀
-  ⢱⡀⠀⠈⠳⢤⣠⠖⠋⠛⠛⢷⣄⢠⣷⠁⠀⠀⠀⠀⠀⠀⠀⠀⠘⡾⢳⠃⠀⠀⠘⢇⠀⠀⠀
-  ⠀⠙⢦⡀⠀⢠⠁⠀⠀⠀⠀⠀⠙⣿⣏⣀⠀⠀⠀⠀⠀⠀⠀⣀⣴⣧⡃⠀⠀⠀⠀⣸⠀⠀⠀
-  ⠀⠀⠀⠈⠉⢺⣄⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣗⣤⣀⣠⡾⠃⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠣⢅⡤⣀⣀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠉⠉⠉⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠁⠀⠉⣿⣿⣿⣿⣿⡿⠻⣿⣿⣿⣿⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⣿⠀⠀⠀⠀⣿⣿⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⣿⣿⣟⠀⠀⢠⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⠀⠀⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⡏⠀⠀⢸⣿⣿⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⠀⠀⠀⢺⣿⣿⣿⣿⣿⣿⣷⠀⠀⠀⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠈⠉⠻⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀
-  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀
-        */
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠀⢀⡔⣻⠁⠀⢀⣀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢀⣾⠳⢶⣦⠤⣀⠀⠀⠀⠀⠀⠀⠀⣾⢀⡇⡴⠋⣀⠴⣊⣩⣤⠶⠞⢹⣄⠀⠀⠀
+⠀⠀⠀⠀⢸⠀⠀⢠⠈⠙⠢⣙⠲⢤⠤⠤⠀⠒⠳⡄⣿⢀⠾⠓⢋⠅⠛⠉⠉⠝⠀⠼⠀⠀⠀
+⠀⠀⠀⠀⢸⠀⢰⡀⠁⠀⠀⠈⠑⠦⡀⠀⠀⠀⠀⠈⠺⢿⣂⠀⠉⠐⠲⡤⣄⢉⠝⢸⠀⠀⠀
+⠀⠀⠀⠀⢸⠀⢀⡹⠆⠀⠀⠀⠀⡠⠃⠀⠀⠀⠀⠀⠀⠀⠉⠙⠲⣄⠀⠀⠙⣷⡄⢸⠀⠀⠀
+⠀⠀⠀⠀⢸⡀⠙⠂⢠⠀⠀⡠⠊⠀⠀⠀⠀⢠⠀⠀⠀⠀⠘⠄⠀⠀⠑⢦⣔⠀⢡⡸⠀⠀⠀
+⠀⠀⠀⠀⢀⣧⠀⢀⡧⣴⠯⡀⠀⠀⠀⠀⠀⡎⠀⠀⠀⠀⠀⢸⡠⠔⠈⠁⠙⡗⡤⣷⡀⠀⠀
+⠀⠀⠀⠀⡜⠈⠚⠁⣬⠓⠒⢼⠅⠀⠀⠀⣠⡇⠀⠀⠀⠀⠀⠀⣧⠀⠀⠀⡀⢹⠀⠸⡄⠀⠀
+⠀⠀⠀⡸⠀⠀⠀⠘⢸⢀⠐⢃⠀⠀⠀⡰⠋⡇⠀⠀⠀⢠⠀⠀⡿⣆⠀⠀⣧⡈⡇⠆⢻⠀⠀
+⠀⠀⢰⠃⠀⠀⢀⡇⠼⠉⠀⢸⡤⠤⣶⡖⠒⠺⢄⡀⢀⠎⡆⣸⣥⠬⠧⢴⣿⠉⠁⠸⡀⣇⠀
+⠀⠀⠇⠀⠀⠀⢸⠀⠀⠀⣰⠋⠀⢸⣿⣿⠀⠀⠀⠙⢧⡴⢹⣿⣿⠀⠀⠀⠈⣆⠀⠀⢧⢹⡄
+⠀⣸⠀⢠⠀⠀⢸⡀⠀⠀⢻⡀⠀⢸⣿⣿⠀⠀⠀⠀⡼⣇⢸⣿⣿⠀⠀⠀⢀⠏⠀⠀⢸⠀⠇
+⠀⠓⠈⢃⠀⠀⠀⡇⠀⠀⠀⣗⠦⣀⣿⡇⠀⣀⠤⠊⠀⠈⠺⢿⣃⣀⠤⠔⢸⠀⠀⠀⣼⠑⢼
+⠀⠀⠀⢸⡀⣀⣾⣷⡀⠀⢸⣯⣦⡀⠀⠀⠀⢇⣀⣀⠐⠦⣀⠘⠀⠀⢀⣰⣿⣄⠀⠀⡟⠀⠀
+⠀⠀⠀⠀⠛⠁⣿⣿⣧⠀⣿⣿⣿⣿⣦⣀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣴⣿⣿⡿⠈⠢⣼⡇⠀⠀           Bryunyeuuuuuu
+⠀⠀⠀⠀⠀⠀⠈⠁⠈⠻⠈⢻⡿⠉⣿⠿⠛⡇⠒⠒⢲⠺⢿⣿⣿⠉⠻⡿⠁⠀⠀⠈⠁⠀⠀          Smooth criminal
+⢀⠤⠒⠦⡀⠀⠀⠀⠀⠀⠀⠀⢀⠞⠉⠆⠀⠀⠉⠉⠉⠀⠀⡝⣍⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⡎⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⡰⠋⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⢡⠈⢦⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⡇⠀⠀⠸⠁⠀⠀⠀⠀⢀⠜⠁⠀⠀⠀⡸⠀⠀⠀⠀⠀⠀⠀⠘⡄⠈⢳⡀⠀⠀⠀⠀⠀⠀⠀
+⡇⠀⠀⢠⠀⠀⠀⠀⠠⣯⣀⠀⠀⠀⡰⡇⠀⠀⠀⠀⠀⠀⠀⠀⢣⠀⢀⡦⠤⢄⡀⠀⠀⠀⠀
+⢱⡀⠀⠈⠳⢤⣠⠖⠋⠛⠛⢷⣄⢠⣷⠁⠀⠀⠀⠀⠀⠀⠀⠀⠘⡾⢳⠃⠀⠀⠘⢇⠀⠀⠀
+⠀⠙⢦⡀⠀⢠⠁⠀⠀⠀⠀⠀⠙⣿⣏⣀⠀⠀⠀⠀⠀⠀⠀⣀⣴⣧⡃⠀⠀⠀⠀⣸⠀⠀⠀
+⠀⠀⠀⠈⠉⢺⣄⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣗⣤⣀⣠⡾⠃⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠣⢅⡤⣀⣀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠉⠉⠉⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠁⠀⠉⣿⣿⣿⣿⣿⡿⠻⣿⣿⣿⣿⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⣿⠀⠀⠀⠀⣿⣿⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⣿⣿⣟⠀⠀⢠⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⠀⠀⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⡏⠀⠀⢸⣿⣿⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⠀⠀⠀⢺⣿⣿⣿⣿⣿⣿⣷⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠈⠉⠻⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀
+      */
       const shaderManager = document.createElement("div");
 
       //Create our menu modal
@@ -4840,7 +4876,7 @@
 
           //I dunno why prettier feels the need to do this. I feel like it makes it more unreadable.
           menuSpecificVars.saveStuffHolder.appendChild(
-            menuSpecificVars.shadername,
+            menuSpecificVars.shadername
           );
 
           //Save Button
@@ -4867,7 +4903,7 @@
           };
 
           menuSpecificVars.saveStuffHolder.appendChild(
-            menuSpecificVars.saveButton,
+            menuSpecificVars.saveButton
           );
 
           //A container containing already existing shaders and some text to accompony them.
@@ -4897,7 +4933,7 @@
           menuSpecificVars.existingText.innerHTML = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingText,
+            menuSpecificVars.existingText
           );
 
           //The background for existing shaders
@@ -4915,7 +4951,7 @@
           menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDivBackground,
+            menuSpecificVars.existingDivBackground
           );
 
           //The container for existing shaders
@@ -4931,7 +4967,7 @@
           menuSpecificVars.existingDiv.style.overflowX = "hidden";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDiv,
+            menuSpecificVars.existingDiv
           );
 
           Object.keys(this.shaders).forEach((shader) => {
@@ -4995,7 +5031,7 @@
           menuSpecificVars.existingText.innerHTML = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingText,
+            menuSpecificVars.existingText
           );
 
           //The background for existing shaders
@@ -5013,7 +5049,7 @@
           menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDivBackground,
+            menuSpecificVars.existingDivBackground
           );
 
           //The container for existing shaders
@@ -5029,7 +5065,7 @@
           menuSpecificVars.existingDiv.style.overflowX = "hidden";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDiv,
+            menuSpecificVars.existingDiv
           );
 
           Object.keys(this.shaders).forEach((shader) => {
@@ -5137,7 +5173,7 @@
           menuSpecificVars.existingText.innerHTML = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingText,
+            menuSpecificVars.existingText
           );
 
           //The background for existing shaders
@@ -5155,7 +5191,7 @@
           menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDivBackground,
+            menuSpecificVars.existingDivBackground
           );
 
           //The container for existing shaders
@@ -5171,7 +5207,7 @@
           menuSpecificVars.existingDiv.style.overflowX = "hidden";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDiv,
+            menuSpecificVars.existingDiv
           );
 
           Object.keys(this.shaders).forEach((shader) => {
@@ -5190,7 +5226,7 @@
                   type: "DATA_LOAD",
                   projectData: this.shaders[shader].projectData.projectData,
                 },
-                this.IFrame.src,
+                this.IFrame.src
               );
               closeFunc();
             };
@@ -5261,14 +5297,14 @@
         const curCostume =
           this.penPlusCostumeLibrary[cubemapSetup[faceID].texture] ||
           curTarget.getCostumeIndexByName(
-            Scratch.Cast.toString(cubemapSetup[faceID].texture),
+            Scratch.Cast.toString(cubemapSetup[faceID].texture)
           );
 
         if (this.penPlusCostumeLibrary[cubemapSetup[faceID].texture]) {
           const textureData = this.textureFunctions.getTextureData(
             curCostume.texture,
             curCostume.width,
-            curCostume.height,
+            curCostume.height
           );
 
           gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.penPlusCubemap[name]);
@@ -5281,18 +5317,18 @@
             0,
             gl.RGBA,
             gl.UNSIGNED_BYTE,
-            textureData,
+            textureData
           );
 
           gl.texParameteri(
             gl.TEXTURE_CUBE_MAP,
             gl.TEXTURE_MIN_FILTER,
-            currentFilter,
+            currentFilter
           );
           gl.texParameteri(
             gl.TEXTURE_CUBE_MAP,
             gl.TEXTURE_MAG_FILTER,
-            currentFilter,
+            currentFilter
           );
         } else {
           if (curCostume >= 0) {
@@ -5310,18 +5346,18 @@
                 gl.RGBA,
                 gl.RGBA,
                 gl.UNSIGNED_BYTE,
-                image,
+                image
               );
 
               gl.texParameteri(
                 gl.TEXTURE_CUBE_MAP,
                 gl.TEXTURE_MIN_FILTER,
-                currentFilter,
+                currentFilter
               );
               gl.texParameteri(
                 gl.TEXTURE_CUBE_MAP,
                 gl.TEXTURE_MAG_FILTER,
-                currentFilter,
+                currentFilter
               );
             };
 
@@ -5378,7 +5414,7 @@
     renderSolidTrisFromList({ list }, util) {
       const { triData, listLength, successful } = this._getTriDataFromList(
         list,
-        util,
+        util
       );
       if (!successful) return;
 
@@ -5393,9 +5429,9 @@
 
       // prettier-ignore
       let inputInfo = {
-          a_position: new Float32Array(triData.a_position),
-          a_color: new Float32Array(triData.a_color)
-        };
+        a_position: new Float32Array(triData.a_position),
+        a_color: new Float32Array(triData.a_color)
+      };
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
       gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
@@ -5407,7 +5443,7 @@
       twgl.setBuffersAndAttributes(
         gl,
         penPlusShaders.untextured.ProgramInf,
-        bufferInfo,
+        bufferInfo
       );
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -5449,7 +5485,7 @@
     renderTexturedTrisFromList({ list, tex }, util) {
       const { triData, listLength, successful } = this._getTriDataFromList(
         list,
-        util,
+        util
       );
       if (!successful) return;
 
@@ -5468,10 +5504,10 @@
 
       // prettier-ignore
       let inputInfo = {
-          a_position: new Float32Array(triData.a_position),
-          a_color: new Float32Array(triData.a_color),
-          a_texCoord: new Float32Array(triData.a_texCoord)
-        };
+        a_position: new Float32Array(triData.a_position),
+        a_color: new Float32Array(triData.a_color),
+        a_texCoord: new Float32Array(triData.a_texCoord)
+      };
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
       gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
@@ -5486,7 +5522,7 @@
       twgl.setBuffersAndAttributes(
         gl,
         penPlusShaders.textured.ProgramInf,
-        bufferInfo,
+        bufferInfo
       );
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -5530,7 +5566,7 @@
     renderShaderTrisFromList({ list, shader }, util) {
       const { triData, listLength, successful } = this._getTriDataFromList(
         list,
-        util,
+        util
       );
       if (!successful) return;
 
@@ -5548,10 +5584,10 @@
 
       // prettier-ignore
       let inputInfo = {
-          a_position: new Float32Array(triData.a_position),
-          a_color: new Float32Array(triData.a_color),
-          a_texCoord: new Float32Array(triData.a_texCoord)
-        };
+        a_position: new Float32Array(triData.a_position),
+        a_color: new Float32Array(triData.a_color),
+        a_texCoord: new Float32Array(triData.a_texCoord)
+      };
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
       gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
@@ -5577,12 +5613,84 @@
 
       twgl.setUniforms(
         this.programs[shader].info,
-        this.programs[shader].uniformDat,
+        this.programs[shader].uniformDat
       );
 
       twgl.drawBufferInfo(gl, bufferInfo);
 
       bufferInfo.numElements = 3;
+    }
+
+    editTriDef({ attribute, id, value, def }) {
+      id = Scratch.Cast.toNumber(id);
+      value = Scratch.Cast.toNumber(value);
+
+      //Ignore reductive values
+      if (!(id > 0 && id <= 3)) return def;
+      if (!value) return def;
+
+      //Parse it
+      let parsed = JSON.parse(def);
+      if (!parsed) return def;
+      id -= 1;
+
+      //handleAttributes
+      switch (attribute) {
+        case "x":
+          if (!parsed["a_position"]) break;
+          parsed["a_position"][id * 4] = value;
+          break;
+
+        case "y":
+          if (!parsed["a_position"]) break;
+          parsed["a_position"][id * 4 + 1] = value;
+          break;
+
+        case "depth value":
+          if (!parsed["a_position"]) break;
+          parsed["a_position"][id * 4 + 2] = value;
+          break;
+
+        case "corner pinch":
+          if (!parsed["a_position"]) break;
+          parsed["a_position"][id * 4 + 3] = value;
+          break;
+
+        case "red tint":
+          if (!parsed["a_color"]) break;
+          parsed["a_color"][id * 4] = value / 100;
+          break;
+
+        case "green tint":
+          if (!parsed["a_color"]) break;
+          parsed["a_color"][id * 4 + 1] = value / 100;
+          break;
+
+        case "blue tint":
+          if (!parsed["a_color"]) break;
+          parsed["a_color"][id * 4 + 2] = value / 100;
+          break;
+
+        case "transparency":
+          if (!parsed["a_color"]) break;
+          parsed["a_color"][id * 4 + 3] = value / 100;
+          break;
+
+        case "U value":
+          if (!parsed["a_texCoord"]) break;
+          parsed["a_texCoord"][id * 2] = value;
+          break;
+
+        case "V value":
+          if (!parsed["a_texCoord"]) break;
+          parsed["a_texCoord"][id * 2 + 1] = value;
+          break;
+
+        default:
+          break;
+      }
+
+      return JSON.stringify(parsed);
     }
 
     setCullMode({ direction }) {
@@ -5609,7 +5717,7 @@
       if (name == "Scratch Stage") return;
       if (this.renderTextures[this.prefixes.renderTextures + name]) {
         this._deleteFramebuffer(
-          this.renderTextures[this.prefixes.renderTextures + name],
+          this.renderTextures[this.prefixes.renderTextures + name]
         );
       }
       this.renderTextures[this.prefixes.renderTextures + name] =
@@ -5622,7 +5730,7 @@
       if (name == "Scratch Stage") return;
       if (this.renderTextures[this.prefixes.renderTextures + name]) {
         this._deleteFramebuffer(
-          this.renderTextures[this.prefixes.renderTextures + name],
+          this.renderTextures[this.prefixes.renderTextures + name]
         );
       }
       this.renderTextures[this.prefixes.renderTextures + name] =
@@ -5632,7 +5740,7 @@
         this.renderTextures[this.prefixes.renderTextures + name],
         triBufferAttachments,
         width,
-        height,
+        height
       );
       this.renderTextures[this.prefixes.renderTextures + name].resizing = false;
       this.renderTextures[this.prefixes.renderTextures + name].name = name;
@@ -5644,7 +5752,7 @@
 
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
-          this.currentRenderTexture.framebuffer,
+          this.currentRenderTexture.framebuffer
         );
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -5652,7 +5760,7 @@
           renderer._backgroundColor4f[0],
           renderer._backgroundColor4f[1],
           renderer._backgroundColor4f[2],
-          renderer._backgroundColor4f[3],
+          renderer._backgroundColor4f[3]
         );
       }
     }
@@ -5665,7 +5773,7 @@
           this.currentRenderTexture = triBufferInfo;
           gl.bindFramebuffer(
             gl.FRAMEBUFFER,
-            this.currentRenderTexture.framebuffer,
+            this.currentRenderTexture.framebuffer
           );
         }
         //Delete the framebuffer
@@ -5691,13 +5799,13 @@
           0,
           0,
           this.currentRenderTexture.width,
-          this.currentRenderTexture.height,
+          this.currentRenderTexture.height
         );
         transform_Matrix[0] = 2 / this.currentRenderTexture.width;
         transform_Matrix[1] = -2 / this.currentRenderTexture.width;
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
-          this.currentRenderTexture.framebuffer,
+          this.currentRenderTexture.framebuffer
         );
       }
     }
@@ -5736,7 +5844,7 @@
       0,
       0,
       0,
-      0,
+      0
     );
 
     penPlusShaders.pen.program = shaderManager._shaderCache.line[0].program;
