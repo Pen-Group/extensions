@@ -32,6 +32,10 @@
             {
                 "name":"version 7",
                 "filename":"v7.js"
+            },
+            {
+                "name":"Experimental",
+                "filename":"experi.js"
             }
         ]
     },
