@@ -5404,6 +5404,12 @@
             }
           });
         });
+
+        //Parse these into F32 arrays for performance.
+        Object.keys(merged).forEach((key) => {
+          merged[key] = new Float32Array(merged[key]);
+        });
+
         this.listCache[refinedID] = { prev: listREF.value, dat: merged };
       } else {
         merged = this.listCache[refinedID].dat;
@@ -5430,8 +5436,8 @@
 
       // prettier-ignore
       let inputInfo = {
-        a_position: new Float32Array(triData.a_position),
-        a_color: new Float32Array(triData.a_color)
+        a_position: triData.a_position,
+        a_color: triData.a_color
       };
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
