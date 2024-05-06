@@ -40,7 +40,7 @@
       type: gl.UNSIGNED_BYTE,
       min: gl.LINEAR,
       wrap: gl.CLAMP_TO_EDGE,
-      premultiplyAlpha:true,
+      premultiplyAlpha: true,
     },
     { format: gl.DEPTH_STENCIL },
   ];
@@ -69,7 +69,7 @@
         triBufferInfo,
         triBufferAttachments,
         Scratch.Cast.toNumber(nativeSize[0]),
-        Scratch.Cast.toNumber(nativeSize[1]),
+        Scratch.Cast.toNumber(nativeSize[1])
       );
       gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
     };
@@ -152,8 +152,7 @@
                     void main()
                     {
                       gl_FragColor = v_color;
-                      //gl_FragColor.rgb *= gl_FragColor.a;
-                      gl_FragColor.rgb = clamp(gl_FragColor.rgb / (gl_FragColor.a + 1e-3), 0.0, 1.0);
+                      gl_FragColor.rgb *= gl_FragColor.a;
                       if (gl_FragColor.a == 0.0) {
                         discard;
                       }
@@ -229,7 +228,6 @@
                     void main()
                     {
                       gl_FragColor = texture2D(u_drawTex, v_texCoord);
-                      //gl_FragColor.rgb *= gl_FragColor.a;
                       gl_FragColor.rgb = clamp(gl_FragColor.rgb / (gl_FragColor.a + 1e-3), 0.0, 1.0);
                     }
                 `,
@@ -338,7 +336,7 @@
   twgl.setBuffersAndAttributes(
     gl,
     penPlusShaders.draw.ProgramInf,
-    reRenderInfo,
+    reRenderInfo
   );
 
   let parentExtension = null;
@@ -356,7 +354,7 @@
       renderer._backgroundColor4f[0],
       renderer._backgroundColor4f[1],
       renderer._backgroundColor4f[2],
-      renderer._backgroundColor4f[3],
+      renderer._backgroundColor4f[3]
     );
 
     //Old clearing
@@ -510,7 +508,7 @@
         twgl.setBuffersAndAttributes(
           gl,
           penPlusShaders.untextured.ProgramInf,
-          bufferInfo,
+          bufferInfo
         );
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -592,7 +590,7 @@
         twgl.setBuffersAndAttributes(
           gl,
           penPlusShaders.textured.ProgramInf,
-          bufferInfo,
+          bufferInfo
         );
 
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -614,7 +612,7 @@
         twgl.setBuffersAndAttributes(
           gl,
           penPlusShaders.draw.ProgramInf,
-          reRenderInfo,
+          reRenderInfo
         );
 
         twgl.setUniforms(penPlusShaders.draw.ProgramInf, {
@@ -644,7 +642,7 @@
               this.currentRenderTexture,
               triBufferAttachments,
               Scratch.Cast.toNumber(nativeSize[0]),
-              Scratch.Cast.toNumber(nativeSize[1]),
+              Scratch.Cast.toNumber(nativeSize[1])
             );
           }
           //Resize our variables to be viewport accurate
@@ -652,7 +650,7 @@
             0,
             0,
             this.currentRenderTexture.width,
-            this.currentRenderTexture.height,
+            this.currentRenderTexture.height
           );
           transform_Matrix[0] = 2 / this.currentRenderTexture.width;
           transform_Matrix[1] = -2 / this.currentRenderTexture.width;
@@ -663,7 +661,7 @@
         }
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
-          this.currentRenderTexture.framebuffer,
+          this.currentRenderTexture.framebuffer
         );
         renderer.dirty = true;
       },
@@ -674,7 +672,7 @@
         this.inDrawRegion = false;
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
-          renderer._allSkins[renderer._penSkinId]._framebuffer.framebuffer,
+          renderer._allSkins[renderer._penSkinId]._framebuffer.framebuffer
         );
 
         this.renderFunctions.reRenderPenLayer();
@@ -687,7 +685,7 @@
           renderer._backgroundColor4f[0],
           renderer._backgroundColor4f[1],
           renderer._backgroundColor4f[2],
-          renderer._backgroundColor4f[3],
+          renderer._backgroundColor4f[3]
         );
 
         /*gl.bindFramebuffer(gl.FRAMEBUFFER, triFrameBuffer);
@@ -706,7 +704,7 @@
       hexToRgb: (hex) => {
         if (typeof hex == "string") {
           const splitHex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
-            hex,
+            hex
           );
           return {
             r: parseInt(splitHex[1], 16),
@@ -769,7 +767,7 @@
           0,
           gl.RGBA,
           gl.UNSIGNED_BYTE,
-          pixelData,
+          pixelData
         );
 
         parentExtension.penPlusCostumeLibrary[name] = {
@@ -794,7 +792,7 @@
           0,
           gl.RGBA,
           gl.UNSIGNED_BYTE,
-          new Uint8Array([0, 0, 255, 255]),
+          new Uint8Array([0, 0, 255, 255])
         );
 
         // Let's assume all images are not a power of 2
@@ -816,7 +814,7 @@
                 gl.RGBA,
                 gl.RGBA,
                 gl.UNSIGNED_BYTE,
-                image,
+                image
               );
               parentExtension.penPlusCostumeLibrary[name] = {
                 texture: texture,
@@ -844,7 +842,7 @@
           gl.COLOR_ATTACHMENT0,
           gl.TEXTURE_2D,
           texture,
-          0,
+          0
         );
 
         //?make sure to unbind the framebuffer and delete it!
@@ -865,7 +863,7 @@
             height,
             gl.RGBA,
             gl.UNSIGNED_BYTE,
-            dataArray,
+            dataArray
           );
 
           //?Remove Buffer data and return data
@@ -891,7 +889,7 @@
           gl.COLOR_ATTACHMENT0,
           gl.TEXTURE_2D,
           texture,
-          0,
+          0
         );
 
         //?make sure to unbind the framebuffer and delete it!
@@ -912,7 +910,7 @@
             height,
             gl.RGBA,
             gl.UNSIGNED_BYTE,
-            dataArray,
+            dataArray
           );
 
           //Make an invisible canvas
@@ -1042,7 +1040,7 @@
         const regexSearcher = new RegExp(`.*${attributeKey}.*\n?`);
         let searchResult =
           this.shaders[shaderName].projectData.vertShader.match(
-            regexSearcher,
+            regexSearcher
           )[0];
 
         //Remove whitespace at the beginning for easy extraction
@@ -1087,7 +1085,7 @@
 
       this.programs[shaderName].buffer = twgl.createBufferInfoFromArrays(
         gl,
-        bufferInitilizer,
+        bufferInitilizer
       );
 
       this.programs[shaderName];
@@ -1116,7 +1114,7 @@
         const regexSearcher = new RegExp(`.*${uniformKey}.*;?`);
         let searchResult =
           this.shaders[shaderName].projectData.vertShader.match(
-            regexSearcher,
+            regexSearcher
           )[0];
 
         //Remove whitespace at the beginning for easy extraction
@@ -1131,7 +1129,7 @@
         const arrayLength = Scratch.Cast.toNumber(
           (split.length < 4 ? split[2] : split[3])
             .replace(uniformKey, "")
-            .replaceAll(/[[\];]/g, ""),
+            .replaceAll(/[[\];]/g, "")
         );
 
         this.programs[shaderName].uniformDec[uniformKey].type = type;
@@ -2994,7 +2992,7 @@
         currentTexture = this.renderTextures[name].attachments[0];
       } else {
         const costIndex = curTarget.getCostumeIndexByName(
-          Scratch.Cast.toString(name),
+          Scratch.Cast.toString(name)
         );
         if (costIndex >= 0) {
           const curCostume = curTarget.sprite.costumes[costIndex];
@@ -3036,22 +3034,22 @@
           //convert the rgb to hex
           let r = Math.floor(
             curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[0] *
-              255,
+              255
           ).toString(16);
           r = r.length == 1 ? "0" + r : r;
           let g = Math.floor(
             curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[1] *
-              255,
+              255
           ).toString(16);
           g = g.length == 1 ? "0" + g : g;
           let b = Math.floor(
             curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[2] *
-              255,
+              255
           ).toString(16);
           b = b.length == 1 ? "0" + b : b;
           let a = Math.floor(
             curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[3] *
-              255,
+              255
           ).toString(16);
           a = a.length == 1 ? "0" + a : a;
 
@@ -3070,7 +3068,7 @@
         Scratch.vm.renderer._penSkinId,
         attrib,
         x,
-        y,
+        y
       );
     }
     drawLine({ x1, y1, x2, y2 }, util) {
@@ -3084,7 +3082,7 @@
         x1,
         y1,
         x2,
-        y2,
+        y2
       );
     }
     stampSprite({ sprite }) {
@@ -3210,7 +3208,7 @@
       twgl.setBuffersAndAttributes(
         gl,
         penPlusShaders.untextured.ProgramInf,
-        bufferInfo,
+        bufferInfo
       );
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -3355,7 +3353,7 @@
       twgl.setBuffersAndAttributes(
         gl,
         penPlusShaders.textured.ProgramInf,
-        bufferInfo,
+        bufferInfo
       );
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -3397,7 +3395,7 @@
           if (this.AdvancedSettings._ClampZ) {
             Math.min(
               Math.max(valuetoSet / this.AdvancedSettings._maxDepth, 0),
-              1,
+              1
             );
             return;
           }
@@ -3462,7 +3460,7 @@
         Scratch.Cast.toNumber(attribute),
         value,
         false,
-        trianglePointStart,
+        trianglePointStart
       );
     }
     setWholeTrianglePointAttribute({ wholeAttribute, value }, util) {
@@ -3477,7 +3475,7 @@
         Scratch.Cast.toNumber(wholeAttribute),
         value,
         true,
-        0,
+        0
       );
     }
     tintTriPoint({ point, color }, util) {
@@ -3497,7 +3495,7 @@
         2,
         calcColor.r / 2.55,
         false,
-        trianglePointStart,
+        trianglePointStart
       );
 
       this.attributeEditors.triangle(
@@ -3505,7 +3503,7 @@
         3,
         calcColor.g / 2.55,
         false,
-        trianglePointStart,
+        trianglePointStart
       );
 
       this.attributeEditors.triangle(
@@ -3513,7 +3511,7 @@
         4,
         calcColor.b / 2.55,
         false,
-        trianglePointStart,
+        trianglePointStart
       );
     }
     tintTri({ point, color }, util) {
@@ -3533,7 +3531,7 @@
         2,
         calcColor.r / 2.55,
         true,
-        trianglePointStart,
+        trianglePointStart
       );
 
       this.attributeEditors.triangle(
@@ -3541,7 +3539,7 @@
         3,
         calcColor.g / 2.55,
         true,
-        trianglePointStart,
+        trianglePointStart
       );
 
       this.attributeEditors.triangle(
@@ -3549,7 +3547,7 @@
         4,
         calcColor.b / 2.55,
         true,
-        trianglePointStart,
+        trianglePointStart
       );
     }
     getTrianglePointAttribute({ point, attribute }, util) {
@@ -3615,7 +3613,7 @@
         x3,
         y3,
         attrib.color4f,
-        curTarget.id,
+        curTarget.id
       );
     }
     drawTexTri({ x1, y1, x2, y2, x3, y3, tex }, util) {
@@ -3649,7 +3647,7 @@
           x3,
           y3,
           curTarget.id,
-          currentTexture,
+          currentTexture
         );
       }
     }
@@ -3711,7 +3709,7 @@
         height,
         color,
         this.prefixes.penPlusTextures + name,
-        gl.CLAMP_TO_EDGE,
+        gl.CLAMP_TO_EDGE
       );
     }
 
@@ -3720,7 +3718,7 @@
       this.textureFunctions.createPenPlusTextureInfo(
         dataURI,
         this.prefixes.penPlusTextures + name,
-        gl.CLAMP_TO_EDGE,
+        gl.CLAMP_TO_EDGE
       );
     }
 
@@ -3744,7 +3742,7 @@
       //Just a simple thing to allow for pen drawing
       const curTarget = util.target;
       const costIndex = curTarget.getCostumeIndexByName(
-        Scratch.Cast.toString(costume),
+        Scratch.Cast.toString(costume)
       );
       if (costIndex >= 0) {
         const curCostume =
@@ -3767,7 +3765,7 @@
         const textureData = this.textureFunctions.getTextureData(
           curCostume.texture,
           curCostume.width,
-          curCostume.height,
+          curCostume.height
         );
         if (textureData) {
           x = Math.floor(x - 1);
@@ -3794,7 +3792,7 @@
               0,
               gl.RGBA,
               gl.UNSIGNED_BYTE,
-              textureData,
+              textureData
             );
           }
         }
@@ -3807,7 +3805,7 @@
         const textureData = this.textureFunctions.getTextureData(
           curCostume.texture,
           curCostume.width,
-          curCostume.height,
+          curCostume.height
         );
         if (textureData) {
           x = Math.floor(x - 1);
@@ -3831,7 +3829,7 @@
         const textureData = this.textureFunctions.getTextureAsURI(
           curCostume.texture,
           curCostume.width,
-          curCostume.height,
+          curCostume.height
         );
         if (textureData) {
           return textureData;
@@ -3932,13 +3930,13 @@
                 return (
                   txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
                 );
-              },
+              }
             )}`,
             exportText: `Export to ${hostname.replace(/\w\S*/g, function (txt) {
               return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
             })}`,
           },
-          this.IFrame.src,
+          this.IFrame.src
         );
       };
 
@@ -3999,7 +3997,7 @@
       const triAttribs = this.triangleAttributesOfAllSprites[targetID];
 
       let inputInfo = JSON.parse(
-        JSON.stringify(this.programs[shader].attribDat),
+        JSON.stringify(this.programs[shader].attribDat)
       );
 
       if (triAttribs) {
@@ -4052,7 +4050,7 @@
         gl.bufferData(
           gl.ARRAY_BUFFER,
           new Float32Array(inputInfo[key].data),
-          gl.DYNAMIC_DRAW,
+          gl.DYNAMIC_DRAW
         );
       });
 
@@ -4070,7 +4068,7 @@
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       twgl.setUniforms(
         this.programs[shader].info,
-        this.programs[shader].uniformDat,
+        this.programs[shader].uniformDat
       );
 
       twgl.drawBufferInfo(gl, bufferInfo);
@@ -4213,7 +4211,7 @@
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       twgl.setUniforms(
         this.programs[shader].info,
-        this.programs[shader].uniformDat,
+        this.programs[shader].uniformDat
       );
 
       transform_Matrix[2] = 0;
@@ -4345,7 +4343,7 @@
       if (!this.programs[shader].uniformDat[uniformName]) return "";
       const text = this.programs[shader].uniformDat[uniformName];
       let foundValue = Object.keys(this.penPlusCostumeLibrary).find(
-        (key) => this.penPlusCostumeLibrary[key] === text,
+        (key) => this.penPlusCostumeLibrary[key] === text
       );
       //if we cannot find it in the pen+ library look for it in the scratch costume library
       if (!foundValue) {
@@ -4372,7 +4370,7 @@
       if (!this.programs[shader].uniformDat[uniformName]) return "";
       const text = this.programs[shader].uniformDat[uniformName];
       return Object.keys(this.penPlusCubemap).find(
-        (key) => this.penPlusCubemap[key] === text,
+        (key) => this.penPlusCubemap[key] === text
       );
     }
 
@@ -4902,7 +4900,7 @@
 
           //I dunno why prettier feels the need to do this. I feel like it makes it more unreadable.
           menuSpecificVars.saveStuffHolder.appendChild(
-            menuSpecificVars.shadername,
+            menuSpecificVars.shadername
           );
 
           //Save Button
@@ -4929,7 +4927,7 @@
           };
 
           menuSpecificVars.saveStuffHolder.appendChild(
-            menuSpecificVars.saveButton,
+            menuSpecificVars.saveButton
           );
 
           //A container containing already existing shaders and some text to accompony them.
@@ -4959,7 +4957,7 @@
           menuSpecificVars.existingText.innerHTML = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingText,
+            menuSpecificVars.existingText
           );
 
           //The background for existing shaders
@@ -4977,7 +4975,7 @@
           menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDivBackground,
+            menuSpecificVars.existingDivBackground
           );
 
           //The container for existing shaders
@@ -4993,7 +4991,7 @@
           menuSpecificVars.existingDiv.style.overflowX = "hidden";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDiv,
+            menuSpecificVars.existingDiv
           );
 
           Object.keys(this.shaders).forEach((shader) => {
@@ -5057,7 +5055,7 @@
           menuSpecificVars.existingText.innerHTML = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingText,
+            menuSpecificVars.existingText
           );
 
           //The background for existing shaders
@@ -5075,7 +5073,7 @@
           menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDivBackground,
+            menuSpecificVars.existingDivBackground
           );
 
           //The container for existing shaders
@@ -5091,7 +5089,7 @@
           menuSpecificVars.existingDiv.style.overflowX = "hidden";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDiv,
+            menuSpecificVars.existingDiv
           );
 
           Object.keys(this.shaders).forEach((shader) => {
@@ -5199,7 +5197,7 @@
           menuSpecificVars.existingText.innerHTML = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingText,
+            menuSpecificVars.existingText
           );
 
           //The background for existing shaders
@@ -5217,7 +5215,7 @@
           menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDivBackground,
+            menuSpecificVars.existingDivBackground
           );
 
           //The container for existing shaders
@@ -5233,7 +5231,7 @@
           menuSpecificVars.existingDiv.style.overflowX = "hidden";
 
           menuSpecificVars.existingShaderHolder.appendChild(
-            menuSpecificVars.existingDiv,
+            menuSpecificVars.existingDiv
           );
 
           Object.keys(this.shaders).forEach((shader) => {
@@ -5252,7 +5250,7 @@
                   type: "DATA_LOAD",
                   projectData: this.shaders[shader].projectData.projectData,
                 },
-                this.IFrame.src,
+                this.IFrame.src
               );
               closeFunc();
             };
@@ -5323,14 +5321,14 @@
         const curCostume =
           this.penPlusCostumeLibrary[cubemapSetup[faceID].texture] ||
           curTarget.getCostumeIndexByName(
-            Scratch.Cast.toString(cubemapSetup[faceID].texture),
+            Scratch.Cast.toString(cubemapSetup[faceID].texture)
           );
 
         if (this.penPlusCostumeLibrary[cubemapSetup[faceID].texture]) {
           const textureData = this.textureFunctions.getTextureData(
             curCostume.texture,
             curCostume.width,
-            curCostume.height,
+            curCostume.height
           );
 
           gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.penPlusCubemap[name]);
@@ -5343,18 +5341,18 @@
             0,
             gl.RGBA,
             gl.UNSIGNED_BYTE,
-            textureData,
+            textureData
           );
 
           gl.texParameteri(
             gl.TEXTURE_CUBE_MAP,
             gl.TEXTURE_MIN_FILTER,
-            currentFilter,
+            currentFilter
           );
           gl.texParameteri(
             gl.TEXTURE_CUBE_MAP,
             gl.TEXTURE_MAG_FILTER,
-            currentFilter,
+            currentFilter
           );
         } else {
           if (curCostume >= 0) {
@@ -5372,18 +5370,18 @@
                 gl.RGBA,
                 gl.RGBA,
                 gl.UNSIGNED_BYTE,
-                image,
+                image
               );
 
               gl.texParameteri(
                 gl.TEXTURE_CUBE_MAP,
                 gl.TEXTURE_MIN_FILTER,
-                currentFilter,
+                currentFilter
               );
               gl.texParameteri(
                 gl.TEXTURE_CUBE_MAP,
                 gl.TEXTURE_MAG_FILTER,
-                currentFilter,
+                currentFilter
               );
             };
 
@@ -5454,7 +5452,7 @@
     renderSolidTrisFromList({ list }, util) {
       const { triData, listLength, successful } = this._getTriDataFromList(
         list,
-        util,
+        util
       );
       if (!successful) return;
 
@@ -5477,7 +5475,7 @@
       twgl.setBuffersAndAttributes(
         gl,
         penPlusShaders.untextured.ProgramInf,
-        bufferInfo,
+        bufferInfo
       );
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -5519,7 +5517,7 @@
     renderTexturedTrisFromList({ list, tex }, util) {
       const { triData, listLength, successful } = this._getTriDataFromList(
         list,
-        util,
+        util
       );
       if (!successful) return;
 
@@ -5549,7 +5547,7 @@
       twgl.setBuffersAndAttributes(
         gl,
         penPlusShaders.textured.ProgramInf,
-        bufferInfo,
+        bufferInfo
       );
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -5630,7 +5628,7 @@
 
       twgl.setUniforms(
         this.programs[shader].info,
-        this.programs[shader].uniformDat,
+        this.programs[shader].uniformDat
       );
 
       twgl.drawBufferInfo(gl, buffer);
@@ -5734,7 +5732,7 @@
       if (name == "Scratch Stage") return;
       if (this.renderTextures[this.prefixes.renderTextures + name]) {
         this._deleteFramebuffer(
-          this.renderTextures[this.prefixes.renderTextures + name],
+          this.renderTextures[this.prefixes.renderTextures + name]
         );
       }
       this.renderTextures[this.prefixes.renderTextures + name] =
@@ -5747,7 +5745,7 @@
       if (name == "Scratch Stage") return;
       if (this.renderTextures[this.prefixes.renderTextures + name]) {
         this._deleteFramebuffer(
-          this.renderTextures[this.prefixes.renderTextures + name],
+          this.renderTextures[this.prefixes.renderTextures + name]
         );
       }
       this.renderTextures[this.prefixes.renderTextures + name] =
@@ -5757,7 +5755,7 @@
         this.renderTextures[this.prefixes.renderTextures + name],
         triBufferAttachments,
         width,
-        height,
+        height
       );
       this.renderTextures[this.prefixes.renderTextures + name].resizing = false;
       this.renderTextures[this.prefixes.renderTextures + name].name = name;
@@ -5769,7 +5767,7 @@
 
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
-          this.currentRenderTexture.framebuffer,
+          this.currentRenderTexture.framebuffer
         );
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -5777,7 +5775,7 @@
           renderer._backgroundColor4f[0],
           renderer._backgroundColor4f[1],
           renderer._backgroundColor4f[2],
-          renderer._backgroundColor4f[3],
+          renderer._backgroundColor4f[3]
         );
       }
     }
@@ -5790,7 +5788,7 @@
           this.currentRenderTexture = triBufferInfo;
           gl.bindFramebuffer(
             gl.FRAMEBUFFER,
-            this.currentRenderTexture.framebuffer,
+            this.currentRenderTexture.framebuffer
           );
         }
         //Delete the framebuffer
@@ -5816,13 +5814,13 @@
           0,
           0,
           this.currentRenderTexture.width,
-          this.currentRenderTexture.height,
+          this.currentRenderTexture.height
         );
         transform_Matrix[0] = 2 / this.currentRenderTexture.width;
         transform_Matrix[1] = -2 / this.currentRenderTexture.width;
         gl.bindFramebuffer(
           gl.FRAMEBUFFER,
-          this.currentRenderTexture.framebuffer,
+          this.currentRenderTexture.framebuffer
         );
       }
     }
