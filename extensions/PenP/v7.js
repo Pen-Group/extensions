@@ -3400,15 +3400,20 @@
 
       let valuetoSet = Scratch.Cast.toNumber(number);
 
-      const attributeNum = Math.min(Math.max(Scratch.Cast.toNumber(target),0),11);
+      const attributeNum = Math.min(
+        Math.max(Scratch.Cast.toNumber(target), 0),
+        11
+      );
 
       //Prevent it from setting the z to a color value;
       if (attributeNum >= 7 && attributeNum != 11) {
-        this.squareAttributesOfAllSprites[curTarget.id][attributeNum] = Math.min(Math.max(valuetoSet, 0), 100) * 0.01;
+        this.squareAttributesOfAllSprites[curTarget.id][attributeNum] =
+          Math.min(Math.max(valuetoSet, 0), 100) * 0.01;
         return;
       }
 
-      this.squareAttributesOfAllSprites[curTarget.id][attributeNum] = valuetoSet;
+      this.squareAttributesOfAllSprites[curTarget.id][attributeNum] =
+        valuetoSet;
     }
     getStampAttribute({ target }, util) {
       const curTarget = util.target;
