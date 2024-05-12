@@ -7,6 +7,10 @@
 // With permission from Sharkpool-SP to use his pen layer data uri block!
 // Thanks dude!
 
+//If you are a mod developer please hit ctrl + f and look for /* MESSAGE FOR MOD DEVELOPERS */ to find more info
+//About supporting you mod.
+//    --Thanks ObviousAlexC
+
 (function (Scratch) {
   "use strict";
 
@@ -282,6 +286,24 @@
         vert: vertShader,
         frag: fragShader,
       };
+    },
+  };
+
+  //Used for the popup animation
+  const animationKeyframes = {
+    open: {
+      IFRAME: [{ top: "100%", easing: "ease-out" }, { top: "10%" }],
+      BG: [
+        { filter: "opacity(0%)", easing: "ease-out" },
+        { filter: "opacity(100%)" },
+      ],
+    },
+    close: {
+      IFRAME: [{ top: "10%", easing: "ease-in" }, { top: "-100%" }],
+      BG: [
+        { filter: "opacity(100%)", easing: "ease-in" },
+        { filter: "opacity(0%)" },
+      ],
     },
   };
 
@@ -805,6 +827,7 @@
           Scratch.canFetch(url).then((allowed) => {
             if (!allowed) {
               reject(false);
+              return;
             }
             // Permission is checked earlier.
             // eslint-disable-next-line no-restricted-syntax
@@ -947,8 +970,8 @@
     culling = false;
     cullMode = 0;
 
-    shaders = {};
-    programs = {};
+    shaders = Object.create(null);
+    programs = Object.create(null);
 
     extensionVersion = "7.0.0";
 
@@ -957,7 +980,7 @@
       renderTextures: "",
     };
 
-    renderTextures = {};
+    renderTextures = Object.create(null);
     currentRenderTexture = triBufferInfo;
 
     blockIcons = {
@@ -1137,7 +1160,6 @@
               .replace(uniformKey, "")
               .replaceAll(/[[\];]/g, "")
           );
-        
 
           this.programs[shaderName].uniformDec[uniformKey].type = type;
           //Add data for array stuff
@@ -2951,8 +2973,6 @@
     }
     //From lily's list tools... With permission of course.
     _getLists() {
-      // @ts-expect-error - Blockly not typed yet
-      // eslint-disable-next-line no-undef
       const lists =
         typeof Blockly === "undefined"
           ? []
@@ -3717,8 +3737,7 @@
         width,
         height,
         color,
-        this.prefixes.penPlusTextures + name,
-        gl.CLAMP_TO_EDGE
+        this.prefixes.penPlusTextures + name
       );
     }
 
@@ -3726,8 +3745,7 @@
       //Just a simple thing to allow for pen drawing
       this.textureFunctions.createPenPlusTextureInfo(
         dataURI,
-        this.prefixes.penPlusTextures + name,
-        gl.CLAMP_TO_EDGE
+        this.prefixes.penPlusTextures + name
       );
     }
 
@@ -3890,7 +3908,14 @@
     }
 
     //?Custom Shaders
-    openShaderEditor() {
+    async openShaderEditor() {
+      const frameSource =
+        "https://pen-group.github.io/penPlus-shader-editor/Source/";
+
+      if (!(await Scratch.canEmbed(frameSource))) {
+        return;
+      }
+
       const bgFade = document.createElement("div");
       bgFade.style.width = "100%";
       bgFade.style.height = "100%";
@@ -3900,13 +3925,14 @@
       bgFade.style.top = "0px";
 
       bgFade.style.backgroundColor = this.fade;
-      bgFade.style.filter = "opacity(0%)";
+      bgFade.style.filter = "opacity(100%)";
 
       bgFade.style.zIndex = "10000";
 
       document.body.appendChild(bgFade);
 
       this.IFrame = document.createElement("iframe");
+      this.IFrame.style.backgroundColor = this._menuBarBackground;
       this.IFrame.style.width = "80%";
       this.IFrame.style.height = "80%";
       this.IFrame.style.borderRadius = "8px";
@@ -3916,7 +3942,7 @@
 
       this.IFrame.style.position = "absolute";
       this.IFrame.style.left = "10%";
-      this.IFrame.style.top = "100%";
+      this.IFrame.style.top = "10%";
 
       this.IFrame.style.zIndex = "10001";
 
@@ -3951,37 +3977,23 @@
 
       this.IFrame.closeIframe = () => {
         document.body.style.overflowY = "hidden";
-        let animation = 0;
-        let oldInterval = setInterval(() => {
-          if (animation < -90) {
-            document.body.style.overflowY = "inherit";
-            document.body.removeChild(this.IFrame);
-            document.body.removeChild(bgFade);
-            clearInterval(oldInterval);
-          }
 
-          this.IFrame.style.top = animation + "%";
-          bgFade.style.filter = `opacity(${100 - Math.abs(animation - 10)}%)`;
-          animation += (-100 - animation) * 0.05;
-        }, 16);
+        this.IFrame.animate(animationKeyframes.close.IFRAME, 1000);
+        bgFade.animate(animationKeyframes.close.BG, 1000);
+
+        //Can't get animationend to work.
+        setTimeout(() => {
+          document.body.removeChild(this.IFrame);
+          document.body.removeChild(bgFade);
+        }, 1000);
       };
 
-      this.IFrame.src =
-        "https://pen-group.github.io/penPlus-shader-editor/Source/";
+      this.IFrame.src = frameSource;
 
       //Popup animation
       document.body.style.overflowY = "hidden";
-      let animation = 100;
-      let oldInterval = setInterval(() => {
-        if (Math.abs(animation - 10) < 1) {
-          document.body.style.overflowY = "inherit";
-          clearInterval(oldInterval);
-        }
-
-        this.IFrame.style.top = animation + "%";
-        bgFade.style.filter = `opacity(${100 - Math.abs(animation - 10)}%)`;
-        animation += (10 - animation) * 0.05;
-      }, 16);
+      this.IFrame.animate(animationKeyframes.open.IFRAME, 1000);
+      bgFade.animate(animationKeyframes.open.BG, 1000);
 
       //Add the IFrame to the body
       document.body.appendChild(this.IFrame);
@@ -4067,7 +4079,7 @@
 
       //Just use the real scratch timer.
       this.programs[shader].uniformDat.u_timer =
-        runtime.ext_scratch3_sensing.getTimer({}, util);
+        runtime.ioDevices.clock.projectTimer();
       this.programs[shader].uniformDat.u_transform = transform_Matrix;
       this.programs[shader].uniformDat.u_res = nativeSize;
 
@@ -4208,7 +4220,7 @@
 
       //Just use the real scratch timer.
       this.programs[shader].uniformDat.u_timer =
-        runtime.ext_scratch3_sensing.getTimer({}, util);
+        runtime.ioDevices.clock.projectTimer();
       this.programs[shader].uniformDat.u_transform = transform_Matrix;
       this.programs[shader].uniformDat.u_res = nativeSize;
 
@@ -4608,6 +4620,7 @@
         numberW;
     }
 
+    /* MESSAGE FOR MOD DEVELOPERS */
     //Doing this just because the penguinmod UI doesn't have this sort of stuff and I'm feeling nice today.
     //Don't bother me with this stuff in the future.
     //I cannot support every mod under the sun.
@@ -4767,7 +4780,7 @@
 
       topText.style.fontSize = "24px";
 
-      topText.innerHTML = "Shader Manager";
+      topText.textContent = "Shader Manager";
 
       shaderManager.appendChild(topText);
 
@@ -4844,7 +4857,7 @@
           shaderManager.style.height = height >= width ? "auto" : height + "%";
         },
         nameFunc: (name) => {
-          topText.innerHTML = name;
+          topText.textContent = name;
         },
       };
     }
@@ -4967,7 +4980,7 @@
 
           menuSpecificVars.existingText.style.fontSize = "16px";
 
-          menuSpecificVars.existingText.innerHTML = "Project Shaders";
+          menuSpecificVars.existingText.textContent = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
             menuSpecificVars.existingText
@@ -5065,7 +5078,7 @@
 
           menuSpecificVars.existingText.style.fontSize = "16px";
 
-          menuSpecificVars.existingText.innerHTML = "Project Shaders";
+          menuSpecificVars.existingText.textContent = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
             menuSpecificVars.existingText
@@ -5207,7 +5220,7 @@
 
           menuSpecificVars.existingText.style.fontSize = "16px";
 
-          menuSpecificVars.existingText.innerHTML = "Project Shaders";
+          menuSpecificVars.existingText.textContent = "Project Shaders";
 
           menuSpecificVars.existingShaderHolder.appendChild(
             menuSpecificVars.existingText
@@ -5398,7 +5411,6 @@
               );
             };
 
-            // eslint-disable-next-line
             image.src = costumeURI;
           }
         }
