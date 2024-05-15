@@ -3910,7 +3910,7 @@
     //?Custom Shaders
     async openShaderEditor() {
       const frameSource =
-        "https://pen-group.github.io/penPlus-shader-editor/Source/";
+        "https://pen-group.github.io/penPlus-shader-editor/Source/?exerimental=true";
 
       if (!(await Scratch.canEmbed(frameSource))) {
         return;
