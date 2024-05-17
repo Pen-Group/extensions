@@ -8,16 +8,13 @@
   "use strict";
 
   if (!Scratch.vm.extensionManager.isExtensionLoaded("penP")) {
-    //&& Scratch.extensions.isPenguinMod) {
-    //Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js");
-    Scratch.vm.extensionManager.loadExtensionURL(
-      "http://localhost:8000/extensions/PenP/v7.js",
-    );
+    if (Scratch.extensions.isPenguinMod) {
+      Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js");
+    }
+    else {
+      Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js");
+    }
   }
-  /*else if ((!Scratch.vm.extensionManager.isExtensionLoaded("penP")) && (!Scratch.extensions.isPenguinMod)){
-        alert("Addon could not autoload pen+. Load pen+ and try again!");
-        throw new Error("Addon could not autoload pen+. Load pen+ and try again!");
-    }*/
 
   if (!Scratch.extensions.unsandboxed) {
     //for those who use the version from pen-group's site
