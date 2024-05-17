@@ -39,6 +39,10 @@ function addExtension(extensionJSON) {
                     bodyData += `\n<select id="${extensionJSON.id}_select" style="background-color:#ff8800; value=${latestVersion}">${options}</select>`;
                   }
 
+                  if (extensionJSON.turbowarpVersion) {
+                    bodyData += <a id="${extensionJSON.id}_open_TWVER" style="background-color:#ff6666" href="https://turbowarp.org/editor?extension=${extensionJSON.turbowarpVersion}">Open Turbowarp Version</a>`;
+                  }
+
                   return bodyData;
                 })()}
             </div>
