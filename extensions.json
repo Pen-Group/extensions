@@ -4,7 +4,7 @@
     "id": "PenP",
     "description": "More pen related functions that allow for advanced rendering. By ObviousAlexC",
     "latestVersion": "v7.js",
-    "turbowarpVersion": "https://extensions.turbowarp.org/obviousAlexC/penPlus.js"
+    "turbowarpVersion": "https://extensions.turbowarp.org/obviousAlexC/penPlus.js",
     "versions": [
       {
         "name": "version 1",
