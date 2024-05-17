@@ -40,7 +40,7 @@ function addExtension(extensionJSON) {
                   }
 
                   if (extensionJSON.turbowarpVersion) {
-                    bodyData += <a id="${extensionJSON.id}_open_TWVER" style="background-color:#ff6666" href="https://turbowarp.org/editor?extension=${extensionJSON.turbowarpVersion}">Open Turbowarp Version</a>`;
+                    bodyData += `<a id="${extensionJSON.id}_open_TWVER" style="background-color:#ff6666" href="https://turbowarp.org/editor?extension=${extensionJSON.turbowarpVersion}">Open Turbowarp Version</a>`;
                   }
 
                   return bodyData;
