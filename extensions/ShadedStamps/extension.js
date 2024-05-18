@@ -253,7 +253,7 @@
           },
           {
             blockType:Scratch.BlockType.BUTTON,
-            text:"Reload Default Shaders",
+            text:"Add Default Shaders",
             func:"addDefaultShaders"
           },
           {
