@@ -47,11 +47,16 @@
     "unavailable": true
   },
   {
-    "name": "Shaded Stamps",
+    "name": "Shaded",
     "id": "ShadedStamps",
     "thumbnailFormat": "png",
-    "description": "Custom shaders for scratch stamps. By ObviousAlexC (Coming Later)",
-    "unavailable": true
+    "description": "Custom shaders for the scratch stage. By ObviousAlexC",
+    "versions": [
+      {
+        "name": "version 1",
+        "filename": "extension.js"
+      }
+    ]
   },
   {
     "name": "Render Control",
