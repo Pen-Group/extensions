@@ -170,6 +170,36 @@
       }
     }
 
+    addDefaultShaders() {
+      if (penPlus) {
+        Object.keys(defaultShaders).forEach(shaderName => {
+          if (!penPlus.shaders[shaderName]) {
+            if (defaultShaders[shaderName].projectData.projectData) {
+              penPlus.saveShader(shaderName,{
+                projectData: defaultShaders[shaderName].projectData.projectData,
+                vertShader: defaultShaders[shaderName].projectData.vertShader,
+                fragShader: defaultShaders[shaderName].projectData.fragShader
+              });
+            }
+            else {
+              penPlus.saveShader(shaderName,{
+                projectData: defaultShaders[shaderName].projectData,
+                vertShader: defaultShaders[shaderName].vertShader,
+                fragShader: defaultShaders[shaderName].fragShader
+              });
+            }
+          }
+
+          setTimeout(() => {
+            if (defaultParameters[shaderName]) {
+              penPlus.programs[shaderName].uniformDat = defaultParameters[shaderName];
+            }
+          }, 33);
+
+        });
+      }
+    }
+
     constructor() {
       parentExtension = this;
       renderer.draw = this.customDrawFunction;
@@ -220,6 +250,11 @@
           {
             blockType:Scratch.BlockType.LABEL,
             text:"block in to save shaders!"
+          },
+          {
+            blockType:Scratch.BlockType.BUTTON,
+            text:"Reload Default Shaders",
+            func:"addDefaultShaders"
           },
           {
             opcode: "setStageShader",
