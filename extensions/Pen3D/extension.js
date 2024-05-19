@@ -7,14 +7,9 @@
 (function (Scratch) {
   "use strict";
 
-  if (!Scratch.vm.extensionManager.isExtensionLoaded("penP")) {
-    if (Scratch.extensions.isPenguinMod) {
-      Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js");
-    }
-    else {
-      Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js");
-    }
-  }
+  
+  //Pen+ Addon API
+  let penPlus; Scratch.vm.runtime.on("EXTENSION_ADDED", () => {penPlus = runtime.ext_obviousalexc_penPlus}); if (!Scratch.vm.extensionManager.isExtensionLoaded("penP")) {if (Scratch.extensions.isPenguinMod) {Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js");} else {Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js");}}
 
   if (!Scratch.extensions.unsandboxed) {
     //for those who use the version from pen-group's site
@@ -75,7 +70,40 @@
       }
     }
 
-    _import_handle_obj(shaderPanel, closeFunc) {}
+    twStyledInput(input) {
+      input.style.cursor = "pointer";
+      input.style.display = "block";
+      input.style.borderRadius = "0.25rem";
+      input.style.padding = "1rem";
+      input.style.margin = "1rem 0";
+      input.style.border = "4px dashed var(--ui-tertiary)";
+      input.style.width = "50%";
+      input.style.position = "absolute";
+      input.style.left = "50%";
+      input.style.transform = "translate(-50%,0%)";
+      input.style.background = "none";
+    }
+
+    _import_handle_obj(file, shaderPanel, closeFunc) {
+      const mtlButton = document.createElement("input")
+      mtlButton.type = "file";
+      mtlButton.accept = ".mtl";
+
+      mtlButton.innerHTML = "Import Mesh";
+      this.twStyledInput(mtlButton);
+
+      shaderPanel.appendChild(mtlButton);
+
+      let mtlFile = null;
+
+      mtlButton.onchange = (event) => {
+        mtlFile = mtlButton.files[0];
+        mtlButton.disabled = true;
+      };
+
+    }
+
+    _import_handle_fbx(file, shaderPanel, closeFunc) {}
 
     _meshImporter() {
       const { shaderPanel, closeFunc, resizeFunc, nameFunc } =
@@ -91,6 +119,7 @@
         //Import Handler
         if (this[`_import_handle_${split[split.length - 1].toLowerCase()}`])
           this[`_import_handle_${split[split.length - 1].toLowerCase()}`](
+            file,
             shaderPanel,
             closeFunc,
           );
@@ -103,24 +132,15 @@
 
         const importButton = document.createElement("input");
         importButton.type = "file";
-        importButton.accept = ".obj,.dae,.fbx";
+        importButton.accept = ".obj,.dae,.fbx,.bbmodel,.gltf";
 
         importButton.innerHTML = "Import Mesh";
-        importButton.style.cursor = "pointer";
-        importButton.style.display = "block";
-        importButton.style.borderRadius = "0.25rem";
-        importButton.style.padding = "1rem";
-        importButton.style.margin = "1rem 0";
-        importButton.style.border = "4px dashed var(--ui-tertiary)";
-        importButton.style.width = "50%";
-        importButton.style.position = "absolute";
-        importButton.style.left = "50%";
-        importButton.style.transform = "translate(-50%,0%)";
-        importButton.style.background = "none";
-        buttoncontainer.appendChild(importButton);
+        this.twStyledInput(importButton);
+        shaderPanel.appendChild(importButton);
 
         importButton.onchange = (event) => {
           file = importButton.files[0];
+          importButton.disabled = true;
           updateOptions();
         };
       }
