@@ -1261,6 +1261,21 @@
                 createArray(4);
               break;
 
+            case "mat2":
+              this.programs[shaderName].uniformDec[uniformKey].arrayData =
+                createArray(4);
+              break;
+
+            case "mat3":
+              this.programs[shaderName].uniformDec[uniformKey].arrayData =
+                createArray(9);
+              break;
+
+            case "mat4":
+              this.programs[shaderName].uniformDec[uniformKey].arrayData =
+                createArray(16);
+              break;
+
             default:
               break;
           }
@@ -2273,6 +2288,40 @@
             },
           },
           {
+            opcode: "setArrayMatrixInShaderList",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set item [item] in matrix array [uniformName] in [shader] to [list]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "penPlusShaders",
+              },
+              list: { type: Scratch.ArgumentType.STRING, menu: "listMenu" },
+            },
+          },
+          {
+            opcode: "setArrayMatrixInShaderArray",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set item [item] in matrix array [uniformName] in [shader] to [array]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "penPlusShaders",
+              },
+              array: { type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0,0]" },
+            },
+          },
+          {
             opcode: "getArrayNumberInShader",
             blockType: Scratch.BlockType.REPORTER,
             text: "get item [item]'s value in number array [uniformName] in [shader]",
@@ -2332,6 +2381,26 @@
             opcode: "getArrayVec4InShader",
             blockType: Scratch.BlockType.REPORTER,
             text: "get item [item]'s [component] value in vector 4 array [uniformName] in [shader]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              component: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "vec4Component",
+              },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "penPlusShaders",
+              },
+            },
+          },
+          {
+            opcode: "getArrayMatrixInShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get item [item]'s value in matrix array [uniformName] in [shader]",
             arguments: {
               item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
               component: {
@@ -2413,6 +2482,30 @@
               numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
               numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
               numberZ: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+            },
+          },
+          {
+            opcode: "setVec4AttributeInShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set vector 4 attribute [attributeName] of point [pointID] in [shader] to [numberX] [numberY] [numberZ] [numberW]",
+            arguments: {
+              attributeName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "attribute",
+              },
+              pointID: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "1",
+                menu: "pointMenu",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "penPlusShaders",
+              },
+              numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              numberZ: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              numberW: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
             },
           },
           {
@@ -4480,7 +4573,7 @@
         return parseInt(str);
       });
 
-      this.programs[shader][uniformName] = converted;
+      this.programs[shader].uniformDat[uniformName] = converted;
     }
 
     setCubeInShader({ uniformName, shader, cubemap }) {
@@ -4643,6 +4736,34 @@
       this.programs[shader].uniformDat[uniformName][item + 3] = numberW;
     }
 
+    setArrayMatrixInShaderList({ item, uniformName, shader, list }) {
+      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader, uniformName)) return;
+      if (  item < 1 ||  item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+
+      let listOBJ = this._getVarObjectFromName(list, util, "list").value;
+      let converted = listOBJ.map(function (str) {
+        return parseFloat(str);
+      });
+
+      this.programs[shader].uniformDat[uniformName][item] = converted;
+    }
+
+    setArrayMatrixInShaderArray({ item, uniformName, shader, array }) {
+      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader, uniformName)) return;
+      if (  item < 1 ||  item > this.programs[shader].uniformDec[uniformName].arrayLength)  return;
+
+      let converted = JSON.parse(array);
+      //Make sure its an array
+      if (!Array.isArray(converted)) return;
+      converted = converted.map(function (str) {
+        return parseInt(str);
+      });
+
+      this.programs[shader].uniformDat[uniformName][item] = converted;
+    }
+
     getArrayNumberInShader({ item, uniformName, shader }) {
       if (!this.programs[shader]) return 0;
       if (!this._isUniformArray(shader, uniformName)) return 0;
@@ -4695,6 +4816,18 @@
       return (
         this.programs[shader].uniformDat[uniformName][item + component] || 0
       );
+    }
+
+    getArrayMatrixInShader({ item, uniformName, shader }) {
+      if (!this.programs[shader]) return 0;
+      if (!this._isUniformArray(shader, uniformName)) return 0;
+      if (
+        item < 1 ||
+        item > this.programs[shader].uniformDec[uniformName].arrayLength
+      )
+        return "";
+      item -= 1;
+      return JSON.stringify(this.programs[shader].uniformDat[uniformName][item]);
     }
 
     //Attributes
