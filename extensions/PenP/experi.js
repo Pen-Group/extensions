@@ -4805,7 +4805,7 @@
     }
 
     getArrayVec4InShader({ item, component, uniformName, shader }) {
-      if (!this.programs[shader]) return;
+      if (!this.programs[shader]) return 0;
       if (!this._isUniformArray(shader, uniformName)) return 0;
       if (
         item < 1 ||
@@ -4825,7 +4825,7 @@
         item < 1 ||
         item > this.programs[shader].uniformDec[uniformName].arrayLength
       )
-        return "";
+        return 0;
       item -= 1;
       return JSON.stringify(this.programs[shader].uniformDat[uniformName][item]);
     }
