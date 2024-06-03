@@ -3216,15 +3216,15 @@
 
       //Hopefully it is in the costumes
       else {
-        console.log(curTarget.sprite);
         const costIndex = curTarget.getCostumeIndexByName(
           Scratch.Cast.toString(name)
         );
         if (costIndex >= 0) {
           const curCostume = curTarget.sprite.costumes[costIndex];
 
-          currentTexture =
-            renderer._allSkins[curCostume.skinId].getTexture();
+          if (!renderer._allSkins[curCostume.skinId]._uniforms.u_skin) renderer._allSkins[curCostume.skinId].getTexture();
+          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
+            
         }
       }
 
