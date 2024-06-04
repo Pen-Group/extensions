@@ -3222,9 +3222,7 @@
         if (costIndex >= 0) {
           const curCostume = curTarget.sprite.costumes[costIndex];
 
-          if (!renderer._allSkins[curCostume.skinId]._uniforms.u_skin) renderer._allSkins[curCostume.skinId].getTexture();
-          currentTexture = renderer._allSkins[curCostume.skinId]._uniforms.u_skin;
-            
+          currentTexture = renderer._allSkins[curCostume.skinId]._texture;
         }
       }
 
