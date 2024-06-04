@@ -3038,7 +3038,7 @@
             acceptReporters: true,
           },
         },
-        name: "Pen+ V7",
+        name: "Pen+ Experimental",
         id: "penP",
         docsURI:
           "https://pen-group.github.io/docs/?page=extensions%2FpenPlus%2Fmain",
