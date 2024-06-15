@@ -134,7 +134,11 @@
       }
 
       if (currentFrameBuffer) {
-        if (!penPlus.shaders[currentShader]) {
+        if (
+          (!penPlus.shaders[currentShader]) ||
+          (!penPlus.shaders[currentShader].info) ||
+          (!penPlus.shaders[currentShader].info.program)
+        ) {
           parentExtension.resetBuffer();
           //re-render if no shader is found.
           renderer.dirty = true;
@@ -317,8 +321,8 @@
       if (currentFrameBuffer != stageBuffer) {
         currentFrameBuffer = stageBuffer;
       }
-      currentShader = shader;
 
+      currentShader = shader;
       if (!penPlus.shaders[shader]) {
         this.resetBuffer();
         return;
