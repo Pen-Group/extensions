@@ -89,14 +89,127 @@
   let currentShader = null;
 
   let parentExtension = null;
+  let shouldBeDirty = false;
+
+  let spriteShaders = {};
 
   class extension {
+    //Awesome
+    advDrawThese (drawables, drawMode, projection, opts = {}) {
+
+      const gl = renderer._gl;
+      let currentShader = null;
+
+      const framebufferSpaceScaleDiffers = (
+          'framebufferWidth' in opts && 'framebufferHeight' in opts &&
+          opts.framebufferWidth !== renderer._nativeSize[0] && opts.framebufferHeight !== renderer._nativeSize[1]
+      );
+
+      const numDrawables = drawables.length;
+      for (let drawableIndex = 0; drawableIndex < numDrawables; ++drawableIndex) {
+          const drawableID = drawables[drawableIndex];
+
+          // If we have a filter, check whether the ID fails
+          if (opts.filter && !opts.filter(drawableID)) continue;
+
+          const drawable = renderer._allDrawables[drawableID];
+          /** @todo check if drawable is inside the viewport before anything else */
+
+          // Hidden drawables (e.g., by a "hide" block) are not drawn unless
+          // the ignoreVisibility flag is used (e.g. for stamping or touchingColor).
+          if (!drawable.getVisible() && !opts.ignoreVisibility) continue;
+
+          // drawableScale is the "framebuffer-pixel-space" scale of the drawable, as percentages of the drawable's
+          // "native size" (so 100 = same as skin's "native size", 200 = twice "native size").
+          // If the framebuffer dimensions are the same as the stage's "native" size, there's no need to calculate it.
+          const drawableScale = framebufferSpaceScaleDiffers ? [
+              drawable.scale[0] * opts.framebufferWidth / renderer._nativeSize[0],
+              drawable.scale[1] * opts.framebufferHeight / renderer._nativeSize[1]
+          ] : drawable.scale;
+
+          // If the skin or texture isn't ready yet, skip it.
+          if (!drawable.skin || !drawable.skin.getTexture(drawableScale)) continue;
+
+          // Skip private skins, if requested.
+          if (opts.skipPrivateSkins && drawable.skin.private) continue;
+
+          const drawableShader = spriteShaders[drawableID]
+
+          let uniforms = {};
+
+          let effectBits = drawable.enabledEffects;
+          effectBits &= Object.prototype.hasOwnProperty.call(opts, 'effectMask') ? opts.effectMask : effectBits;
+
+          const newShader = (spriteShaders[drawableID] && penPlus.shaders[drawableShader]) ? 
+          penPlus.programs[spriteShaders[drawableID]].info : 
+          renderer._shaderManager.getShader(drawMode, effectBits);
+
+          // Manually perform region check. Do not create functions inside a
+          // loop.
+          // ! no
+          if (renderer._regionId !== newShader) {
+            renderer._doExitDrawRegion();
+            renderer._regionId = newShader;
+
+              currentShader = newShader;
+              gl.useProgram(currentShader.program);
+              twgl.setBuffersAndAttributes(gl, currentShader, renderer._bufferInfo);
+              Object.assign(uniforms, {
+                  u_projectionMatrix: projection
+              });
+          }
+
+          Object.assign(uniforms,
+              drawable.skin.getUniforms(drawableScale),
+              drawable.getUniforms());
+
+          // Apply extra uniforms after the Drawable's, to allow overwriting.
+          if (opts.extraUniforms) {
+              Object.assign(uniforms, opts.extraUniforms);
+          }
+
+          if (spriteShaders[drawableID] && penPlus.shaders[drawableShader]) {
+            penPlus.programs[drawableShader].uniformDat.u_res = [
+              gl.canvas.width,
+              gl.canvas.height,
+            ];
+            penPlus.programs[drawableShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
+            
+            penPlus.programs[drawableShader].uniformDat.u_transform = [
+              1,1,0,0,
+              0,1,0,0,
+              0,0,0,0,
+              0,0,0,0
+            ]
+
+            shouldBeDirty = true;
+
+            uniforms = Object.assign({},uniforms, penPlus.programs[drawableShader].uniformDat);
+            console.log(penPlus.programs[drawableShader].uniformDat);
+          }
+
+          if (uniforms.u_skin) {
+              twgl.setTextureParameters(
+                  gl, uniforms.u_skin, {
+                      minMag: drawable.skin.useNearest(drawableScale, drawable) ? gl.NEAREST : gl.LINEAR
+                  }
+              );
+          }
+
+          twgl.setUniforms(currentShader, uniforms);
+          twgl.drawBufferInfo(gl, renderer._bufferInfo, gl.TRIANGLES);
+      }
+
+      renderer._regionId = null;
+    }
+
     //Will allow us to use custom shaders within our entire stage.
     customDrawFunction() {
       if (!renderer.dirty) {
           return;
       }
       renderer.dirty = false;
+      shouldBeDirty = false;
 
       renderer._doExitDrawRegion();
 
@@ -124,10 +237,11 @@
 
       const snapshotRequested = renderer._snapshotCallbacks.length > 0;
       renderer._drawThese(renderer._drawList, 'default', renderer._projection, {
-          framebufferWidth: gl.canvas.width,
-          framebufferHeight: gl.canvas.height,
-          skipPrivateSkins: snapshotRequested
+        framebufferWidth: gl.canvas.width,
+        framebufferHeight: gl.canvas.height,
+        skipPrivateSkins: snapshotRequested
       });
+
       if (snapshotRequested) {
           const snapshot = gl.canvas.toDataURL();
           renderer._snapshotCallbacks.forEach(cb => cb(snapshot));
@@ -173,6 +287,10 @@
         twgl.drawBufferInfo(gl, reRenderInfo);
         renderer.dirty = true;
       }
+
+      if (shouldBeDirty) {
+        renderer.dirty = true;
+      }
     }
 
     addDefaultShaders() {
@@ -205,10 +323,25 @@
       }
     }
 
+    saveThingExists = false;
+
+    addSaveListeners() {
+      if (this.saveThingExists) return;
+
+      if (penPlus) {
+        console.log("Shaded : Adding Save Listener")
+        this.saveThingExists = true;
+        penPlus.addEventListener("shaderSaved", (event) => {
+          console.log(event);
+        });
+      }
+    }
+
     constructor() {
       parentExtension = this;
       renderer.draw = this.customDrawFunction;
-      
+      renderer._drawThese = this.advDrawThese;
+
       vm.runtime.on("PROJECT_LOADED", () => {
         const checkFrame = () => {
           if (penPlus) {
@@ -244,6 +377,8 @@
         }
         window.requestAnimationFrame(checkFrame);
       });
+
+      Scratch.vm.runtime.on("EXTENSION_ADDED", this.addSaveListeners);
     }
 
     getInfo() {
@@ -279,6 +414,19 @@
             opcode: "setStageShaderAlt",
             blockType: Scratch.BlockType.COMMAND,
             text: "use [shader] on the stage",
+            arguments: {
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shadersAndStageALT",
+              },
+            },
+            filter: "sprite",
+          },
+          "---",
+          {
+            opcode: "setSpriteShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "use [shader] on myself",
             arguments: {
               shader: {
                 type: Scratch.ArgumentType.STRING,
@@ -351,6 +499,22 @@
         return;
       }
 
+      renderer.dirty = true;
+    }
+
+    setSpriteShader({ shader },util) {
+      if (shader == "____PEN_PLUS__NO__SHADER____") {
+        delete spriteShaders[util.target.drawableID];
+        this.resetBuffer();
+        return;
+      }
+
+      if (!penPlus.shaders[shader]) {
+        delete spriteShaders[util.target.drawableID];
+        this.resetBuffer();
+        return;
+      }
+      spriteShaders[util.target.drawableID] = shader;
       renderer.dirty = true;
     }
   }
