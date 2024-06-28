@@ -91,6 +91,8 @@
   let parentExtension = null;
   let shouldBeDirty = false;
 
+  //Should add name to the thing.
+  let shaderCache = {};
   let spriteShaders = {};
 
   class extension {
@@ -333,7 +335,14 @@
         this.saveThingExists = true;
         penPlus.addEventListener("shaderSaved", (event) => {
           console.log(event);
+          Object.keys(penPlus.shaders).forEach(shaderKey => {
+            if (shaderCache[shaderKey] != penPlus.shaders[shaderKey]) {
+              console.log(penPlus.shaders[shaderKey]);
+            }
+          })
+          shaderCache = penPlus.shaders;
         });
+        shaderCache = penPlus.shaders;
       }
     }
 
