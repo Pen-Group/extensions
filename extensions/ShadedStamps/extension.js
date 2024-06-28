@@ -92,7 +92,6 @@
   let shouldBeDirty = false;
 
   //Should add name to the thing.
-  let shaderCache = {};
   let spriteShaders = {};
 
   class extension {
@@ -334,15 +333,8 @@
         console.log("Shaded : Adding Save Listener")
         this.saveThingExists = true;
         penPlus.addEventListener("shaderSaved", (event) => {
-          console.log(event);
-          Object.keys(penPlus.shaders).forEach(shaderKey => {
-            if (shaderCache[shaderKey] != penPlus.shaders[shaderKey]) {
-              console.log(penPlus.shaders[shaderKey]);
-            }
-          })
-          shaderCache = penPlus.shaders;
+          console.log(`converting shader ${event.name} to sprite format!`);
         });
-        shaderCache = penPlus.shaders;
       }
     }
 
