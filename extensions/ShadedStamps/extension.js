@@ -145,7 +145,7 @@
           let effectBits = drawable.enabledEffects;
           effectBits &= Object.prototype.hasOwnProperty.call(opts, 'effectMask') ? opts.effectMask : effectBits;
 
-          const newShader = (spriteShaders[drawableID] && penPlus.shaders[drawableShader]) ? 
+          const newShader = (spriteShaders[drawableID] && penPlus.shaders[drawableShader] && recompiledShaders[spriteShaders[drawableID]]) ? 
           recompiledShaders[spriteShaders[drawableID]] : 
           renderer._shaderManager.getShader(drawMode, effectBits);
 
@@ -337,18 +337,15 @@
         this.saveThingExists = true;
         penPlus.addEventListener("shaderSaved", (event) => {
           console.log(`converting shader ${event.name} to sprite format!`);
+
           let convertedVertex = event.vertexShader.replaceAll(GL_POS_FINDER,"gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position,0,1);");
           convertedVertex = convertedVertex.replaceAll(GL_POS_VAR,"vec2 a_position;");
           convertedVertex = "uniform highp mat4 u_projectionMatrix; uniform highp mat4 u_modelMatrix;\n" + convertedVertex;
-
-          console.log(convertedVertex);
           
           recompiledShaders[event.name] = twgl.createProgramInfo(gl,[
             convertedVertex,
             event.fragmentShader
           ]);
-
-          console.log(recompiledShaders);
         });
       }
     }
@@ -392,6 +389,22 @@
           }
         }
         window.requestAnimationFrame(checkFrame);
+        setTimeout(() => {
+          Object.keys(penPlus.shaders).forEach(name => {
+            console.log(`converting shader ${name} to sprite format!`);
+
+            const event = penPlus.shaders[name].projectData;
+
+            let convertedVertex = event.vertShader.replaceAll(GL_POS_FINDER,"gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position,0,1);");
+            convertedVertex = convertedVertex.replaceAll(GL_POS_VAR,"vec2 a_position;");
+            convertedVertex = "uniform highp mat4 u_projectionMatrix; uniform highp mat4 u_modelMatrix;\n" + convertedVertex;
+            
+            recompiledShaders[name] = twgl.createProgramInfo(gl,[
+              convertedVertex,
+              event.fragShader
+            ]);
+          })
+        },500)
       });
 
       Scratch.vm.runtime.on("EXTENSION_ADDED", this.addSaveListeners);
@@ -416,7 +429,7 @@
           {
             opcode: "setStageShader",
             blockType: Scratch.BlockType.COMMAND,
-            text: "use [shader] on the stage",
+            text: "use [shader] on the screen",
             hideFromPalette:true,
             arguments: {
               shader: {
@@ -424,19 +437,17 @@
                 menu: "shadersAndStage",
               },
             },
-            filter: "sprite",
           },
           {
             opcode: "setStageShaderAlt",
             blockType: Scratch.BlockType.COMMAND,
-            text: "use [shader] on the stage",
+            text: "use [shader] on the screen",
             arguments: {
               shader: {
                 type: Scratch.ArgumentType.STRING,
                 menu: "shadersAndStageALT",
               },
             },
-            filter: "sprite",
           },
           "---",
           {
@@ -449,7 +460,32 @@
                 menu: "shadersAndStageALT",
               },
             },
-            filter: "sprite",
+          },
+          {
+            opcode: "setExtraShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "use [shader] on the [target]",
+            arguments: {
+              target: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "extraTargets",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shadersAndStageALT",
+              },
+            },
+          },
+          {
+            opcode: "getDescrepency",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "scale multiplier of the [dimension]",
+            arguments: {
+              dimension: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "dimensions",
+              }
+            },
           }
         ],
         menus: {
@@ -462,12 +498,38 @@
           shadersAndStageALT: {
             items:"shaderMenuAndStage",
             acceptReporters:true
-
+          },
+          extraTargets: {
+            items: [
+              {
+                text:"pen layer",
+                value:"pen"
+              },
+              {
+                text:"stage",
+                value:"stage"
+              },
+              {
+                text:"camera",
+                value:"camera"
+              }
+            ]
+          },
+          dimensions: {
+            items:["width","height"],
+            acceptReporters:true
           }
         },
         name: "Shaded",
         id: "OACShaded",
       };
+    }
+
+    getDescrepency({ dimension }) {
+      if (dimension == "width") {
+        return gl.canvas.width / renderer._nativeSize[0];
+      }
+      return gl.canvas.height / renderer._nativeSize[1];
     }
 
     shaderMenu() {
@@ -531,6 +593,47 @@
         return;
       }
       spriteShaders[util.target.drawableID] = shader;
+      renderer.dirty = true;
+    }
+
+    setExtraShader({ target, shader },util) {
+      let DesiredID = -1;
+      switch(target) {
+        case "pen":
+          if (!runtime.ext_videoSensing) break;
+          DesiredID = runtime.ext_pen._penDrawableId;
+          break;
+
+        case "camera":
+          if (!runtime.ext_videoSensing) break;
+          DesiredID = runtime.ioDevices.video._drawable;
+          break;
+
+        case "stage":
+          if (!runtime.getTargetForStage()) break;
+          DesiredID = runtime.getTargetForStage().drawableID;
+          break;
+        
+        default:
+          break;
+      }
+
+      console.log(DesiredID);
+
+      if (DesiredID == -1) return;
+
+      if (shader == "____PEN_PLUS__NO__SHADER____") {
+        delete spriteShaders[DesiredID];
+        this.resetBuffer();
+        return;
+      }
+
+      if (!penPlus.shaders[shader]) {
+        delete spriteShaders[DesiredID];
+        this.resetBuffer();
+        return;
+      }
+      spriteShaders[DesiredID] = shader;
       renderer.dirty = true;
     }
   }
