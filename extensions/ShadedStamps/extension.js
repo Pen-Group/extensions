@@ -424,6 +424,25 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         },500)
       });
 
+      setTimeout(() => {
+        if (penPlus) {
+          Object.keys(penPlus.shaders).forEach(name => {
+            console.log(`converting shader ${name} to sprite format!`);
+
+            const event = penPlus.shaders[name].projectData;
+
+            let convertedVertex = event.vertShader.replaceAll(GL_POS_FINDER,"gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position,0,1);");
+            convertedVertex = convertedVertex.replaceAll(GL_POS_VAR,"vec2 a_position;");
+            convertedVertex = "uniform highp mat4 u_projectionMatrix; uniform highp mat4 u_modelMatrix;\n" + convertedVertex;
+            
+            recompiledShaders[name] = twgl.createProgramInfo(gl,[
+              convertedVertex,
+              event.fragShader
+            ]);
+          })
+        }
+      },500)
+
       Scratch.vm.runtime.on("EXTENSION_ADDED", this.addSaveListeners);
     }
 
