@@ -355,6 +355,13 @@
       renderer.draw = this.customDrawFunction;
       renderer._drawThese = this.advDrawThese;
 
+      vm.runtime.on("targetWasRemoved", (clone) => {
+        const cloneID = clone.drawableID;
+        if (spriteShaders[cloneID]) {
+          delete spriteShaders[cloneID];
+        }
+      });
+
       vm.runtime.on("PROJECT_LOADED", () => {
         const checkFrame = () => {
           if (penPlus) {
