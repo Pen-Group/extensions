@@ -204,6 +204,8 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
               0,0,0,0,
               0,0,0,0
             ]
+            
+            penPlus.programs[drawableShader].uniformDat.u_skin = drawable.skin.getTexture(drawableScale);
 
             shouldBeDirty = true;
 
