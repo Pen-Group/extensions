@@ -68,5 +68,17 @@
         "filename": "main.js"
       }
     ]
+  },
+  {
+    "name": "Customizable AA",
+    "id": "PenAA",
+    "thumbnailFormat": "png",
+    "description": "Configure how scratch uses Anti-Aliasing on the pen.",
+    "versions": [
+      {
+        "name": "version 1",
+        "filename": "extension.js"
+      }
+    ]
   }
 ]
