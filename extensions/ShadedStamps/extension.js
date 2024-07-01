@@ -404,10 +404,12 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
               }
 
               setTimeout(() => {
-                if (defaultParameters[shaderName]) {
-                  penPlus.programs[shaderName].uniformDat = defaultParameters[shaderName];
+                if (penPlus) {
+                  if (defaultParameters[shaderName]) {
+                    penPlus.programs[shaderName].uniformDat = defaultParameters[shaderName];
+                  }
                 }
-              }, 33);
+              }, 500);
 
             });
           }
