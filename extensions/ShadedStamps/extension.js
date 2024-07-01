@@ -405,7 +405,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
 
               setTimeout(() => {
                 if (penPlus) {
-                  if (defaultParameters[shaderName]) {
+                  if (defaultParameters[shaderName] && penPlus.programs[shaderName]) {
                     penPlus.programs[shaderName].uniformDat = defaultParameters[shaderName];
                   }
                 }
