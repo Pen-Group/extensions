@@ -10,7 +10,7 @@
   
   //Pen+ Addon API
   let penPlus; Scratch.vm.runtime.on("EXTENSION_ADDED", () => {penPlus = runtime.ext_obviousalexc_penPlus}); if (!Scratch.vm.extensionManager.isExtensionLoaded("penP")) {if (Scratch.extensions.isPenguinMod) {Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js");} else {Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js");}}
-
+  
   if (!Scratch.extensions.unsandboxed) {
     //for those who use the version from pen-group's site
     alert("Pen+ 3d must be ran unsandboxed!");
@@ -19,6 +19,8 @@
 
   const vm = Scratch.vm;
   const runtime = vm.runtime;
+
+  const fileReader = new FileReader();
 
   class extension {
     getInfo() {
@@ -78,13 +80,42 @@
       input.style.margin = "1rem 0";
       input.style.border = "4px dashed var(--ui-tertiary)";
       input.style.width = "50%";
-      input.style.position = "absolute";
-      input.style.left = "50%";
+      input.style.marginLeft = "50%";
       input.style.transform = "translate(-50%,0%)";
       input.style.background = "none";
     }
 
     _import_handle_obj(file, shaderPanel, closeFunc) {
+      const parsedModel = {};
+      let objectName = "";
+
+      fileReader.onload = () => {
+        fileReader.result.split("\n").forEach(line => {
+          const splitLine = line.split(" ");
+          
+          console.log(line);
+          switch (splitLine[0]) {
+            case "o":
+              splitLine.shift();
+              objectName = splitLine.join(" ");
+              parsedModel[objectName] = {
+                materials: {}
+              };
+              break;
+
+            case "usemtl":
+              splitLine.shift();
+              parsedModel[objectName].materials[splitLine.join(" ")] = {};
+              break;
+          
+            default:
+              break;
+          }
+        })
+        console.log(parsedModel);
+      }
+      fileReader.readAsText(file);
+
       const mtlButton = document.createElement("input")
       mtlButton.type = "file";
       mtlButton.accept = ".mtl";
@@ -99,6 +130,22 @@
       mtlButton.onchange = (event) => {
         mtlFile = mtlButton.files[0];
         mtlButton.disabled = true;
+
+        fileReader.onload = () => {
+          fileReader.result.split("\n").forEach(line => {
+            const splitLine = line.split(" ");
+            
+            switch (splitLine[0]) {
+              case "newmtl":
+                
+                break;
+            
+              default:
+                break;
+            }
+          })
+        }
+        fileReader.readAsText(mtlFile);
       };
 
     }
