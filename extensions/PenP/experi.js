@@ -437,7 +437,7 @@
       },
     };
 
-    extensionVersion = "7.1.5";
+    extensionVersion = "8.0.0 β";
 
     //?Stores our attributes
     triangleAttributesOfAllSprites = {};
@@ -445,6 +445,7 @@
 
     penPlusCostumeLibrary = {};
     penPlusCubemap = {};
+    penPlusLayers = {};
 
     listCache = {};
 
@@ -2582,6 +2583,46 @@
             filter: "sprite",
           },
 
+          "---",
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: "Pen Layers",
+          },
+          {
+            opcode: "createPenLayer",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "create pen layer named [name]",
+            arguments: {
+              name: { type: Scratch.ArgumentType.STRING, defaultValue: "Name" },
+            },
+          },
+          {
+            opcode: "deletePenLayer",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "delete pen layer named [name]",
+            arguments: {
+              name: { type: Scratch.ArgumentType.STRING, defaultValue: "Name" },
+            },
+          },
+          "---",
+          {
+            opcode: "usePenLayer",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "use the pen layer named [name]",
+            arguments: {
+              name: { menu: "penLayerMenu", defaultValue: "Default" },
+            },
+          },
+          {
+            opcode: "doesPenLayerExist",
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: "does pen layer [name] exist?",
+            arguments: {
+              name: { type: Scratch.ArgumentType.STRING, defaultValue: "Name" },
+            },
+          },
+
+          "---",
           {
             blockType: Scratch.BlockType.LABEL,
             text: "List Based Rendering",
@@ -2943,6 +2984,10 @@
             items: "getRenderTexturesWarning",
             acceptReporters: true,
           },
+          penLayerMenu: {
+            items: "getPenlayers",
+            acceptReporters: true,
+          },
           penPlusShaders: {
             items: "shaderMenu",
             acceptReporters: true,
@@ -3140,6 +3185,11 @@
       let renderTextures = ["Scratch Stage"];
       renderTextures.push(...Object.keys(this.renderTextures));
       return renderTextures;
+    }
+    getPenlayers() {
+      const keys = ["Default"];
+      keys.push(...Object.keys(this.penPlusLayers));
+      return keys;
     }
     getSprites() {
       const sprites = [];
@@ -6228,6 +6278,60 @@
 
       //Return it as a png? Why png specifically I dunno.
       return canvas.toDataURL("image/png");
+    }
+
+    //Wowza
+    createPenLayer({ name }) {
+      if (this.penPlusLayers[name]) return;
+      if (name == "Default") return;
+      this.__checkForPenLayerStuff();
+
+      this.penPlusLayers[name] = {
+        skinID: renderer.createPenSkin(),
+        drawableID: renderer.createDrawable('pen')
+      };
+      const skinID = this.penPlusLayers[name].skinID;
+      const drawableID = this.penPlusLayers[name].drawableID;
+
+      renderer._allDrawables[drawableID]._skin = renderer._allSkins[skinID];
+
+      this.penPlusLayers[name].skin = renderer._allSkins[skinID];
+      this.penPlusLayers[name].drawable = renderer._allDrawables[drawableID];
+    }
+
+    deletePenLayer({ name }) {
+      if (!this.penPlusLayers[name]) return;
+      if (name == "Default") return;
+      this.__checkForPenLayerStuff();
+      renderer.destroySkin(this.penPlusLayers[name].skin._id);
+      renderer.destroyDrawable(this.penPlusLayers[name].drawable,'pen');
+
+      delete this.penPlusLayers[name];
+    }
+
+    usePenLayer({ name }) {
+      this.__checkForPenLayerStuff();
+      if (name == "Default") {
+        renderer._penSkinId = this.OldPenSkinFunction();
+        return;
+      };
+
+      if (!this.penPlusLayers[name]) return;
+      renderer._penSkinId = this.penPlusLayers[name].skin._id;
+    }
+
+    doesPenLayerExist({ name }) {
+      return Scratch.Cast.toBoolean(typeof this.penPlusLayers[name] != "undefined")
+    }
+
+    __checkForPenLayerStuff() {
+      if (!this.OldPenSkinFunction) {
+        this.OldPenSkinFunction = runtime.ext_pen._getPenLayerID;
+        runtime.ext_pen._getPenLayerID = () => {
+          return renderer._penSkinId;
+        }
+      }
+      this.OldPenSkinFunction();
     }
   }
 
