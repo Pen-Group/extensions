@@ -456,6 +456,28 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
       },500)
 
       Scratch.vm.runtime.on("EXTENSION_ADDED", this.addSaveListeners);
+
+      window.addEventListener("message", (event) => {
+        let eventType = event.data.type;
+
+        if (!eventType) return;
+
+        switch (eventType) {
+          case "EXTENSION_REQUEST":
+            penPlus.IFrame.contentWindow.postMessage(
+              {
+                type: "ADD_EXTENSION",
+                URL: "https://pen-group.github.io/extensions/extensions/ShadedStamps/shaderEditorExtension.js"
+              },
+              //Target URL
+              penPlus.IFrame.src
+            );
+            break;
+
+          default:
+            break;
+        }
+      });
     }
 
     getInfo() {
