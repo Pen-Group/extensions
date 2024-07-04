@@ -82,7 +82,7 @@ highp vec2 scratch3_apply_UV_Effects(highp vec2 scratch3_input_uv) {
 	}
 
     //Scratch 3 Whirl
-    if (u_whirl > 0.0) {
+    if (u_whirl != 0.0) {
 		const highp float kRadius = 0.5;
 		highp vec2 offset = scratch3_input_uv - scratch3_kCenter;
 		highp float offsetMagnitude = length(offset);
@@ -99,7 +99,7 @@ highp vec2 scratch3_apply_UV_Effects(highp vec2 scratch3_input_uv) {
 	}
 
     //Scratch 3 Fisheye
-    if (u_fisheye > 0.0) {
+    if (u_fisheye != 0.0) {
 		highp vec2 vec = (scratch3_input_uv - scratch3_kCenter) / scratch3_kCenter;
 		highp float vecLength = length(vec);
 		highp float r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);
