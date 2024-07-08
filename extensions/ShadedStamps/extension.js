@@ -54,7 +54,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
   }
 
   //Pen+ Addon API
-  let penPlus; Scratch.vm.runtime.on("EXTENSION_ADDED", () => {penPlus = runtime.ext_obviousalexc_penPlus}); if (!Scratch.vm.extensionManager.isExtensionLoaded("penP")) {if (Scratch.extensions.isPenguinMod) {Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js");} else {Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js");}}
+  let penPlus; Scratch.vm.runtime.on("EXTENSION_ADDED", () => {penPlus = Scratch.vm.runtime.ext_obviousalexc_penPlus}); if (!(Scratch.vm.extensionManager.isExtensionLoaded("penP") || Scratch.vm.runtime.ext_obviousalexc_penPlus)) {if (Scratch.extensions.isPenguinMod) {Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js");} else {Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js");}}
 
 
   const vm = Scratch.vm;
