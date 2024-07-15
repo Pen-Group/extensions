@@ -108,16 +108,11 @@
       updateCanvasSize();
     });
 
-    let lastCanvasSize = [canvas.clientWidth, canvas.clientHeight];
-    vm.runtime.on("BEFORE_EXECUTE", () => {
-      if (
-        lastCanvasSize[0] != canvas.clientWidth ||
-        lastCanvasSize[1] != canvas.clientHeight
-      ) {
-        lastCanvasSize = [canvas.clientWidth, canvas.clientHeight];
-        updateCanvasSize();
-      }
+    const resizeObserver = new ResizeObserver(() => {
+      updateCanvasSize();
     });
+
+    resizeObserver.observe(canvas);
 
     //?Make sure pen is loaded!
     if (!Scratch.vm.extensionManager.isExtensionLoaded("pen")) {
@@ -527,6 +522,10 @@
         }
       },
     };
+
+    //?Optimizations for single tri
+    triShader;
+    triTexture;
 
     //?Our functions that allow for extra rendering things.
     renderFunctions = {
@@ -1019,6 +1018,9 @@
       shaderSaved: [],
       editorClosed: [],
     };
+
+    //?WebGL
+    defaultShaders = penPlusShaders;
 
     //Statistical Stuff
     trianglesDrawn = 0;

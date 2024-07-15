@@ -309,11 +309,11 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         twgl.setUniforms(penPlus.programs[currentShader].info, penPlus.programs[currentShader].uniformDat);
 
         twgl.drawBufferInfo(gl, reRenderInfo);
-        renderer.dirty = true;
+        renderer.dirty = parentExtension.autoReRender;
       }
 
       if (shouldBeDirty) {
-        renderer.dirty = true;
+        renderer.dirty = parentExtension.autoReRender;
       }
     }
 
@@ -369,6 +369,8 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         });
       }
     }
+
+    autoReRender = true;
 
     constructor() {
       parentExtension = this;
@@ -561,7 +563,19 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
                 menu: "dimensions",
               }
             },
-          }
+          },
+          {
+            opcode: "setAutoReRender",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "turn auto re-render [value]",
+            arguments: {
+              value: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "autorender",
+              }
+            },
+          },
+          
         ],
         menus: {
           shaders: {
@@ -593,6 +607,10 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           dimensions: {
             items:["width","height"],
             acceptReporters:true
+          },
+          autorender: {
+            items:["on","off"],
+            acceptReporters:true
           }
         },
         docsURI: "https://pen-group.github.io/docs/?page=extensions%2Fshaded%2Fmain",
@@ -600,6 +618,10 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         name: "Shaded",
         id: "OACShaded",
       };
+    }
+
+    setAutoReRender({value}) {
+      this.autoReRender = value == "on" ? true : false;
     }
 
     getDescrepency({ dimension }) {
