@@ -525,159 +525,115 @@
 
     //?Optimizations for single tri
     triShader;
+    triIsDefault;
     triTexture;
+    triDefaultAttributes = {}
+    triQueue = {
+      a_position: [],
+      a_color: [],
+      a_texCoord: [],
+    };
+    triUniforms = {};
+    triPointCount = 0;
+
+    tryFinalizeDraw(shader,isDefault,texture,uniforms,forceDraw) {
+      //trying my best to reduce memory usage
+      gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
+
+      //console.log(this.triUniforms,uniforms,uniforms == this.triUniforms)
+      if (
+        (shader == this.triShader &&
+        isDefault == this.triIsDefault &&
+        texture == this.triTexture) &&
+        (!forceDraw)
+      ) {
+        return;
+      }
+
+      // prettier-ignore
+      if ((!this.inDrawRegion) && (!forceDraw)) renderer.enterDrawRegion(this.penPlusDrawRegion);
+
+      if (!this.triShader) {return};
+
+      if (this.triIsDefault) {
+        const attributeKeys = Object.keys(bufferInfo.attribs);
+
+        for (let keyID = 0; keyID < attributeKeys.length; keyID++) {
+          const key = attributeKeys[keyID];
+          
+          gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs[key].buffer);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.triQueue[key]), gl.DYNAMIC_DRAW);
+
+          this.triQueue[key] = [];
+        }
+
+        bufferInfo.numElements = this.triPointCount;
+
+        twgl.setBuffersAndAttributes(
+          gl,
+          penPlusShaders[this.triShader].ProgramInf,
+          bufferInfo
+        );
+
+        //? Bind Positional Data
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        gl.useProgram(penPlusShaders[this.triShader].ProgramInf.program);
+
+        twgl.setUniforms(penPlusShaders[this.triShader].ProgramInf, this.triDefaultAttributes);
+        twgl.drawBufferInfo(gl, bufferInfo);
+      }
+      else {
+        //Safe to assume they have a buffer;
+        const bufferInfo = this.programs[shader].buffer;
+        
+        const attributeKeys = Object.keys(bufferInfo.attribs);
+
+        for (let keyID = 0; keyID < attributeKeys.length; keyID++) {
+          const key = attributeKeys[keyID];
+          
+          gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs[key].buffer);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.triQueue[key]), gl.DYNAMIC_DRAW);
+
+          this.triQueue[key] = [];
+        }
+        
+        bufferInfo.numElements = this.triPointCount;
+
+        twgl.setBuffersAndAttributes(
+          gl,
+          this.programs[this.triShader].ProgramInf,
+          bufferInfo
+        );
+
+        //? Bind Positional Data
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        gl.useProgram(this.programs[this.triShader].info.program);
+
+        //Just use the real scratch timer.
+        this.triUniforms.u_timer =
+        runtime.ioDevices.clock.projectTimer();
+        this.triUniforms.u_transform = transform_Matrix;
+        this.triUniforms.u_res = [
+          this.currentRenderTexture.width,
+          this.currentRenderTexture.height,
+        ];
+
+        twgl.setUniforms(this.programs[this.triShader].info, this.triUniforms);
+        twgl.drawBufferInfo(gl, bufferInfo);
+      }
+
+      this.triShader = shader;
+      this.triIsDefault = isDefault;
+      this.triTexture = texture;
+      this.triUniforms = uniforms;
+
+      this.triPointCount = 0;
+    }
 
     //?Our functions that allow for extra rendering things.
     renderFunctions = {
-      drawTri: (x1, y1, x2, y2, x3, y3, penColor, targetID) => {
-        // prettier-ignore
-        if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
-
-        this.trianglesDrawn += 1;
-        //? get triangle attributes for current sprite.
-        const triAttribs = this.triangleAttributesOfAllSprites[targetID];
-
-        let inputInfo = {};
-
-        if (triAttribs) {
-          //Just for our eyes sakes
-          // prettier-ignore
-          inputInfo = {
-            a_position: new Float32Array([
-              x1,y1,triAttribs[5],triAttribs[6],
-              x2,y2,triAttribs[13],triAttribs[14],
-              x3,y3,triAttribs[21],triAttribs[22]
-            ]),
-            a_color: new Float32Array([
-              penColor[0] * triAttribs[2],penColor[1] * triAttribs[3],penColor[2] * triAttribs[4],penColor[3] * triAttribs[7],
-              penColor[0] * triAttribs[10],penColor[1] * triAttribs[11],penColor[2] * triAttribs[12],penColor[3] * triAttribs[15],
-              penColor[0] * triAttribs[18],penColor[1] * triAttribs[19],penColor[2] * triAttribs[20],penColor[3] * triAttribs[23]
-            ])
-          };
-        } else {
-          //Just for our eyes sakes
-          // prettier-ignore
-          inputInfo = {
-            a_position: new Float32Array([
-              x1,y1,1,1,
-              x2,y2,1,1,
-              x3,y3,1,1
-            ]),
-            a_color: new Float32Array([
-              penColor[0],penColor[1],penColor[2],penColor[3],
-              penColor[0],penColor[1],penColor[2],penColor[3],
-              penColor[0],penColor[1],penColor[2],penColor[3]
-            ])
-          };
-        }
-
-        bufferInfo.numElements = 3;
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
-
-        //? Bind Positional Data
-        twgl.setBuffersAndAttributes(
-          gl,
-          penPlusShaders.untextured.ProgramInf,
-          bufferInfo
-        );
-        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-        gl.useProgram(penPlusShaders.untextured.ProgramInf.program);
-
-        twgl.setUniforms(penPlusShaders.untextured.ProgramInf, {
-          u_transform: transform_Matrix,
-        });
-        twgl.drawBufferInfo(gl, bufferInfo);
-      },
-
-      drawTextTri: (x1, y1, x2, y2, x3, y3, targetID, texture) => {
-        // prettier-ignore
-        if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
-
-        this.trianglesDrawn += 1;
-
-        //? get triangle attributes for current sprite.
-        const triAttribs = this.triangleAttributesOfAllSprites[targetID];
-
-        let inputInfo = {};
-
-        if (triAttribs) {
-          //Just for our eyes sakes
-          // prettier-ignore
-          inputInfo = {
-            a_position: new Float32Array([
-              x1,y1,triAttribs[5],triAttribs[6],
-              x2,y2,triAttribs[13],triAttribs[14],
-              x3,y3,triAttribs[21],triAttribs[22]
-            ]),
-            a_color: new Float32Array([
-              triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
-              triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
-              triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
-            ]),
-            a_texCoord: new Float32Array([
-              triAttribs[0],triAttribs[1],
-              triAttribs[8],triAttribs[9],
-              triAttribs[16],triAttribs[17]
-            ])
-          };
-        } else {
-          //Just for our eyes sakes
-          // prettier-ignore
-          inputInfo = {
-            a_position: new Float32Array([
-              x1,y1,1,1,
-              x2,y2,1,1,
-              x3,y3,1,1
-            ]),
-            a_color: new Float32Array([
-              1,1,1,1,
-              1,1,1,1,
-              1,1,1,1
-            ]),
-            a_texCoord: new Float32Array([
-              0,0,
-              0,1,
-              1,1
-            ])
-          };
-        }
-
-        bufferInfo.numElements = 3;
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_texCoord.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.DYNAMIC_DRAW);
-
-        gl.useProgram(penPlusShaders.textured.ProgramInf.program);
-
-        //? Bind Positional Data
-        twgl.setBuffersAndAttributes(
-          gl,
-          penPlusShaders.textured.ProgramInf,
-          bufferInfo
-        );
-
-        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-        twgl.setUniforms(penPlusShaders.textured.ProgramInf, {
-          u_texture: texture,
-          u_transform: transform_Matrix,
-        });
-
-        twgl.drawBufferInfo(gl, bufferInfo);
-      },
-
       //? this is so I don't have to go through the hassle of replacing default scratch shaders
       //? many of curse words where exchanged between me and a pillow while writing this extension
       //? but I have previaled!
@@ -744,6 +700,7 @@
         renderer.dirty = true;
       },
       exit: () => {
+        this.tryFinalizeDraw(null,null,null,null,true);
         if (this.culling) {
           gl.disable(gl.CULL_FACE);
         }
@@ -3854,13 +3811,16 @@
         1, 1, 1,
       ];
     }
+
     drawSolidTri({ x1, y1, x2, y2, x3, y3 }, util) {
       const curTarget = util.target;
       checkForPen(util);
       const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
+      const penColor = attrib.color4f;
+      const targetID = curTarget.id;
 
-      if (!this.triangleAttributesOfAllSprites[curTarget.id]) {
-        this.triangleAttributesOfAllSprites[curTarget.id] =
+      if (!this.triangleAttributesOfAllSprites[targetID]) {
+        this.triangleAttributesOfAllSprites[targetID] =
           this._getDefaultTriAttributes();
       }
 
@@ -3875,10 +3835,6 @@
       //}
 
       //?Renderer Freaks out if we don't do this so do it.
-
-      //trying my best to reduce memory usage
-      gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
-
       //Paratheses because I know some obscure browser will screw this up.
       x1 = Scratch.Cast.toNumber(x1);
       x2 = Scratch.Cast.toNumber(x2);
@@ -3888,24 +3844,74 @@
       y2 = Scratch.Cast.toNumber(y2);
       y3 = Scratch.Cast.toNumber(y3);
 
-      this.renderFunctions.drawTri(
-        x1,
-        y1,
-        x2,
-        y2,
-        x3,
-        y3,
-        attrib.color4f,
-        curTarget.id
-      );
+      this.tryFinalizeDraw("untextured",true,null,{});
+
+      this.trianglesDrawn += 1;
+      //? get triangle attributes for current sprite.
+      const triAttribs = this.triangleAttributesOfAllSprites[targetID];
+
+      if (triAttribs) {
+        //Just for our eyes sakes
+        // prettier-ignore
+        this.triQueue.a_position.push(...[
+          x1,y1,triAttribs[5],triAttribs[6],
+          x2,y2,triAttribs[13],triAttribs[14],
+          x3,y3,triAttribs[21],triAttribs[22]
+        ]);
+
+        // prettier-ignore
+        this.triQueue.a_color.push(...[
+          penColor[0] * triAttribs[2],penColor[1] * triAttribs[3],penColor[2] * triAttribs[4],penColor[3] * triAttribs[7],
+          penColor[0] * triAttribs[10],penColor[1] * triAttribs[11],penColor[2] * triAttribs[12],penColor[3] * triAttribs[15],
+          penColor[0] * triAttribs[18],penColor[1] * triAttribs[19],penColor[2] * triAttribs[20],penColor[3] * triAttribs[23]
+        ]);
+
+        // prettier-ignore
+        this.triQueue.a_texCoord.push(...[
+          0,0,
+          0,0,
+          0,0
+        ]);
+      } else {
+        //Just for our eyes sakes
+        // prettier-ignore
+        this.triQueue.a_position.push(...[
+          x1,y1,1,1,
+          x2,y2,1,1,
+          x3,y3,1,1
+        ]);
+
+        // prettier-ignore
+        this.triQueue.a_color.push(...[
+          penColor[0],penColor[1],penColor[2],penColor[3],
+          penColor[0],penColor[1],penColor[2],penColor[3],
+          penColor[0],penColor[1],penColor[2],penColor[3]
+        ]);
+
+        // prettier-ignore
+        this.triQueue.a_texCoord.push(...[
+          0,0,
+          0,0,
+          0,0
+        ]);
+      }
+
+      this.triPointCount += 3;
+
+      this.triShader = "untextured"
+      this.triIsDefault = true;
+
+      this.triDefaultAttributes.u_transform = transform_Matrix;
     }
+
     drawTexTri({ x1, y1, x2, y2, x3, y3, tex }, util) {
       const curTarget = util.target;
       let currentTexture = this._locateTextureObject(tex, util);
+      const targetID = curTarget.id;
 
       //Triangle attributes
-      if (!this.triangleAttributesOfAllSprites[curTarget.id]) {
-        this.triangleAttributesOfAllSprites[curTarget.id] =
+      if (!this.triangleAttributesOfAllSprites[targetID]) {
+        this.triangleAttributesOfAllSprites[targetID] =
           this._getDefaultTriAttributes();
       }
 
@@ -3915,10 +3921,6 @@
         : renderer._nativeSize;
 
       //?Renderer Freaks out if we don't do this so do it.
-
-      //trying my best to reduce memory usage
-      gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
-
       //Paratheses because I know some obscure browser will screw this up.
       x1 = Scratch.Cast.toNumber(x1);
       x2 = Scratch.Cast.toNumber(x2);
@@ -3928,18 +3930,66 @@
       y2 = Scratch.Cast.toNumber(y2);
       y3 = Scratch.Cast.toNumber(y3);
 
-      if (currentTexture != null && typeof currentTexture != "undefined") {
-        this.renderFunctions.drawTextTri(
-          x1,
-          y1,
-          x2,
-          y2,
-          x3,
-          y3,
-          curTarget.id,
-          currentTexture
-        );
+      this.tryFinalizeDraw("textured",true,currentTexture,{});
+
+      this.trianglesDrawn += 1;
+
+      //? get triangle attributes for current sprite.
+      const triAttribs = this.triangleAttributesOfAllSprites[targetID];
+
+      if (triAttribs) {
+        //Just for our eyes sakes
+        // prettier-ignore
+        this.triQueue.a_position.push(...[
+          x1,y1,triAttribs[5],triAttribs[6],
+          x2,y2,triAttribs[13],triAttribs[14],
+          x3,y3,triAttribs[21],triAttribs[22]
+        ]);
+
+        // prettier-ignore
+        this.triQueue.a_color.push(...[
+          triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
+          triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
+          triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
+        ]);
+        
+        // prettier-ignore
+        this.triQueue.a_texCoord.push(...[
+          triAttribs[0],triAttribs[1],
+          triAttribs[8],triAttribs[9],
+          triAttribs[16],triAttribs[17]
+        ]);
+      } else {
+        //Just for our eyes sakes
+        // prettier-ignore
+        this.triQueue.a_position.push(...[
+          x1,y1,1,1,
+          x2,y2,1,1,
+          x3,y3,1,1
+        ]);
+        
+        // prettier-ignore
+        this.triQueue.a_position.push(...[
+          1,1,1,1,
+          1,1,1,1,
+          1,1,1,1
+        ]);
+
+        // prettier-ignore
+        this.triQueue.a_position.push(...[
+          0,0,
+          0,1,
+          1,1
+        ]);
       }
+
+      this.triPointCount += 3;
+
+      this.triShader = "textured"
+      this.triIsDefault = true;
+
+      this.triDefaultAttributes.u_transform = transform_Matrix;
+      this.triDefaultAttributes.u_texture = currentTexture;
     }
 
     //?Color Stuff
@@ -4299,11 +4349,7 @@
       if (!this.programs[shader]) return;
       // prettier-ignore
       if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
-
-      gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
-
-      //Safe to assume they have a buffer;
-      const buffer = this.programs[shader].buffer;
+      this.tryFinalizeDraw(shader,false,null,this.programs[shader].uniformDat);
 
       this.trianglesDrawn += 1;
 
@@ -4317,85 +4363,58 @@
       //? get triangle attributes for current sprite.
       const triAttribs = this.triangleAttributesOfAllSprites[targetID];
 
-      let inputInfo = JSON.parse(
-        JSON.stringify(this.programs[shader].attribDat)
-      );
+      let inputInfo = this.programs[shader].attribDat;
 
       if (triAttribs) {
         //Just for our eyes sakes
         // prettier-ignore
-        inputInfo.a_position = {data: [
+        this.triQueue.a_position.push(...[
           x1,-y1,triAttribs[5],triAttribs[6],
           x2,-y2,triAttribs[13],triAttribs[14],
           x3,-y3,triAttribs[21],triAttribs[22]
-        ]}
+        ])
         // prettier-ignore
-        inputInfo.a_color = {data: [
+        this.triQueue.a_color.push(...[
           triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
           triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
           triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
-        ]}
+        ]);
         // prettier-ignore
-        inputInfo.a_texCoord = {data:[
+        this.triQueue.a_texCoord.push(...[
           triAttribs[0],triAttribs[1],
           triAttribs[8],triAttribs[9],
           triAttribs[16],triAttribs[17]
-        ]}
+        ]);
       } else {
         //Just for our eyes sakes
         // prettier-ignore
-        inputInfo.a_position = {data: [
+        this.triQueue.a_position.push(...[
           x1,y1,1,1,
           x2,y2,1,1,
           x3,y3,1,1
-        ]}
+        ]);
         // prettier-ignore
-        inputInfo.a_color = {data: [
+        this.triQueue.a_color.push(...[
           1,1,1,1,
           1,1,1,1,
           1,1,1,1
-        ]}
+        ]);
         // prettier-ignore
-        inputInfo.a_texCoord = {data: [
+        this.triQueue.a_texCoord.push(...[
           0,0,
           0,1,
           1,1
-        ]}
+        ]);
       }
 
       const keys = Object.keys(inputInfo);
 
       keys.forEach((key) => {
         if (!buffer.attribs[key]) return;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs[key].buffer);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(inputInfo[key].data),
-          gl.DYNAMIC_DRAW
-        );
+
+        if (!this.triQueue[key]) this.triQueue[key] = [];
+        this.triQueue[key].push(...inputInfo[key].data);
       });
-
-      gl.useProgram(this.programs[shader].info.program);
-
-      //Just use the real scratch timer.
-      this.programs[shader].uniformDat.u_timer =
-        runtime.ioDevices.clock.projectTimer();
-      this.programs[shader].uniformDat.u_transform = transform_Matrix;
-      this.programs[shader].uniformDat.u_res = [
-        this.currentRenderTexture.width,
-        this.currentRenderTexture.height,
-      ];
-
-      //? Bind Positional Data
-      twgl.setBuffersAndAttributes(gl, this.programs[shader].info, buffer);
-
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      twgl.setUniforms(
-        this.programs[shader].info,
-        this.programs[shader].uniformDat
-      );
-
-      twgl.drawBufferInfo(gl, bufferInfo);
     }
 
     drawShaderSquare({ shader }, util) {
@@ -4559,6 +4578,7 @@
     setTextureInShader({ uniformName, shader, texture }, util) {
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
 
       let curCostume = this._locateTextureObject(texture, util);
       if (!curCostume) return;
@@ -4569,18 +4589,21 @@
     setNumberInShader({ uniformName, shader, number }) {
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       this.programs[shader].uniformDat[uniformName] = number;
     }
 
     setVec2InShader({ uniformName, shader, numberX, numberY }) {
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       this.programs[shader].uniformDat[uniformName] = [numberX, numberY];
     }
 
     setVec3InShader({ uniformName, shader, numberX, numberY, numberZ }) {
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       this.programs[shader].uniformDat[uniformName] = [
         numberX,
         numberY,
@@ -4598,6 +4621,7 @@
     }) {
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       this.programs[shader].uniformDat[uniformName] = [
         numberX,
         numberY,
@@ -4609,6 +4633,7 @@
     setMatrixInShader({ uniformName, shader, list }, util) {
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       let listOBJ = this._getVarObjectFromName(list, util, "list").value;
       let converted = listOBJ.map(function (str) {
         return parseFloat(str);
@@ -4620,6 +4645,7 @@
     setMatrixInShaderArray({ uniformName, shader, array }) {
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       let converted = JSON.parse(array);
       //Make sure its an array
       if (!Array.isArray(converted)) return;
@@ -4634,6 +4660,7 @@
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
       if (!this.penPlusCubemap[cubemap]) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       this.programs[shader].uniformDat[uniformName] =
         this.penPlusCubemap[cubemap];
     }
@@ -4729,6 +4756,7 @@
         item > this.programs[shader].uniformDec[uniformName].arrayLength
       )
         return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       item = item - 1;
       this.programs[shader].uniformDat[uniformName][item] = number;
     }
@@ -4741,6 +4769,7 @@
         item > this.programs[shader].uniformDec[uniformName].arrayLength
       )
         return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       item -= (item - 1) * 2;
       this.programs[shader].uniformDat[uniformName][item] = numberX;
       this.programs[shader].uniformDat[uniformName][item + 1] = numberY;
@@ -4761,6 +4790,7 @@
         item > this.programs[shader].uniformDec[uniformName].arrayLength
       )
         return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       item = (item - 1) * 3;
       this.programs[shader].uniformDat[uniformName][item] = numberX;
       this.programs[shader].uniformDat[uniformName][item + 1] = numberY;
@@ -4783,6 +4813,7 @@
         item > this.programs[shader].uniformDec[uniformName].arrayLength
       )
         return;
+      this.tryFinalizeDraw(null,null,null,null,true);
       item = (item - 1) * 4;
       this.programs[shader].uniformDat[uniformName][item] = numberX;
       this.programs[shader].uniformDat[uniformName][item + 1] = numberY;
@@ -4794,6 +4825,7 @@
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
       if (  item < 1 ||  item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
 
       let listOBJ = this._getVarObjectFromName(list, util, "list").value;
       let converted = listOBJ.map(function (str) {
@@ -4807,7 +4839,8 @@
       if (!this.programs[shader]) return;
       if (this._isUniformArray(shader, uniformName)) return;
       if (  item < 1 ||  item > this.programs[shader].uniformDec[uniformName].arrayLength)  return;
-
+      this.tryFinalizeDraw(null,null,null,null,true);
+      
       let converted = JSON.parse(array);
       //Make sure its an array
       if (!Array.isArray(converted)) return;
