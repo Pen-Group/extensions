@@ -539,6 +539,7 @@
     tryFinalizeDraw(shader,isDefault,texture,uniforms,forceDraw) {
       //trying my best to reduce memory usage
       gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
+      console.log(this.triIsDefault)
 
       //console.log(this.triUniforms,uniforms,uniforms == this.triUniforms)
       if (
@@ -584,6 +585,7 @@
         twgl.drawBufferInfo(gl, bufferInfo);
       }
       else {
+        console.log("wghat")
         //Safe to assume they have a buffer;
         const bufferInfo = this.programs[shader].buffer;
         
@@ -4410,8 +4412,6 @@
       const keys = Object.keys(inputInfo);
 
       keys.forEach((key) => {
-        if (!buffer.attribs[key]) return;
-
         if (!this.triQueue[key]) this.triQueue[key] = [];
         this.triQueue[key].push(...inputInfo[key].data);
       });
@@ -4840,7 +4840,7 @@
       if (this._isUniformArray(shader, uniformName)) return;
       if (  item < 1 ||  item > this.programs[shader].uniformDec[uniformName].arrayLength)  return;
       this.tryFinalizeDraw(null,null,null,null,true);
-      
+
       let converted = JSON.parse(array);
       //Make sure its an array
       if (!Array.isArray(converted)) return;
@@ -6260,6 +6260,7 @@
       else {
         this.currentRenderTexture = triBufferInfo;
       }
+      this.tryFinalizeDraw(null,null,null,null,true);
 
       //Do some fixes if we are already in the pen+ draw region!
       if (this.inDrawRegion) {
@@ -6350,6 +6351,8 @@
         renderer._penSkinId = this.OldPenSkinFunction();
         return;
       };
+
+      this.tryFinalizeDraw(null,null,null,null,true);
 
       if (!this.penPlusLayers[name]) return;
       renderer._penSkinId = this.penPlusLayers[name].skin._id;
