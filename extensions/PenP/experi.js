@@ -598,30 +598,21 @@
 
             this.triQueue[key] = [];
           }
-          
-          bufferInfo.numElements = this.triPointCount;
 
+          bufferInfo.numElements = this.triPointCount;
+  
           twgl.setBuffersAndAttributes(
             gl,
             this.programs[this.triShader].info,
             bufferInfo
           );
-
+  
           //? Bind Positional Data
           gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
+  
           gl.useProgram(this.programs[this.triShader].info.program);
-
-          //Just use the real scratch timer.
-          this.triUniforms.u_timer =
-          runtime.ioDevices.clock.projectTimer();
-          this.triUniforms.u_transform = transform_Matrix;
-          this.triUniforms.u_res = [
-            this.currentRenderTexture.width,
-            this.currentRenderTexture.height,
-          ];
-
-          twgl.setUniforms(this.programs[this.triShader].info, this.triUniforms);
+          console.log(this.programs[this.triShader])
+          twgl.setUniforms(this.programs[this.triShader].info, this.triDefaultAttributes);
           twgl.drawBufferInfo(gl, bufferInfo);
         }
       }
@@ -4354,6 +4345,7 @@
       this.tryFinalizeDraw(shader,false,null,this.programs[shader].uniformDat);
 
       this.trianglesDrawn += 1;
+      this.triPointCount += 3;
 
       const targetID = util.target.id;
 
