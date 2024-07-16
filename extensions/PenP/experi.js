@@ -539,7 +539,6 @@
     tryFinalizeDraw(shader,isDefault,texture,uniforms,forceDraw) {
       //trying my best to reduce memory usage
       gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
-      console.log(this.triIsDefault)
 
       //console.log(this.triUniforms,uniforms,uniforms == this.triUniforms)
       if (
@@ -554,7 +553,7 @@
       // prettier-ignore
       if ((!this.inDrawRegion) && (!forceDraw)) renderer.enterDrawRegion(this.penPlusDrawRegion);
 
-      if (!this.triShader) {return};
+      //if (!this.triShader) {return};
 
       if (this.triIsDefault) {
         const attributeKeys = Object.keys(bufferInfo.attribs);
@@ -585,45 +584,46 @@
         twgl.drawBufferInfo(gl, bufferInfo);
       }
       else {
-        console.log("wghat")
-        //Safe to assume they have a buffer;
-        const bufferInfo = this.programs[shader].buffer;
-        
-        const attributeKeys = Object.keys(bufferInfo.attribs);
-
-        for (let keyID = 0; keyID < attributeKeys.length; keyID++) {
-          const key = attributeKeys[keyID];
+        if (this.programs[this.triShader]) {
+          //Safe to assume they have a buffer;
+          const bufferInfo = this.programs[this.triShader].buffer;
           
-          gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs[key].buffer);
-          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.triQueue[key]), gl.DYNAMIC_DRAW);
+          const attributeKeys = Object.keys(bufferInfo.attribs);
 
-          this.triQueue[key] = [];
+          for (let keyID = 0; keyID < attributeKeys.length; keyID++) {
+            const key = attributeKeys[keyID];
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs[key].buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.triQueue[key]), gl.DYNAMIC_DRAW);
+
+            this.triQueue[key] = [];
+          }
+          
+          bufferInfo.numElements = this.triPointCount;
+
+          twgl.setBuffersAndAttributes(
+            gl,
+            this.programs[this.triShader].info,
+            bufferInfo
+          );
+
+          //? Bind Positional Data
+          gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+          gl.useProgram(this.programs[this.triShader].info.program);
+
+          //Just use the real scratch timer.
+          this.triUniforms.u_timer =
+          runtime.ioDevices.clock.projectTimer();
+          this.triUniforms.u_transform = transform_Matrix;
+          this.triUniforms.u_res = [
+            this.currentRenderTexture.width,
+            this.currentRenderTexture.height,
+          ];
+
+          twgl.setUniforms(this.programs[this.triShader].info, this.triUniforms);
+          twgl.drawBufferInfo(gl, bufferInfo);
         }
-        
-        bufferInfo.numElements = this.triPointCount;
-
-        twgl.setBuffersAndAttributes(
-          gl,
-          this.programs[this.triShader].ProgramInf,
-          bufferInfo
-        );
-
-        //? Bind Positional Data
-        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-        gl.useProgram(this.programs[this.triShader].info.program);
-
-        //Just use the real scratch timer.
-        this.triUniforms.u_timer =
-        runtime.ioDevices.clock.projectTimer();
-        this.triUniforms.u_transform = transform_Matrix;
-        this.triUniforms.u_res = [
-          this.currentRenderTexture.width,
-          this.currentRenderTexture.height,
-        ];
-
-        twgl.setUniforms(this.programs[this.triShader].info, this.triUniforms);
-        twgl.drawBufferInfo(gl, bufferInfo);
       }
 
       this.triShader = shader;
