@@ -1,1 +1,2 @@
-let penPlus;Scratch.vm.runtime.on("EXTENSION_ADDED",()=>{penPlus=Scratch.vm.runtime.ext_obviousalexc_penPlus}),setTimeout(()=>{Scratch.vm.extensionManager.isExtensionLoaded("penP")||Scratch.vm.runtime.ext_obviousalexc_penPlus||(Scratch.extensions.isPenguinMod?Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js"):Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js"))},33);
+//Need to extend this and add some safty hoops
+let penPlus; Scratch.vm.runtime.on("EXTENSION_ADDED", () => {penPlus = Scratch.vm.runtime.ext_obviousalexc_penPlus;})

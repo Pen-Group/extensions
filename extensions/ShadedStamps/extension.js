@@ -54,14 +54,14 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
   }
 
   //Pen+ Addon API
-  let penPlus;Scratch.vm.runtime.on("EXTENSION_ADDED",()=>{penPlus=Scratch.vm.runtime.ext_obviousalexc_penPlus}),setTimeout(()=>{Scratch.vm.extensionManager.isExtensionLoaded("penP")||Scratch.vm.runtime.ext_obviousalexc_penPlus||(Scratch.extensions.isPenguinMod?Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js"):Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js"))},33);
-
+  let penPlus; Scratch.vm.runtime.on("EXTENSION_ADDED", () => {penPlus = Scratch.vm.runtime.ext_obviousalexc_penPlus;})
 
   const vm = Scratch.vm;
   const runtime = vm.runtime;
   const renderer = runtime.renderer;
   const gl = renderer._gl;
   const twgl = renderer.exports.twgl;
+  const oldDrawThese = renderer._drawThese;
 
   const GL_POS_FINDER = /gl_Position\s*=[\w\s\d[\]|&^%$#@!+=\-*\/,._()]*;/gm;
   const GL_POS_VAR = /vec4\s*a_position;/gm;
@@ -377,6 +377,10 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
       renderer.draw = this.customDrawFunction;
       renderer._drawThese = this.advDrawThese;
 
+      //Doing this for the modified version of clipping and blending.
+      this.stageBuffer = stageBuffer;
+      runtime.ext_obviousalexc_shaded = this;
+
       vm.runtime.on("targetWasRemoved", (clone) => {
         const cloneID = clone.drawableID;
         if (spriteShaders[cloneID]) {
@@ -568,7 +572,23 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
             opcode: "setAutoReRender",
             blockType: Scratch.BlockType.COMMAND,
             text: "turn auto re-render [value]",
+            hideFromPalette:true,
             arguments: {
+              value: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "autorender",
+              }
+            },
+          },
+          {
+            opcode: "setSetting",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "turn [setting] [value]",
+            arguments: {
+              setting: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "settings",
+              },
               value: {
                 type: Scratch.ArgumentType.STRING,
                 menu: "autorender",
@@ -606,6 +626,10 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           },
           dimensions: {
             items:["width","height"],
+            acceptReporters:true
+          },
+          settings: {
+            items:["auto re-render","compatibility mode"],
             acceptReporters:true
           },
           autorender: {
@@ -821,6 +845,26 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
       }
       spriteShaders[DesiredID] = shader;
       renderer.dirty = true;
+    }
+
+    setSetting({ setting, value }) {
+      switch (setting) {
+        case "compatibility mode":
+          if (value == "on") {
+            renderer._drawThese = oldDrawThese;
+          }
+          else {
+            renderer._drawThese = this.advDrawThese;
+          }
+          break;
+      
+        case "auto re-render":
+          this.autoReRender = value == "on" ? true : false;
+          break;
+
+        default:
+          break;
+      }
     }
   }
 
