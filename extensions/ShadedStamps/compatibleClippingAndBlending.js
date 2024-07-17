@@ -74,14 +74,7 @@
           }
           //Shaded compatibility part :)
           if (runtime.ext_obviousalexc_shaded) {
-            const fbInfo = runtime.ext_obviousalexc_shaded.stageBuffer;
-            if (framebuffer == fbInfo.framebuffer) {
-              toCorrectThing = true;
-              flipY = false;
-              width = fbInfo.width;
-              height = fbInfo.height;
               break findCorrect;
-            }
           }
           toCorrectThing = false;
         }
