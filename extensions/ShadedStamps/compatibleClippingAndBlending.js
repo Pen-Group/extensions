@@ -54,34 +54,35 @@
     const bfb = gl.bindFramebuffer;
     gl.bindFramebuffer = function (target, framebuffer) {
       if (target == gl.FRAMEBUFFER) {
-        if (framebuffer == null) {
-          toCorrectThing = true;
-          flipY = false;
-          width = canvas.width;
-          height = canvas.height;
-        } else if (renderer._penSkinId) {
-          const fbInfo = renderer._allSkins[renderer._penSkinId]._framebuffer;
-          if (framebuffer == fbInfo.framebuffer) {
+        findCorrect: {
+          if (framebuffer == null) {
             toCorrectThing = true;
-            flipY = true;
-            width = fbInfo.width;
-            height = fbInfo.height;
-          } else {
-            //Shaded compatibility part :)
-            if (runtime.ext_obviousalexc_shaded) {
-                const fbInfo = runtime.ext_obviousalexc_shaded.stageBuffer;
-                if (framebuffer == fbInfo.framebuffer) {
-                    toCorrectThing = true;
-                    flipY = false;
-                    width = fbInfo.width;
-                    height = fbInfo.height;
-                } else {
-                    toCorrectThing = false;
-                }
+            flipY = false;
+            width = canvas.width;
+            height = canvas.height;
+            break findCorrect;
+          }
+          if (renderer._penSkinId) {
+            const fbInfo = renderer._allSkins[renderer._penSkinId]._framebuffer;
+            if (framebuffer == fbInfo.framebuffer) {
+              toCorrectThing = true;
+              flipY = true;
+              width = fbInfo.width;
+              height = fbInfo.height;
+              break findCorrect;
             }
           }
-        } 
-        else {
+          //Shaded compatibility part :)
+          if (runtime.ext_obviousalexc_shaded) {
+            const fbInfo = runtime.ext_obviousalexc_shaded.stageBuffer;
+            if (framebuffer == fbInfo.framebuffer) {
+              toCorrectThing = true;
+              flipY = false;
+              width = fbInfo.width;
+              height = fbInfo.height;
+              break findCorrect;
+            }
+          }
           toCorrectThing = false;
         }
       }
