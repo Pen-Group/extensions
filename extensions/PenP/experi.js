@@ -17,17 +17,10 @@
 
 /*
   * -- Added -- *
-  * Extension settings
-  * Added a patch for mods with different or "Unique" urls Suggested on discord
-  * This little patch notes section
+  * Matrix Arrays
 
   ? -- Changed -- ?
-  ? Added a fix for render textures not removing themselves politely.
-  ? General bug fixes
-  ? Fixed CSS bugs
-
-  ! -- Removed -- !
-  ! Herobrine?
+  ? Triangle Drawing Order
 */
 
 (function (Scratch) {
@@ -50,20 +43,31 @@
 
   const canvas = renderer.canvas;
   const gl = renderer._gl;
+
+  const isWebGL2 = gl.getParameter(gl.VERSION).includes("2.0");
+  console.log(isWebGL2)
+  
   let currentFilter = gl.NEAREST;
 
   let nativeSize = renderer.useHighQualityRender
     ? [canvas.width, canvas.height]
     : renderer._nativeSize;
 
+  if (isWebGL2) {
+    const ext = gl.getExtension("EXT_color_buffer_float");
+  }
+
   //?create the depth buffer's texture
   const triBufferAttachments = [
     {
+      internalFormat: (isWebGL2) ? gl.RGBA32F : gl.RGBA,
       format: gl.RGBA,
-      type: gl.UNSIGNED_BYTE,
-      min: gl.LINEAR,
+      type: (isWebGL2) ? gl.FLOAT : gl.UNSIGNED_BYTE,
       wrap: gl.CLAMP_TO_EDGE,
       premultiplyAlpha: true,
+
+      //Texture
+      min: gl.LINEAR
     },
     { format: gl.DEPTH_STENCIL },
   ];
