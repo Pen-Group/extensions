@@ -1,4 +1,4 @@
-// Name: Pen Plus V7
+// Name: Pen Plus V8
 // ID: penP
 // Description: Advanced rendering capabilities.
 // By: ObviousAlexC <https://scratch.mit.edu/users/pinksheep2917/>
@@ -590,34 +590,34 @@
       else {
         if (this.programs[this.triShader]) {
           //Safe to assume they have a buffer;
-          const bufferInfo = this.programs[this.triShader].buffer;
+          const shaderBufferInfo = this.programs[this.triShader].buffer;
           
-          const attributeKeys = Object.keys(bufferInfo.attribs);
+          const attributeKeys = Object.keys(shaderBufferInfo.attribs);
 
           for (let keyID = 0; keyID < attributeKeys.length; keyID++) {
             const key = attributeKeys[keyID];
             
-            gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs[key].buffer);
+            gl.bindBuffer(gl.ARRAY_BUFFER, shaderBufferInfo.attribs[key].buffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.triQueue[key]), gl.DYNAMIC_DRAW);
 
             this.triQueue[key] = [];
           }
 
-          bufferInfo.numElements = this.triPointCount;
+          shaderBufferInfo.numElements = this.triPointCount;
   
           twgl.setBuffersAndAttributes(
             gl,
             this.programs[this.triShader].info,
-            bufferInfo
+            shaderBufferInfo
           );
   
           //? Bind Positional Data
           gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   
           gl.useProgram(this.programs[this.triShader].info.program);
-          console.log(this.programs[this.triShader])
+          twgl.setUniforms(this.programs[this.triShader].info, this.programs[this.triShader].uniformDat);
           twgl.setUniforms(this.programs[this.triShader].info, this.triDefaultAttributes);
-          twgl.drawBufferInfo(gl, bufferInfo);
+          twgl.drawBufferInfo(gl, shaderBufferInfo);
         }
       }
 
@@ -3972,6 +3972,9 @@
           1,1,1,1
         ]);
 
+
+        this.triDefaultAttributes.u_transform = transform_Matrix;
+        this.triDefaultAttributes.u_texture = currentTexture;
         // prettier-ignore
         this.triQueue.a_position.push(...[
           0,0,
@@ -4366,19 +4369,19 @@
       if (triAttribs) {
         //Just for our eyes sakes
         // prettier-ignore
-        this.triQueue.a_position.push(...[
+        if (inputInfo.a_position) inputInfo.a_position.data = ([
           x1,-y1,triAttribs[5],triAttribs[6],
           x2,-y2,triAttribs[13],triAttribs[14],
           x3,-y3,triAttribs[21],triAttribs[22]
         ])
         // prettier-ignore
-        this.triQueue.a_color.push(...[
+        if (inputInfo.a_color) inputInfo.a_color.data = ([
           triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
           triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
           triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
         ]);
         // prettier-ignore
-        this.triQueue.a_texCoord.push(...[
+        if (inputInfo.a_texCoord) inputInfo.a_texCoord.data = ([
           triAttribs[0],triAttribs[1],
           triAttribs[8],triAttribs[9],
           triAttribs[16],triAttribs[17]
@@ -4386,19 +4389,19 @@
       } else {
         //Just for our eyes sakes
         // prettier-ignore
-        this.triQueue.a_position.push(...[
+        if (inputInfo.a_position) inputInfo.a_position.data = ([
           x1,y1,1,1,
           x2,y2,1,1,
           x3,y3,1,1
         ]);
         // prettier-ignore
-        this.triQueue.a_color.push(...[
+        if (inputInfo.a_color) inputInfo.a_color.data = ([
           1,1,1,1,
           1,1,1,1,
           1,1,1,1
         ]);
         // prettier-ignore
-        this.triQueue.a_texCoord.push(...[
+        if (inputInfo.a_texCoord) inputInfo.a_texCoord.data = ([
           0,0,
           0,1,
           1,1
@@ -4411,6 +4414,13 @@
         if (!this.triQueue[key]) this.triQueue[key] = [];
         this.triQueue[key].push(...inputInfo[key].data);
       });
+
+      this.triDefaultAttributes.u_transform = transform_Matrix;
+      this.triDefaultAttributes.u_timer = runtime.ioDevices.clock.projectTimer();
+      this.triDefaultAttributes.u_res = [
+        this.currentRenderTexture.width,
+        this.currentRenderTexture.height,
+      ];
     }
 
     drawShaderSquare({ shader }, util) {
@@ -4524,14 +4534,20 @@
         ]),
       };
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_position.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+      if (buffer.attribs.a_position) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_position.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+      }
+      
+      if (buffer.attribs.a_color) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_color.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
+      }
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_color.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_texCoord.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.DYNAMIC_DRAW);
+      if (buffer.attribs.a_texCoord) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_texCoord.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.DYNAMIC_DRAW);
+      }
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.useProgram(this.programs[shader].info.program);
