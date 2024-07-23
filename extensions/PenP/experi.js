@@ -11,13 +11,14 @@
 //About supporting you mod.
 //    --Thanks ObviousAlexC
 
-//if you are looking for extension settings search up /* EXTENSION SETTINGS */
+//if you are looking for extension settings search up /* EXTENSION SETTINGS */ there are two of them. One being preamble options, the other being for the actual extension instance.
 
-//7.1.5 patch notes
+//8.0.0 patch notes
 
 /*
   * -- Added -- *
   * Matrix Arrays
+  * Optimizations
 
   ? -- Changed -- ?
   ? Triangle Drawing Order
@@ -32,6 +33,9 @@
     throw new Error("Pen+ must run unsandboxed");
   }
 
+  /* EXTENSION SETTINGS */
+  const TRIANGLES_PER_BUFFER = 10000;
+
   //?some smaller optimizations just store the multiplacation for later
   const d2r = 0.0174533;
 
@@ -45,7 +49,6 @@
   const gl = renderer._gl;
 
   const isWebGL2 = gl.getParameter(gl.VERSION).includes("2.0");
-  console.log(isWebGL2)
   
   let currentFilter = gl.NEAREST;
 
@@ -344,14 +347,22 @@
     ]);
   }
 
-  let bufferInfo = twgl.createBufferInfoFromArrays(gl, {
-    a_color: { numComponents: 4, data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+  const defaultBufferDat = {
+    a_color: { 
+      numComponents: 4, 
+      data: new Float32Array(TRIANGLES_PER_BUFFER * 3 * 4)
+    },
     a_position: {
       numComponents: 4,
-      data: [0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1],
+      data: new Float32Array(TRIANGLES_PER_BUFFER * 3 * 4)
     },
-    a_texCoord: { numComponents: 2, data: [0, 0, 1, 0, 1, 1] },
-  });
+    a_texCoord: { 
+      numComponents: 2, 
+      data: new Float32Array(TRIANGLES_PER_BUFFER * 3 * 2)
+    },
+  };
+
+  let bufferInfo = twgl.createBufferInfoFromArrays(gl, defaultBufferDat);
 
   //Just for our eyes sakes
   // prettier-ignore
@@ -546,6 +557,7 @@
 
       //console.log(this.triUniforms,uniforms,uniforms == this.triUniforms)
       if (
+        (this.triPointCount <= TRIANGLES_PER_BUFFER * 3) &&
         (shader == this.triShader &&
         isDefault == this.triIsDefault &&
         texture == this.triTexture) &&
@@ -566,9 +578,7 @@
           const key = attributeKeys[keyID];
           
           gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs[key].buffer);
-          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.triQueue[key]), gl.DYNAMIC_DRAW);
-
-          this.triQueue[key] = [];
+          gl.bufferData(gl.ARRAY_BUFFER, defaultBufferDat[key].data, gl.STREAM_DRAW);
         }
 
         bufferInfo.numElements = this.triPointCount;
@@ -591,30 +601,28 @@
         if (this.programs[this.triShader]) {
           //Safe to assume they have a buffer;
           const shaderBufferInfo = this.programs[this.triShader].buffer;
-          
           const attributeKeys = Object.keys(shaderBufferInfo.attribs);
 
           for (let keyID = 0; keyID < attributeKeys.length; keyID++) {
             const key = attributeKeys[keyID];
             
             gl.bindBuffer(gl.ARRAY_BUFFER, shaderBufferInfo.attribs[key].buffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.triQueue[key]), gl.DYNAMIC_DRAW);
-
-            this.triQueue[key] = [];
+            gl.bufferData(gl.ARRAY_BUFFER, this.programs[this.triShader].data[key], gl.STREAM_DRAW);
           }
 
           shaderBufferInfo.numElements = this.triPointCount;
-  
+
           twgl.setBuffersAndAttributes(
             gl,
             this.programs[this.triShader].info,
             shaderBufferInfo
           );
-  
+
           //? Bind Positional Data
           gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-  
+
           gl.useProgram(this.programs[this.triShader].info.program);
+
           twgl.setUniforms(this.programs[this.triShader].info, this.programs[this.triShader].uniformDat);
           twgl.setUniforms(this.programs[this.triShader].info, this.triDefaultAttributes);
           twgl.drawBufferInfo(gl, shaderBufferInfo);
@@ -1063,186 +1071,134 @@
       //Make sure required info exists
       if (!shaderDat) return;
       if (!shaderDat.info) return;
-      if (!shaderDat.info.attribSetters) return;
+
+      const createArray = (length) => {
+        return Array.apply(null, Array(length)).map(() => {
+          return 0;
+        });
+      };
+
       //Store info
-      const attributeDat = shaderDat.info.attribSetters;
-      const attributes = Object.keys(attributeDat);
+      const activeAttributes = gl.getProgramParameter(shaderDat.info.program, gl.ACTIVE_ATTRIBUTES);
 
       const bufferInitilizer = {};
 
-      //Loop through every attribute and add the appropriate data.
-      attributes.forEach((attributeKey) => {
-        //Create the array
-        this.programs[shaderName].attribDat[attributeKey] = {
+      for (let attribID = 0; attribID < activeAttributes; attribID++) {
+        const attribDat = gl.getActiveAttrib(shaderDat.info.program, attribID);
+        const declaration = {
           type: "unknown",
-          data: [],
+          data:[],
+          unitSize: 1
         };
 
-        //Search using regex
-        const regexSearcher = new RegExp(`.*${attributeKey}.*\n?`);
-        let searchResult =
-          this.shaders[shaderName].projectData.vertShader.match(
-            regexSearcher
-          )[0];
+        const name = attribDat.name.replaceAll(/\[\d*\]/g,"");
 
-        //Remove whitespace at the beginning for easy extraction
-        while (searchResult.charAt(0) == " ") {
-          searchResult = searchResult.replace(" ", "");
+        switch (attribDat.type) {
+          case gl.FLOAT:
+            declaration.type = "float"
+            break;
+
+          case gl.FLOAT_VEC2:
+            declaration.type = "vec2"
+            declaration.unitSize = 2;
+            break;
+
+          case gl.FLOAT_VEC3:
+            declaration.type = "vec3"
+            declaration.unitSize = 3;
+            break;
+
+          case gl.FLOAT_VEC4:
+            declaration.type = "vec4"
+            declaration.unitSize = 4;
+            break;
+
+          default:
+            break;
         }
 
-        //determine the length of the array through type
-        const split = searchResult.split(" ");
-        const type = split.length < 4 ? split[1] : split[2];
-        if (split && (split[1] || split[2])) {
-          let length = 3;
-          this.programs[shaderName].attribDat[attributeKey].type = type;
+        declaration.data = createArray(declaration.unitSize * 3);
 
-          switch (type) {
-            case "vec2":
-              length = 6;
-              break;
+        bufferInitilizer[name] = new Float32Array(TRIANGLES_PER_BUFFER * declaration.unitSize * 3);
+        this.programs[shaderName].attribDat[name] = declaration;
+      }
 
-            case "vec3":
-              length = 9;
-              break;
-
-            case "vec4":
-              length = 12;
-              break;
-
-            default:
-              break;
-          }
-
-          //Add data to data array.
-          for (let i = 0; i < length; i++) {
-            this.programs[shaderName].attribDat[attributeKey].data.push(0);
-          }
-
-          //Add the data to our buffer initilizer.
-          bufferInitilizer[attributeKey] = {
-            numComponents: Math.floor(length / 3),
-            data: this.programs[shaderName].attribDat[attributeKey].data,
-          };
-        }
-      });
-
+      this.programs[shaderName].data = bufferInitilizer;
       this.programs[shaderName].buffer = twgl.createBufferInfoFromArrays(
         gl,
         bufferInitilizer
       );
 
       this.programs[shaderName];
-      //Make sure required info exists
-      if (!shaderDat) return;
-      if (!shaderDat.info) return;
-      if (!shaderDat.info.uniformSetters) return;
-      //Store info
-      const uniformDat = shaderDat.info.uniformSetters;
-      const uniforms = Object.keys(uniformDat);
 
-      //Set this to our program
-      gl.useProgram(this.programs[shaderName].info.program);
+      //Get Active Uniforms
+      const activeUniforms = gl.getProgramParameter(shaderDat.info.program, gl.ACTIVE_UNIFORMS);
 
-      //Loop through every uniforms and add the appropriate data.
-      uniforms.forEach((uniformKey) => {
-        //Create the data
-        this.programs[shaderName].uniformDec[uniformKey] = {
+      for (let uniformID = 0; uniformID < activeUniforms; uniformID++) {
+        const uniformDef = gl.getActiveUniform(shaderDat.info.program, uniformID);
+
+        const declaration = {
           type: "unknown",
           isArray: false,
           arrayLength: 0,
           arrayData: [],
+          unitSize: 1
         };
 
-        //Search using regex
-        const regexSearcher = new RegExp(`uniform.*${uniformKey}.*;?`);
-        let searchResult =
-          this.shaders[shaderName].projectData.vertShader.match(
-            regexSearcher
-          )[0];
+        const name = uniformDef.name.replaceAll(/\[\d*\]/g,"");
 
-        //Remove whitespace at the beginning for easy extraction
-        while (searchResult.charAt(0) == " ") {
-          searchResult = searchResult.replace(" ", "");
+        switch (uniformDef.type) {
+          case gl.FLOAT:
+            declaration.type = "float"
+            break;
+
+          case gl.INT:
+            declaration.type = "int"
+            break;
+
+          case gl.FLOAT_VEC2:
+            declaration.type = "vec2"
+            declaration.unitSize = 2;
+            break;
+
+          case gl.FLOAT_VEC3:
+            declaration.type = "vec3"
+            declaration.unitSize = 3;
+            break;
+
+          case gl.FLOAT_VEC4:
+            declaration.type = "vec4"
+            declaration.unitSize = 4;
+            break;
+
+          case gl.FLOAT_MAT2:
+            declaration.type = "mat2"
+            declaration.unitSize = 4;
+            break;
+
+          case gl.FLOAT_MAT3:
+            declaration.type = "mat3"
+            declaration.unitSize = 9;
+            break;
+
+          case gl.FLOAT_MAT4:
+            declaration.type = "mat4"
+            declaration.unitSize = 16;
+            break;
+
+          default:
+            break;
         }
 
-        //determine the type of the uniform
-        const split = searchResult.split(" ");
-        const type = split.length < 4 ? split[1] : split[2];
-        if (split && (split[2] || split[3])) {
-          //Try to extract array data
-          const arrayLength = Scratch.Cast.toNumber(
-            (split.length < 4 ? split[2] : split[3])
-              .replace(uniformKey, "")
-              .replaceAll(/[[\];]/g, "")
-          );
-
-          this.programs[shaderName].uniformDec[uniformKey].type = type;
-          //Add data for array stuff
-          this.programs[shaderName].uniformDec[uniformKey].arrayLength =
-            arrayLength;
-          this.programs[shaderName].uniformDec[uniformKey].isArray =
-            arrayLength > 0;
-
-          if (arrayLength == 0) return;
-
-          const createArray = (lengthMul) => {
-            return Array.apply(null, Array(arrayLength * lengthMul)).map(() => {
-              return 0;
-            });
-          };
-
-          switch (type) {
-            case "float":
-              this.programs[shaderName].uniformDec[uniformKey].arrayData =
-                createArray(1);
-              break;
-
-            case "int":
-              this.programs[shaderName].uniformDec[uniformKey].arrayData =
-                createArray(1);
-              break;
-
-            case "vec2":
-              this.programs[shaderName].uniformDec[uniformKey].arrayData =
-                createArray(2);
-              break;
-
-            case "vec3":
-              this.programs[shaderName].uniformDec[uniformKey].arrayData =
-                createArray(3);
-              break;
-
-            case "vec4":
-              this.programs[shaderName].uniformDec[uniformKey].arrayData =
-                createArray(4);
-              break;
-
-            case "mat2":
-              this.programs[shaderName].uniformDec[uniformKey].arrayData =
-                createArray(4);
-              break;
-
-            case "mat3":
-              this.programs[shaderName].uniformDec[uniformKey].arrayData =
-                createArray(9);
-              break;
-
-            case "mat4":
-              this.programs[shaderName].uniformDec[uniformKey].arrayData =
-                createArray(16);
-              break;
-
-            default:
-              break;
-          }
-
-          //Data that will be sent to the GPU to initilize the array
-          //But we will keep it in the declaration
-          this.programs[shaderName].uniformDat[uniformKey] =
-            this.programs[shaderName].uniformDec[uniformKey].arrayData;
+        if (uniformDef.name.includes("[")) {
+          declaration.isArray = true;
+          declaration.arrayLength = uniformDef.size;
+          declaration.arrayData = createArray(declaration.arrayLength * declaration.unitSize);
         }
-      });
+
+        this.programs[shaderName].uniformDec[name] = declaration;
+        if (declaration.isArray) this.programs[shaderName].uniformDat[name] = this.programs[shaderName].uniformDec[name].arrayData;
+      }
     }
 
     _parseProjectShaders() {
@@ -3434,10 +3390,10 @@
       };
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.STREAM_DRAW);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.STREAM_DRAW);
 
       //? Bind Positional Data
       twgl.setBuffersAndAttributes(
@@ -3580,13 +3536,13 @@
       };
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.STREAM_DRAW);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.STREAM_DRAW);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_texCoord.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.STREAM_DRAW);
 
       //? Bind Positional Data
       twgl.setBuffersAndAttributes(
@@ -3847,51 +3803,46 @@
       //? get triangle attributes for current sprite.
       const triAttribs = this.triangleAttributesOfAllSprites[targetID];
 
-      if (triAttribs) {
-        //Just for our eyes sakes
-        // prettier-ignore
-        this.triQueue.a_position.push(...[
-          x1,y1,triAttribs[5],triAttribs[6],
-          x2,y2,triAttribs[13],triAttribs[14],
-          x3,y3,triAttribs[21],triAttribs[22]
-        ]);
+      const vec2ID = this.triPointCount * 2;
+      const vec4ID = this.triPointCount * 4;
 
-        // prettier-ignore
-        this.triQueue.a_color.push(...[
-          penColor[0] * triAttribs[2],penColor[1] * triAttribs[3],penColor[2] * triAttribs[4],penColor[3] * triAttribs[7],
-          penColor[0] * triAttribs[10],penColor[1] * triAttribs[11],penColor[2] * triAttribs[12],penColor[3] * triAttribs[15],
-          penColor[0] * triAttribs[18],penColor[1] * triAttribs[19],penColor[2] * triAttribs[20],penColor[3] * triAttribs[23]
-        ]);
+      //I know this is ugly... Its for speed
+      
+      //Set the position
+      defaultBufferDat.a_position.data[vec4ID + 0] = x1;
+      defaultBufferDat.a_position.data[vec4ID + 1] = y1;
+      defaultBufferDat.a_position.data[vec4ID + 2] = triAttribs[5];
+      defaultBufferDat.a_position.data[vec4ID + 3] = triAttribs[6];
+      defaultBufferDat.a_position.data[vec4ID + 4] = x2;
+      defaultBufferDat.a_position.data[vec4ID + 5] = y2;
+      defaultBufferDat.a_position.data[vec4ID + 6] = triAttribs[13];
+      defaultBufferDat.a_position.data[vec4ID + 7] = triAttribs[14];
+      defaultBufferDat.a_position.data[vec4ID + 8] = x3;
+      defaultBufferDat.a_position.data[vec4ID + 9] = y3;
+      defaultBufferDat.a_position.data[vec4ID + 10] = triAttribs[21];
+      defaultBufferDat.a_position.data[vec4ID + 11] = triAttribs[22];
 
-        // prettier-ignore
-        this.triQueue.a_texCoord.push(...[
-          0,0,
-          0,0,
-          0,0
-        ]);
-      } else {
-        //Just for our eyes sakes
-        // prettier-ignore
-        this.triQueue.a_position.push(...[
-          x1,y1,1,1,
-          x2,y2,1,1,
-          x3,y3,1,1
-        ]);
+      //Set the color
+      defaultBufferDat.a_color.data[vec4ID + 0] = penColor[0] * triAttribs[2];
+      defaultBufferDat.a_color.data[vec4ID + 1] = penColor[1] * triAttribs[3];
+      defaultBufferDat.a_color.data[vec4ID + 2] = penColor[2] * triAttribs[4];
+      defaultBufferDat.a_color.data[vec4ID + 3] = penColor[3] * triAttribs[7];
+      defaultBufferDat.a_color.data[vec4ID + 4] = penColor[0] * triAttribs[10];
+      defaultBufferDat.a_color.data[vec4ID + 5] = penColor[1] * triAttribs[11];
+      defaultBufferDat.a_color.data[vec4ID + 6] = penColor[2] * triAttribs[12];
+      defaultBufferDat.a_color.data[vec4ID + 7] = penColor[3] * triAttribs[15];
+      defaultBufferDat.a_color.data[vec4ID + 8] = penColor[0] * triAttribs[18];
+      defaultBufferDat.a_color.data[vec4ID + 9] = penColor[1] * triAttribs[19];
+      defaultBufferDat.a_color.data[vec4ID + 10] = penColor[2] * triAttribs[20];
+      defaultBufferDat.a_color.data[vec4ID + 11] = penColor[3] * triAttribs[23];
 
-        // prettier-ignore
-        this.triQueue.a_color.push(...[
-          penColor[0],penColor[1],penColor[2],penColor[3],
-          penColor[0],penColor[1],penColor[2],penColor[3],
-          penColor[0],penColor[1],penColor[2],penColor[3]
-        ]);
-
-        // prettier-ignore
-        this.triQueue.a_texCoord.push(...[
-          0,0,
-          0,0,
-          0,0
-        ]);
-      }
+      //Set the UVs this doesn't do much
+      defaultBufferDat.a_texCoord.data[vec2ID + 0] = 0;
+      defaultBufferDat.a_texCoord.data[vec2ID + 1] = 0;
+      defaultBufferDat.a_texCoord.data[vec2ID + 2] = 0;
+      defaultBufferDat.a_texCoord.data[vec2ID + 3] = 0;
+      defaultBufferDat.a_texCoord.data[vec2ID + 4] = 0;
+      defaultBufferDat.a_texCoord.data[vec2ID + 5] = 0;
 
       this.triPointCount += 3;
 
@@ -3934,54 +3885,44 @@
       //? get triangle attributes for current sprite.
       const triAttribs = this.triangleAttributesOfAllSprites[targetID];
 
-      if (triAttribs) {
-        //Just for our eyes sakes
-        // prettier-ignore
-        this.triQueue.a_position.push(...[
-          x1,y1,triAttribs[5],triAttribs[6],
-          x2,y2,triAttribs[13],triAttribs[14],
-          x3,y3,triAttribs[21],triAttribs[22]
-        ]);
+      const vec2ID = this.triPointCount * 2;
+      const vec4ID = this.triPointCount * 4;
 
-        // prettier-ignore
-        this.triQueue.a_color.push(...[
-          triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
-          triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
-          triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
-        ]);
-        
-        // prettier-ignore
-        this.triQueue.a_texCoord.push(...[
-          triAttribs[0],triAttribs[1],
-          triAttribs[8],triAttribs[9],
-          triAttribs[16],triAttribs[17]
-        ]);
-      } else {
-        //Just for our eyes sakes
-        // prettier-ignore
-        this.triQueue.a_position.push(...[
-          x1,y1,1,1,
-          x2,y2,1,1,
-          x3,y3,1,1
-        ]);
-        
-        // prettier-ignore
-        this.triQueue.a_position.push(...[
-          1,1,1,1,
-          1,1,1,1,
-          1,1,1,1
-        ]);
+      //Set the position
+      defaultBufferDat.a_position.data[vec4ID + 0] = x1;
+      defaultBufferDat.a_position.data[vec4ID + 1] = y1;
+      defaultBufferDat.a_position.data[vec4ID + 2] = triAttribs[5];
+      defaultBufferDat.a_position.data[vec4ID + 3] = triAttribs[6];
+      defaultBufferDat.a_position.data[vec4ID + 4] = x2;
+      defaultBufferDat.a_position.data[vec4ID + 5] = y2;
+      defaultBufferDat.a_position.data[vec4ID + 6] = triAttribs[13];
+      defaultBufferDat.a_position.data[vec4ID + 7] = triAttribs[14];
+      defaultBufferDat.a_position.data[vec4ID + 8] = x3;
+      defaultBufferDat.a_position.data[vec4ID + 9] = y3;
+      defaultBufferDat.a_position.data[vec4ID + 10] = triAttribs[21];
+      defaultBufferDat.a_position.data[vec4ID + 11] = triAttribs[22];
 
+      //Set the color
+      defaultBufferDat.a_color.data[vec4ID + 0] = triAttribs[2];
+      defaultBufferDat.a_color.data[vec4ID + 1] = triAttribs[3];
+      defaultBufferDat.a_color.data[vec4ID + 2] = triAttribs[4];
+      defaultBufferDat.a_color.data[vec4ID + 3] = triAttribs[7];
+      defaultBufferDat.a_color.data[vec4ID + 4] = triAttribs[10];
+      defaultBufferDat.a_color.data[vec4ID + 5] = triAttribs[11];
+      defaultBufferDat.a_color.data[vec4ID + 6] = triAttribs[12];
+      defaultBufferDat.a_color.data[vec4ID + 7] = triAttribs[15];
+      defaultBufferDat.a_color.data[vec4ID + 8] = triAttribs[18];
+      defaultBufferDat.a_color.data[vec4ID + 9] = triAttribs[19];
+      defaultBufferDat.a_color.data[vec4ID + 10] = triAttribs[20];
+      defaultBufferDat.a_color.data[vec4ID + 11] = triAttribs[23];
 
-        this.triDefaultAttributes.u_transform = transform_Matrix;
-        this.triDefaultAttributes.u_texture = currentTexture;
-        // prettier-ignore
-        this.triQueue.a_position.push(...[
-          0,0,
-          0,1,
-          1,1
-        ]);
-      }
+      //Set the UVs this doesn't do much
+      defaultBufferDat.a_texCoord.data[vec2ID + 0] = triAttribs[0];
+      defaultBufferDat.a_texCoord.data[vec2ID + 1] = triAttribs[1];
+      defaultBufferDat.a_texCoord.data[vec2ID + 2] = triAttribs[8];
+      defaultBufferDat.a_texCoord.data[vec2ID + 3] = triAttribs[9];
+      defaultBufferDat.a_texCoord.data[vec2ID + 4] = triAttribs[16];
+      defaultBufferDat.a_texCoord.data[vec2ID + 5] = triAttribs[17];
 
       this.triPointCount += 3;
 
@@ -4351,9 +4292,6 @@
       if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
       this.tryFinalizeDraw(shader,false,null,this.programs[shader].uniformDat);
 
-      this.trianglesDrawn += 1;
-      this.triPointCount += 3;
-
       const targetID = util.target.id;
 
       if (!this.triangleAttributesOfAllSprites[targetID]) {
@@ -4366,54 +4304,110 @@
 
       let inputInfo = this.programs[shader].attribDat;
 
-      if (triAttribs) {
-        //Just for our eyes sakes
-        // prettier-ignore
-        if (inputInfo.a_position) inputInfo.a_position.data = ([
-          x1,-y1,triAttribs[5],triAttribs[6],
-          x2,-y2,triAttribs[13],triAttribs[14],
-          x3,-y3,triAttribs[21],triAttribs[22]
-        ])
-        // prettier-ignore
-        if (inputInfo.a_color) inputInfo.a_color.data = ([
-          triAttribs[2],triAttribs[3],triAttribs[4],triAttribs[7],
-          triAttribs[10],triAttribs[11],triAttribs[12],triAttribs[15],
-          triAttribs[18],triAttribs[19],triAttribs[20],triAttribs[23]
-        ]);
-        // prettier-ignore
-        if (inputInfo.a_texCoord) inputInfo.a_texCoord.data = ([
-          triAttribs[0],triAttribs[1],
-          triAttribs[8],triAttribs[9],
-          triAttribs[16],triAttribs[17]
-        ]);
-      } else {
-        //Just for our eyes sakes
-        // prettier-ignore
-        if (inputInfo.a_position) inputInfo.a_position.data = ([
-          x1,y1,1,1,
-          x2,y2,1,1,
-          x3,y3,1,1
-        ]);
-        // prettier-ignore
-        if (inputInfo.a_color) inputInfo.a_color.data = ([
-          1,1,1,1,
-          1,1,1,1,
-          1,1,1,1
-        ]);
-        // prettier-ignore
-        if (inputInfo.a_texCoord) inputInfo.a_texCoord.data = ([
-          0,0,
-          0,1,
-          1,1
-        ]);
-      }
+      const vec2ID = this.triPointCount * 2;
+      const vec3ID = this.triPointCount * 3;
+      const vec4ID = this.triPointCount * 4;
 
+      //Set the position
+      if (inputInfo.a_position) {
+        this.programs[shader].data.a_position[vec4ID + 0] = x1;
+        this.programs[shader].data.a_position[vec4ID + 1] = y1;
+        this.programs[shader].data.a_position[vec4ID + 2] = triAttribs[5];
+        this.programs[shader].data.a_position[vec4ID + 3] = triAttribs[6];
+        this.programs[shader].data.a_position[vec4ID + 4] = x2;
+        this.programs[shader].data.a_position[vec4ID + 5] = y2;
+        this.programs[shader].data.a_position[vec4ID + 6] = triAttribs[13];
+        this.programs[shader].data.a_position[vec4ID + 7] = triAttribs[14];
+        this.programs[shader].data.a_position[vec4ID + 8] = x3;
+        this.programs[shader].data.a_position[vec4ID + 9] = y3;
+        this.programs[shader].data.a_position[vec4ID + 10] = triAttribs[21];
+        this.programs[shader].data.a_position[vec4ID + 11] = triAttribs[22];
+      }
+      //Set the color
+      if (inputInfo.a_color) {
+        this.programs[shader].data.a_color[vec4ID + 0] = triAttribs[2];
+        this.programs[shader].data.a_color[vec4ID + 1] = triAttribs[3];
+        this.programs[shader].data.a_color[vec4ID + 2] = triAttribs[4];
+        this.programs[shader].data.a_color[vec4ID + 3] = triAttribs[7];
+        this.programs[shader].data.a_color[vec4ID + 4] = triAttribs[10];
+        this.programs[shader].data.a_color[vec4ID + 5] = triAttribs[11];
+        this.programs[shader].data.a_color[vec4ID + 6] = triAttribs[12];
+        this.programs[shader].data.a_color[vec4ID + 7] = triAttribs[15];
+        this.programs[shader].data.a_color[vec4ID + 8] = triAttribs[18];
+        this.programs[shader].data.a_color[vec4ID + 9] = triAttribs[19];
+        this.programs[shader].data.a_color[vec4ID + 10] = triAttribs[20];
+        this.programs[shader].data.a_color[vec4ID + 11] = triAttribs[23];
+      }
+      //Set the UVs this doesn't do much
+      if (inputInfo.a_texCoord) {
+        this.programs[shader].data.a_texCoord[vec2ID + 0] = triAttribs[0];
+        this.programs[shader].data.a_texCoord[vec2ID + 1] = triAttribs[1];
+        this.programs[shader].data.a_texCoord[vec2ID + 2] = triAttribs[8];
+        this.programs[shader].data.a_texCoord[vec2ID + 3] = triAttribs[9];
+        this.programs[shader].data.a_texCoord[vec2ID + 4] = triAttribs[16];
+        this.programs[shader].data.a_texCoord[vec2ID + 5] = triAttribs[17];
+      }
+      
       const keys = Object.keys(inputInfo);
 
       keys.forEach((key) => {
-        if (!this.triQueue[key]) this.triQueue[key] = [];
-        this.triQueue[key].push(...inputInfo[key].data);
+        if (key == "a_position" || key == "a_color" || key == "a_texCoord") return;
+        switch (inputInfo[key].type) {
+          case "float":
+            this.programs[shader].data[key][this.triPointCount + 0] = inputInfo[key][0];
+            this.programs[shader].data[key][this.triPointCount + 1] = inputInfo[key][1];
+            this.programs[shader].data[key][this.triPointCount + 2] = inputInfo[key][2];
+            break;
+
+          case "vec2":
+            this.programs[shader].data[key][vec2ID + 0] = inputInfo[key][0];
+            this.programs[shader].data[key][vec2ID + 1] = inputInfo[key][1];
+
+            this.programs[shader].data[key][vec2ID + 2] = inputInfo[key][2];
+            this.programs[shader].data[key][vec2ID + 3] = inputInfo[key][3];
+
+            this.programs[shader].data[key][vec2ID + 4] = inputInfo[key][4];
+            this.programs[shader].data[key][vec2ID + 5] = inputInfo[key][5];
+            break;
+
+          case "vec3":
+            this.programs[shader].data[key][vec3ID + 0] = inputInfo[key][0];
+            this.programs[shader].data[key][vec3ID + 1] = inputInfo[key][1];
+            this.programs[shader].data[key][vec3ID + 2] = inputInfo[key][2];
+
+            this.programs[shader].data[key][vec3ID + 3] = inputInfo[key][3];
+            this.programs[shader].data[key][vec3ID + 4] = inputInfo[key][4];
+            this.programs[shader].data[key][vec3ID + 5] = inputInfo[key][5];
+            
+            this.programs[shader].data[key][vec3ID + 6] = inputInfo[key][6];
+            this.programs[shader].data[key][vec3ID + 7] = inputInfo[key][7];
+            this.programs[shader].data[key][vec3ID + 8] = inputInfo[key][8];
+            break;
+
+          case "vec4":
+            this.programs[shader].data[key][vec4ID + 0] = inputInfo[key][0];
+            this.programs[shader].data[key][vec4ID + 1] = inputInfo[key][1];
+            this.programs[shader].data[key][vec4ID + 2] = inputInfo[key][2];
+            this.programs[shader].data[key][vec4ID + 3] = inputInfo[key][3];
+
+            this.programs[shader].data[key][vec4ID + 4] = inputInfo[key][4];
+            this.programs[shader].data[key][vec4ID + 5] = inputInfo[key][5];
+            this.programs[shader].data[key][vec4ID + 6] = inputInfo[key][6];
+            this.programs[shader].data[key][vec4ID + 7] = inputInfo[key][7];
+
+            this.programs[shader].data[key][vec4ID + 8] = inputInfo[key][8];
+            this.programs[shader].data[key][vec4ID + 9] = inputInfo[key][9];
+            this.programs[shader].data[key][vec4ID + 10] = inputInfo[key][10];
+            this.programs[shader].data[key][vec4ID + 11] = inputInfo[key][11];
+            break;
+        
+          default:
+            break;
+        }
       });
+
+      this.trianglesDrawn += 1;
+      this.triPointCount += 3;
 
       this.triDefaultAttributes.u_transform = transform_Matrix;
       this.triDefaultAttributes.u_timer = runtime.ioDevices.clock.projectTimer();
@@ -4536,17 +4530,17 @@
 
       if (buffer.attribs.a_position) {
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_position.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_position, gl.STREAM_DRAW);
       }
       
       if (buffer.attribs.a_color) {
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_color.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_color, gl.STREAM_DRAW);
       }
 
       if (buffer.attribs.a_texCoord) {
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs.a_texCoord.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, inputInfo.a_texCoord, gl.STREAM_DRAW);
       }
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -5894,10 +5888,10 @@
       bufferInfo.numElements = listLength * 3;
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, triData.a_position, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, triData.a_position, gl.STREAM_DRAW);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, triData.a_color, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, triData.a_color, gl.STREAM_DRAW);
 
       //? Bind Positional Data
       twgl.setBuffersAndAttributes(
@@ -5963,13 +5957,13 @@
       bufferInfo.numElements = listLength * 3;
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_position.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, triData.a_position, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, triData.a_position, gl.STREAM_DRAW);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_color.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, triData.a_color, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, triData.a_color, gl.STREAM_DRAW);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs.a_texCoord.buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, triData.a_texCoord, gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, triData.a_texCoord, gl.STREAM_DRAW);
 
       //? Bind Positional Data
       twgl.setBuffersAndAttributes(
@@ -6038,7 +6032,7 @@
         if (!buffer.attribs[key]) return;
         //Then use the key in the shader
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.attribs[key].buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, triData[key], gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, triData[key], gl.STREAM_DRAW);
       });
 
       //? Bind Positional Data
