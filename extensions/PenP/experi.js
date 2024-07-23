@@ -557,7 +557,7 @@
 
       //console.log(this.triUniforms,uniforms,uniforms == this.triUniforms)
       if (
-        (this.triPointCount <= TRIANGLES_PER_BUFFER * 3) &&
+        (this.triPointCount < TRIANGLES_PER_BUFFER * 3) &&
         (shader == this.triShader &&
         isDefault == this.triIsDefault &&
         texture == this.triTexture) &&
@@ -1082,6 +1082,7 @@
       const activeAttributes = gl.getProgramParameter(shaderDat.info.program, gl.ACTIVE_ATTRIBUTES);
 
       const bufferInitilizer = {};
+      const dataInitilizer = {};
 
       for (let attribID = 0; attribID < activeAttributes; attribID++) {
         const attribDat = gl.getActiveAttrib(shaderDat.info.program, attribID);
@@ -1118,12 +1119,18 @@
         }
 
         declaration.data = createArray(declaration.unitSize * 3);
+        dataInitilizer[name] = new Float32Array(TRIANGLES_PER_BUFFER * declaration.unitSize * 3)
 
-        bufferInitilizer[name] = new Float32Array(TRIANGLES_PER_BUFFER * declaration.unitSize * 3);
+        bufferInitilizer[name] = {
+          numComponents:declaration.unitSize,
+          data:new Float32Array(TRIANGLES_PER_BUFFER * declaration.unitSize * 3)
+        };
         this.programs[shaderName].attribDat[name] = declaration;
       }
 
-      this.programs[shaderName].data = bufferInitilizer;
+      console.log(dataInitilizer);
+
+      this.programs[shaderName].data = dataInitilizer;
       this.programs[shaderName].buffer = twgl.createBufferInfoFromArrays(
         gl,
         bufferInitilizer
@@ -1204,6 +1211,9 @@
     _parseProjectShaders() {
       Object.keys(this.shaders).forEach((shaderKey) => {
         let shader = this.shaders[shaderKey];
+        //If we don't have webgl2 support. Don't
+        if (shader.projectData.vertShader.includes("#version 300 es") && (!isWebGL2)) return;
+
         this.programs[shaderKey] = {
           info: twgl.createProgramInfo(gl, [
             shader.projectData.vertShader,
@@ -1308,6 +1318,10 @@
         projectData: data,
         modifyDate: Date.now(),
       };
+
+
+      //If we don't have webgl2 support. Don't
+      if (data.vertShader.includes("#version 300 es") && (!isWebGL2)) return;
 
       this.programs[name] = {
         info: twgl.createProgramInfo(gl, [data.vertShader, data.fragShader]),
@@ -1826,6 +1840,12 @@
             blockType: Scratch.BlockType.REPORTER,
             opcode: "getAllShaders",
             text: "shaders in project",
+          },
+          {
+            disableMonitor: true,
+            opcode: "supportsWEBGL_TWO",
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: "supports GLSL 3.0?"
           },
           {
             disableMonitor: true,
@@ -4283,6 +4303,11 @@
 
       //Add the IFrame to the body
       document.body.appendChild(this.IFrame);
+    }
+
+    //Feature
+    supportsWEBGL_TWO() {
+      return isWebGL2;
     }
 
     //?Shader blocks
