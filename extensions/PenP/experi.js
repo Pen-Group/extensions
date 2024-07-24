@@ -2727,7 +2727,7 @@
           {
             opcode: "getPenPVersion",
             blockType: Scratch.BlockType.REPORTER,
-            text: "Pen+ version",
+            text: "pen+ version",
           },
           {
             opcode: "getTrianglesDrawn",
