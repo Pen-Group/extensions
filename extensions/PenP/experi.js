@@ -408,6 +408,7 @@
 
     penPlusCostumeLibrary = {};
     penPlusCubemap = {};
+    penPlus3DTextures = {};
     penPlusLayers = {};
 
     listCache = {};
@@ -1164,6 +1165,21 @@
             declaration.unitSize = 16;
             break;
 
+<<<<<<< Updated upstream
+=======
+          case gl.SAMPLER_2D:
+            declaration.type = "sampler2D"
+            break;
+
+          case gl.SAMPLER_3D:
+            declaration.type = "sampler3D"
+            break;
+
+          case gl.SAMPLER_CUBE:
+            declaration.type = "samplerCube"
+            break;
+
+>>>>>>> Stashed changes
           default:
             break;
         }
@@ -2001,6 +2017,26 @@
             },
           },
           {
+            opcode: "setTexture3DinShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set 3D texture [uniformName] in [shader] to [texture]",
+            hideFromPalette: !isWebGL2,
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "penPlusShaders",
+              },
+              texture: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "penPlus3DTextures",
+              },
+            },
+          },
+          {
             opcode: "getNumberInShader",
             blockType: Scratch.BlockType.REPORTER,
             text: "get value of number [uniformName] in [shader]",
@@ -2459,19 +2495,7 @@
             },
             filter: "sprite",
           },
-          {
-            disableMonitor: true,
-            opcode: "doesCubemapexist",
-            blockType: Scratch.BlockType.BOOLEAN,
-            text: "does [name] exist as a cubemap",
-            arguments: {
-              name: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: "Image",
-              },
-            },
-            filter: "sprite",
-          },
+          "---",
           {
             disableMonitor: true,
             opcode: "removeCubemapfromDURI",
@@ -2485,8 +2509,70 @@
             },
             filter: "sprite",
           },
+          {
+            disableMonitor: true,
+            opcode: "doesCubemapexist",
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: "does [name] exist as a cubemap",
+            arguments: {
+              name: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Image",
+              },
+            },
+            filter: "sprite",
+          },
 
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: "3D textures",
+          },
+          {
+            opcode: "create3DtextureList",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "create 3D texture named [name] size [W] [H] [D] from [list]",
+            hideFromPalette: !isWebGL2,
+            arguments: {
+              name: { type: Scratch.ArgumentType.STRING, defaultValue: "Name" },
+              W: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              H: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              D: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              list: { type: Scratch.ArgumentType.STRING, menu: "listMenu" },
+            },
+          },
+          {
+            opcode: "create3DtextureArray",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "create 3D texture named [name] of size [W] [H] [D] from [array]",
+            hideFromPalette: !isWebGL2,
+            arguments: {
+              name: { type: Scratch.ArgumentType.STRING, defaultValue: "Name" },
+              W: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              H: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              D: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              array: { type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,1,1]" },
+            },
+          },
           "---",
+          {
+            opcode: "delete3Dtexture",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "delete 3D texture named [name]",
+            hideFromPalette: !isWebGL2,
+            arguments: {
+              name: { type: Scratch.ArgumentType.STRING, defaultValue: "Name" },
+            },
+          },
+          {
+            opcode: "does3DtextureExist",
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: "does 3D texture named [name] exist?",
+            hideFromPalette: !isWebGL2,
+            arguments: {
+              name: { type: Scratch.ArgumentType.STRING, defaultValue: "Name" },
+            },
+          },
+
           {
             blockType: Scratch.BlockType.LABEL,
             text: "Pen Layers",
@@ -2898,6 +2984,10 @@
             items: "getRenderTexturesWarning",
             acceptReporters: true,
           },
+          penPlus3DTextures: {
+            items:"_get3DTextures",
+            acceptReporters:true
+          },
           penLayerMenu: {
             items: "getPenlayers",
             acceptReporters: true,
@@ -3141,6 +3231,13 @@
       }
       return returned;
     }
+<<<<<<< Updated upstream
+=======
+    _get3DTextures() {
+      const keys = Object.keys(this.penPlus3DTextures);
+      return (keys.length > 0) ? keys : ["No 3D Textures yet"];
+    }
+>>>>>>> Stashed changes
     //From lily's list tools... With permission of course.
     _getLists() {
       const lists =
@@ -4697,6 +4794,14 @@
       this.programs[shader].uniformDat[uniformName] =
         this.penPlusCubemap[cubemap];
     }
+    
+    setTexture3DinShader({ uniformName, shader, texture }) {
+      if (!this.programs[shader]) return;
+      if (this._isUniformArray(shader, uniformName)) return;
+      if (!this.penPlus3DTextures[texture]) return;
+      this.tryFinalizeDraw(null,null,null,null,true);
+      this.programs[shader].uniformDat[uniformName] = this.penPlus3DTextures[texture];
+    }
 
     getNumberInShader({ uniformName, shader }) {
       if (!this.programs[shader]) return 0;
@@ -5847,6 +5952,48 @@
       if (this.penPlusCubemap[name]) {
         delete this.penPlusCubemap[name];
       }
+    }
+
+    create3DtextureList({ name, W, H, D, list }, util) {
+      const listREF = this._getVarObjectFromName(list, util, "list");
+      if (!listREF) return;
+
+      this.create3DtextureArray({name:name, W:W, H:H, D:D, array:JSON.stringify(listREF.value)});
+    }
+
+    create3DtextureArray({ name, W, H, D, array }) {
+      if (typeof array == "string") {
+        array = JSON.parse(array);
+        if (!array) return;
+      }
+
+      //Make sure it is valid
+      if (!Array.isArray(array)) return;
+      if (array.length < (W * H * D)) return;
+
+      for (let index = 0; index < array.length; index++) {
+        array[index] = Scratch.Cast.toNumber(array[index]);
+      }
+
+      this.penPlus3DTextures[name] = twgl.createTexture(gl, {
+        target: gl.TEXTURE_3D,
+        width: W,
+        height: H,
+        depth: D,
+        wrap: gl.CLAMP_TO_EDGE,
+        minMag: this.currentFilter,
+        src:array
+      });
+    }
+
+    delete3Dtexture({ name }) {
+      if (!this.penPlus3DTextures[name]) return;
+      gl.deleteTexture(this.penPlus3DTextures[name]);
+      delete this.penPlus3DTextures[name];
+    }
+
+    does3DtextureExist({ name }) {
+      return (typeof name != "undefined");
     }
 
     _getTriDataFromList(list, util) {
