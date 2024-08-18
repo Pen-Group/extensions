@@ -1165,8 +1165,6 @@
             declaration.unitSize = 16;
             break;
 
-<<<<<<< Updated upstream
-=======
           case gl.SAMPLER_2D:
             declaration.type = "sampler2D"
             break;
@@ -1179,7 +1177,6 @@
             declaration.type = "samplerCube"
             break;
 
->>>>>>> Stashed changes
           default:
             break;
         }
