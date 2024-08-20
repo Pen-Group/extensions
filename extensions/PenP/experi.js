@@ -3228,13 +3228,10 @@
       }
       return returned;
     }
-<<<<<<< Updated upstream
-=======
     _get3DTextures() {
       const keys = Object.keys(this.penPlus3DTextures);
       return (keys.length > 0) ? keys : ["No 3D Textures yet"];
     }
->>>>>>> Stashed changes
     //From lily's list tools... With permission of course.
     _getLists() {
       const lists =
