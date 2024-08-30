@@ -1,8 +1,6 @@
 (function (Scratch) {
   "use strict";
 
-  let penPlus;Scratch.vm.runtime.on("EXTENSION_ADDED",()=>{penPlus=Scratch.vm.runtime.ext_obviousalexc_penPlus}),setTimeout(()=>{Scratch.vm.extensionManager.isExtensionLoaded("penP")||Scratch.vm.runtime.ext_obviousalexc_penPlus||(Scratch.extensions.isPenguinMod?Scratch.vm.extensionManager.loadExtensionURL("https://pen-group.github.io/extensions/extensions/PenP/v7.js"):Scratch.vm.extensionManager.loadExtensionURL("https://extensions.turbowarp.org/obviousAlexC/penPlus.js"))},33);
-
   const vm = Scratch.vm;
   const runtime = vm.runtime;
   const renderer = runtime.renderer;
@@ -197,16 +195,16 @@
       if (!this.storage[name]) return;
 
       // prettier-ignore
-      if (!penPlus.inDrawRegion) renderer.enterDrawRegion(penPlus.penPlusDrawRegion);
+      if (!Scratch.vm.runtime.ext_obviousalexc_penPlus.inDrawRegion) renderer.enterDrawRegion(Scratch.vm.runtime.ext_obviousalexc_penPlus.penPlusDrawRegion);
 
       const { triData, listLength, keys } = this.storage[name];
 
-      const buffer = penPlus.programs[shader].buffer;
+      const buffer = Scratch.vm.runtime.ext_obviousalexc_penPlus.programs[shader].buffer;
 
-      if (!penPlus.programs[shader]) return;
+      if (!Scratch.vm.runtime.ext_obviousalexc_penPlus.programs[shader]) return;
 
       //Make sure we have the triangle data updating accordingly
-      penPlus.trianglesDrawn += listLength;
+      Scratch.vm.runtime.ext_obviousalexc_penPlus.trianglesDrawn += listLength;
       buffer.numElements = listLength * 3;
 
       // prettier-ignore
@@ -219,23 +217,23 @@
         });
 
       //? Bind Positional Data
-      twgl.setBuffersAndAttributes(gl, penPlus.programs[shader].info, buffer);
+      twgl.setBuffersAndAttributes(gl, Scratch.vm.runtime.ext_obviousalexc_penPlus.programs[shader].info, buffer);
 
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
       //Just use the real scratch timer.
-      penPlus.programs[shader].uniformDat.u_timer =
+      Scratch.vm.runtime.ext_obviousalexc_penPlus.programs[shader].uniformDat.u_timer =
         runtime.ext_scratch3_sensing.getTimer({}, util);
-      penPlus.programs[shader].uniformDat.u_res = [
-        penPlus.currentRenderTexture.width,
-        penPlus.currentRenderTexture.height,
+      Scratch.vm.runtime.ext_obviousalexc_penPlus.programs[shader].uniformDat.u_res = [
+        Scratch.vm.runtime.ext_obviousalexc_penPlus.currentRenderTexture.width,
+        Scratch.vm.runtime.ext_obviousalexc_penPlus.currentRenderTexture.height,
       ];
 
-      gl.useProgram(penPlus.programs[shader].info.program);
+      gl.useProgram(Scratch.vm.runtime.ext_obviousalexc_penPlus.programs[shader].info.program);
 
       twgl.setUniforms(
-        penPlus.programs[shader].info,
-        penPlus.programs[shader].uniformDat
+        Scratch.vm.runtime.ext_obviousalexc_penPlus.programs[shader].info,
+        Scratch.vm.runtime.ext_obviousalexc_penPlus.programs[shader].uniformDat
       );
 
       twgl.drawBufferInfo(gl, buffer);
@@ -244,8 +242,8 @@
     }
 
     shaderMenu() {
-        if (penPlus) {
-          return penPlus.shaderMenu();
+        if (Scratch.vm.runtime.ext_obviousalexc_penPlus) {
+          return Scratch.vm.runtime.ext_obviousalexc_penPlus.shaderMenu();
         }
         return ["None Yet"];
       }
