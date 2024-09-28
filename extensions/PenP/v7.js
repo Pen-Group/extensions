@@ -6033,7 +6033,7 @@
 
       //Ignore reductive values
       if (!(id > 0 && id <= 3)) return def;
-      if (!value) return def;
+      if (typeof value == "undefined") return def;
 
       //Parse it
       let parsed = JSON.parse(def);
