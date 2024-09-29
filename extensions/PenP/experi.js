@@ -18,7 +18,11 @@
 /*
   * -- Added -- *
   * Matrix Arrays
+  * Voxel Textures
+  * Render texture extra buffers
+  * Pen Layers
   * Optimizations
+  * Option to disable block dropdown stuff, so ya don't crash because you can't disable that for specific blocks
 
   ? -- Changed -- ?
   ? Triangle Drawing Order
@@ -967,6 +971,8 @@
     shaders = Object.create(null);
     programs = Object.create(null);
 
+    MENUS_DISABLED_MESSAGE = "Menus Not Enabled"
+
     prefixes = {
       penPlusTextures: "",
       renderTextures: "",
@@ -977,6 +983,8 @@
     renderTextures = Object.create(null);
     currentRenderTexture = triBufferInfo;
     currentAttachmentInfo = triBufferAttachments;
+
+    hideTexturesInMenus = false;
 
     blockIcons = {
       undo: "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIxOS40NDU0NCIgaGVpZ2h0PSIxMC42MzM1MSIgdmlld0JveD0iMCwwLDE5LjQ0NTQ0LDEwLjYzMzUxIj48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjMxLjE1NDU0LC0xNzMuNTc1OTkpIj48ZyBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpc1BhaW50aW5nTGF5ZXImcXVvdDs6dHJ1ZX0iIGZpbGwtcnVsZT0ibm9uemVybyIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS1kYXNoYXJyYXk9IiIgc3Ryb2tlLWRhc2hvZmZzZXQ9IjAiIHN0eWxlPSJtaXgtYmxlbmQtbW9kZTogbm9ybWFsIj48cGF0aCBkPSJNMjMyLjIxNTIsMTc0LjMxYzAuNjM2NCwtMC4yMTIxMyAxLjM0MzUsLTAuMDcwNzEgMS43Njc3NywwLjM1MzU1bDEuMTMxMzcsMS4xMzEzN2MwLjk4OTk1LC0wLjg0ODUzIDIuMTIxMzIsLTEuNDE0MjEgMy4zMjM0LC0xLjc2Nzc3YzEuODM4NDgsLTAuNTY1NjkgMy44ODkwOSwtMC42MzY0IDUuNzk4MjgsMGMxLjgzODQ4LDAuNTY1NjkgMy4zOTQxMSwxLjY5NzA2IDQuNTI1NDgsMy4yNTI2OWMxLjA2MDY2LDEuNDg0OTIgMS42OTcwNiwzLjI1MjY5IDEuODM4NDgsNS4wOTExN2MwLDAuOTg5OTUgLTAuODQ4NTMsMS44Mzg0OCAtMS44Mzg0OCwxLjgzODQ4Yy0wLjg0ODUzLDAgLTEuNjI2MzUsLTAuNjM2NCAtMS43Njc3NywtMS40ODQ5MmwtMC4wNzA3MSwtMC4wNzA3MWMtMC4yMTIxMywtMS4wNjA2NiAtMC43MDcxMSwtMS45Nzk5IC0xLjQxNDIxLC0yLjY4NzAxYy0wLjcwNzExLC0wLjcwNzExIC0xLjU1NTYzLC0xLjEzMTM3IC0yLjU0NTU4LC0xLjI3Mjc5Yy0xLjM0MzUsLTAuMjEyMTMgLTIuNzU3NzIsMC4yMTIxMyAtMy43NDc2NywxLjIwMjA4bDEuMDYwNjYsMS4wNjA2NmMwLjYzNjQsMC42MzY0IDAuNzA3MTEsMS42OTcwNiAwLDIuNDA0MTZjLTAuMjgyODQsMC4yODI4NCAtMC43Nzc4MiwwLjQ5NDk3IC0xLjIwMjA4LDAuNDk0OTdsLTYuMjIyNTQsMGMtMC45MTkyNCwtMC4wNzA3MSAtMS42MjYzNSwtMC43Nzc4MiAtMS42OTcwNiwtMS42OTcwNmwwLC02LjM2Mzk2YzAsLTAuNzA3MTEgMC40MjQyNiwtMS4yNzI3OSAxLjA2MDY2LC0xLjQ4NDkyeiIgZmlsbC1vcGFjaXR5PSIwLjM3MjU1IiBmaWxsPSIjMDAwMDAwIi8+PHBhdGggZD0iTTIzMy4yNzU4NSwxNzUuMzcwNjVsMS44Mzg0OCwxLjgzODQ4YzEuMDYwNjYsLTEuMDYwNjYgMi4yNjI3NCwtMS44Mzg0OCAzLjY3Njk2LC0yLjI2Mjc0YzEuNjk3MDYsLTAuNTY1NjkgMy40NjQ4MiwtMC40OTQ5NyA1LjE2MTg4LDAuMDcwNzFjMS42MjYzNSwwLjQ5NDk3IDMuMTExMjcsMS41NTU2MyA0LjAzMDUxLDIuODk5MTRjMC45ODk5NSwxLjI3Mjc5IDEuNTU1NjMsMi45Njk4NSAxLjYyNjM1LDQuNTk2MTljMC4wNzA3MSwwLjQ5NDk3IC0wLjM1MzU1LDAuOTE5MjQgLTAuNzc3ODIsMC45MTkyNGMtMC40OTQ5NywwLjA3MDcxIC0wLjkxOTI0LC0wLjM1MzU1IC0wLjkxOTI0LC0wLjc3NzgydjBjLTAuMjEyMTMsLTEuMjAyMDggLTAuNzc3ODIsLTIuMzMzNDUgLTEuNjI2MzUsLTMuMTgxOThjLTAuODQ4NTMsLTAuODQ4NTMgLTEuODM4NDgsLTEuNDE0MjEgLTMuMDQwNTYsLTEuNjI2MzVjLTEuMDYwNjYsLTAuMjEyMTMgLTIuMTkyMDMsLTAuMDcwNzEgLTMuMjUyNjksMC40MjQyNmMtMC44NDg1MywwLjQyNDI2IC0xLjU1NTYzLDAuOTg5OTUgLTIuMTIxMzIsMS44Mzg0OGwxLjY5NzA2LDEuNjk3MDZjMC4yODI4NCwwLjI4Mjg0IDAuMjgyODQsMC43MDcxMSAwLDAuOTg5OTVjLTAuMTQxNDIsMC4xNDE0MiAtMC4yODI4NCwwLjE0MTQyIC0wLjQyNDI2LDAuMTQxNDJsLTYuMjIyNTQsMGMtMC40MjQyNiwwIC0wLjcwNzExLC0wLjI4Mjg0IC0wLjYzNjQsLTAuNjM2NGwwLC02LjIyMjU0YzAsLTAuNDI0MjYgMC4xNDE0MiwtMC43MDcxMSAwLjQyNDI2LC0wLjg0ODUzYzAuMjgyODQsLTAuMTQxNDIgMC40MjQyNiwwIDAuNTY1NjksMC4xNDE0MnoiIGZpbGw9IiNmZmZmZmYiLz48L2c+PC9nPjwvc3ZnPjwhLS1yb3RhdGlvbkNlbnRlcjo4Ljg0NTQ2Mzg5MDkwNTQ3ODo2LjQyNDAxMjQ0MTg5NTI4Ni0tPg==",
@@ -2752,6 +2760,53 @@
               height: { type: Scratch.ArgumentType.NUMBER, defaultValue: 128 },
             },
           },
+          "---",
+          {
+            opcode: "addBufferToRenderTexture",
+            blockType: Scratch.BlockType.COMMAND,
+            text:"add new channel named [name] to [renderTexture]",
+            arguments: {
+              name: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "channel2",
+              },
+              renderTexture: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "renderTexturesOnly",
+              },
+            },
+          },
+          {
+            opcode: "getIdOfBuffer",
+            blockType: Scratch.BlockType.REPORTER,
+            text:"get id of channel named [name] in [renderTexture]",
+            arguments: {
+              name: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "channel2",
+              },
+              renderTexture: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "renderTexturesOnly",
+              },
+            },
+          },
+          {
+            opcode: "doesBufferExistInRT",
+            blockType: Scratch.BlockType.BOOLEAN,
+            text:"does channel named [name] exist in [renderTexture]",
+            arguments: {
+              name: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "channel2",
+              },
+              renderTexture: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "renderTexturesOnly",
+              },
+            },
+          },
+          "---",
           {
             opcode: "removeRenderTexture",
             blockType: Scratch.BlockType.COMMAND,
@@ -2897,6 +2952,11 @@
                 defaultValue: "!",
               },
             },
+          },
+          {
+            blockType: Scratch.BlockType.BUTTON,
+            func: "__hideThatStuff",
+            text: "Hide costumes in menu",
           },
         ],
         menus: {
@@ -3101,6 +3161,7 @@
     }
     //Menus
     costumeMenuFunction() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       if (!runtime) return ["no costumes?"];
       if (!runtime._editingTarget) return ["no costumes?"];
       if (!runtime._editingTarget.sprite) return ["no costumes?"];
@@ -3127,6 +3188,12 @@
 
       if (penplusRenderTextures.length > 0) {
         readCostumes = readCostumes.concat(penplusRenderTextures);
+        Object.keys(this.renderTextures).forEach(texture => {
+          const textureDef = this.renderTextures[texture];
+          Object.keys(textureDef.extraChannels).forEach(channel => {
+            readCostumes.push(`${texture}█${channel}`);
+          })
+        })
       }
 
       //For custom addons to be able to add their own texture lists.
@@ -3141,6 +3208,7 @@
     }
 
     penPlusCostumesFunction() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       const keys = Object.keys(this.penPlusCostumeLibrary);
       if (keys.length > 0) {
         return keys;
@@ -3150,12 +3218,14 @@
     }
 
     shaderMenu() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       //!Pain.json
       return Object.keys(this.shaders).length == 0
         ? ["none yet"]
         : Object.keys(this.shaders);
     }
     getCostumeDataURI_costume_MenuFunction() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       if (!runtime) return ["No costumes?"];
       if (!runtime._editingTarget) return ["No costumes?"];
 
@@ -3174,29 +3244,35 @@
       return readCostumes;
     }
     _getCubemaps() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       if (Object.keys(this.penPlusCubemap).length == 0)
         return ["No cubemaps yet!"];
       return Object.keys(this.penPlusCubemap);
     }
     getRenderTexturesMenu() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       return Object.keys(this.renderTextures);
     }
     getRenderTexturesWarning() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       return Object.keys(this.renderTextures).length > 0
         ? Object.keys(this.renderTextures)
         : ["No Render Textures Yet!"];
     }
     getRenderTexturesAndStage() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       let renderTextures = ["Scratch Stage"];
       renderTextures.push(...Object.keys(this.renderTextures));
       return renderTextures;
     }
     getPenlayers() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       const keys = ["Default"];
       keys.push(...Object.keys(this.penPlusLayers));
       return keys;
     }
     getSprites() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       const sprites = [];
       for (const target of vm.runtime.targets) {
         if (target.isOriginal && !target.isStage) {
@@ -3214,6 +3290,7 @@
       return sprites;
     }
     _textureTypeMenu() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       const returned = [
         {text:"Standard",value:`[${gl.RGBA},${gl.UNSIGNED_BYTE},${gl.RGBA}]`},
         {text:"No Alpha",value:`[${gl.RGB},${gl.UNSIGNED_BYTE},${gl.RGB}]`}
@@ -3229,11 +3306,14 @@
       return returned;
     }
     _get3DTextures() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
       const keys = Object.keys(this.penPlus3DTextures);
       return (keys.length > 0) ? keys : ["No 3D Textures yet"];
     }
     //From lily's list tools... With permission of course.
     _getLists() {
+      if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+
       const lists =
         typeof Blockly === "undefined"
           ? []
@@ -3288,6 +3368,15 @@
         name != this.currentRenderTexture.name
       ) {
         currentTexture = this.renderTextures[name].attachments[0];
+      }
+
+      else if (
+        this.renderTextures[name.split("█")[0]] &&
+        name != this.currentRenderTexture.name
+      ) {
+        const RTName = name.split("█")[0];
+        const subTexName = name.split("█")[1];
+        currentTexture = this.renderTextures[RTName].attachments[this.renderTextures[RTName].extraChannels[subTexName] + 1];
       }
 
       //Hopefully it is in the costumes
@@ -6326,8 +6415,6 @@
       this.frameBufferAttachmentSettings[0].internalFormat = parsed[0];
       this.frameBufferAttachmentSettings[0].format = parsed[2];
       this.frameBufferAttachmentSettings[0].type = parsed[1];
-      console.log(this.frameBufferAttachmentSettings[0]);
-      console.log(parsed);
     }
 
     createRenderTexture({ name }) {
@@ -6335,18 +6422,21 @@
       if (name == "Scratch Stage") return;
 
       //if the render texture exists delete it
-      if (this.renderTextures[this.prefixes.renderTextures + name]) {
+      name = this.prefixes.renderTextures + name
+      if (this.renderTextures[name]) {
         this._deleteFramebuffer(
-          this.renderTextures[this.prefixes.renderTextures + name]
+          this.renderTextures[name]
         );
       }
 
       //Add it
-      this.renderTextures[this.prefixes.renderTextures + name] =
+      this.renderTextures[name] =
         twgl.createFramebufferInfo(gl, this.frameBufferAttachmentSettings);
-      this.renderTextures[this.prefixes.renderTextures + name].resizing = true;
-      this.renderTextures[this.prefixes.renderTextures + name].name = name;
-      this.renderTextures[this.prefixes.renderTextures + name].attachmentInfo = this.frameBufferAttachmentSettings;
+      this.renderTextures[name].resizing = true;
+      this.renderTextures[name].name = name;
+      this.renderTextures[name].colorBuffers = 1;
+      this.renderTextures[name].extraChannels = {};
+      this.renderTextures[name].attachmentInfo = this.frameBufferAttachmentSettings;
     }
 
     createRenderTextureOfSize({ name, width, height }) {
@@ -6354,25 +6444,92 @@
       if (name == "Scratch Stage") return;
 
       //if the render texture exists delete it
-      if (this.renderTextures[this.prefixes.renderTextures + name]) {
+      name = this.prefixes.renderTextures + name
+      if (this.renderTextures[name]) {
         this._deleteFramebuffer(
-          this.renderTextures[this.prefixes.renderTextures + name]
+          this.renderTextures[name]
         );
       }
 
       //Add it
-      this.renderTextures[this.prefixes.renderTextures + name] =
+      this.renderTextures[name] =
         twgl.createFramebufferInfo(gl, this.frameBufferAttachmentSettings);
       twgl.resizeFramebufferInfo(
         gl,
-        this.renderTextures[this.prefixes.renderTextures + name],
+        this.renderTextures[name],
         this.frameBufferAttachmentSettings,
         width,
         height
       );
-      this.renderTextures[this.prefixes.renderTextures + name].resizing = false;
-      this.renderTextures[this.prefixes.renderTextures + name].name = name;
-      this.renderTextures[this.prefixes.renderTextures + name].attachmentInfo = this.frameBufferAttachmentSettings;
+      this.renderTextures[name].resizing = false;
+      this.renderTextures[name].name = name;
+      this.renderTextures[name].colorBuffers = 1;
+      this.renderTextures[name].extraChannels = {};
+      this.renderTextures[name].attachmentInfo = this.frameBufferAttachmentSettings;
+    }
+
+    addBufferToRenderTexture({ name, renderTexture }) {
+      //If it is named scratch stage get that stuff out of here
+      if (renderTexture == "Scratch Stage") return;
+
+      //if the render texture exists continue
+      if (!this.renderTextures[renderTexture]) return;
+
+      //If this happens we have to many attachments. Sorry
+      if (!gl[`COLOR_ATTACHMENT${this.renderTextures[renderTexture].colorBuffers}`]) return;
+
+      //Check to make sure the name of this buffer isn't taken
+      if (this.renderTextures[renderTexture].extraChannels[name]) return;
+
+      const newTexture = twgl.createTexture(gl,{
+        internalFormat: this.frameBufferAttachmentSettings[0].internalFormat,
+        format: this.frameBufferAttachmentSettings[0].format,
+        type: this.frameBufferAttachmentSettings[0].type,
+        width:this.renderTextures[renderTexture].width,
+        height:this.renderTextures[renderTexture].height,
+      });
+
+      //Attach to the colour buffer
+      gl.bindFramebuffer(gl.FRAMEBUFFER,this.renderTextures[renderTexture].framebuffer);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl[`COLOR_ATTACHMENT${this.renderTextures[renderTexture].colorBuffers}`], gl.TEXTURE_2D, newTexture, 0);
+      this.renderTextures[renderTexture].attachments.push(newTexture);
+      this.renderTextures[renderTexture].attachmentInfo.push(this.frameBufferAttachmentSettings[0]);
+      this.renderTextures[renderTexture].extraChannels[name] = this.renderTextures[renderTexture].colorBuffers;
+      this.renderTextures[renderTexture].colorBuffers += 1;
+
+      console.log(this.renderTextures[renderTexture]);
+    }
+
+    getIdOfBuffer({ name, renderTexture }) {
+      //If it is named scratch stage get that stuff out of here
+      if (renderTexture == "Scratch Stage") return Scratch.Cast.toString(0);
+
+      //if the render texture exists continue
+      if (!this.renderTextures[renderTexture]) return Scratch.Cast.toString(0);
+
+      //If this happens we have to many attachments. Sorry
+      if (!gl[`COLOR_ATTACHMENT${this.renderTextures[renderTexture].colorBuffers}`]) return Scratch.Cast.toString(0);
+
+      //Check to make sure the name of this buffer isn't taken
+      if (!this.renderTextures[renderTexture].extraChannels[name]) return Scratch.Cast.toString(0);
+
+      return Scratch.Cast.toString(this.renderTextures[renderTexture].extraChannels[name]);
+    }
+
+    doesBufferExistInRT({ name, renderTexture }) {
+      //If it is named scratch stage get that stuff out of here
+      if (renderTexture == "Scratch Stage") return false;
+
+      //if the render texture exists continue
+      if (!this.renderTextures[renderTexture]) return false;
+
+      //If this happens we have to many attachments. Sorry
+      if (!gl[`COLOR_ATTACHMENT${this.renderTextures[renderTexture].colorBuffers}`]) return false;
+
+      //Check to make sure the name of this buffer isn't taken
+      if (!this.renderTextures[renderTexture].extraChannels[name]) return false;
+
+      return true;
     }
 
     clearRenderTexture({ name }) {
@@ -6559,6 +6716,10 @@
         }
       }
       this.OldPenSkinFunction();
+    }
+
+    __hideThatStuff() {
+      this.hideTexturesInMenus = !this.hideTexturesInMenus;
     }
   }
 
