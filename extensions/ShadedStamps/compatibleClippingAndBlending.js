@@ -73,7 +73,7 @@
             }
           }
           //Shaded compatibility part :)
-          if (runtime.ext_obviousalexc_shaded) {
+          if (runtime.ext_penP) {
               break findCorrect;
           }
           toCorrectThing = false;
