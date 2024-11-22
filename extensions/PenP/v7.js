@@ -265,7 +265,7 @@
         gl.shaderSource(vertShader, vert.trim());
         gl.compileShader(vertShader);
         if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
-          throw gl.getShaderInfoLog();
+          throw gl.getShaderInfoLog(vertShader);
         }
       } catch (error) {
         console.error(error);
