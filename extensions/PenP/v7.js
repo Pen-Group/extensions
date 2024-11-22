@@ -265,7 +265,7 @@
         gl.shaderSource(vertShader, vert.trim());
         gl.compileShader(vertShader);
         if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
-          throw gl.getShaderInfoLog(vertShader);
+          throw gl.getShaderInfoLog();
         }
       } catch (error) {
         console.error(error);
@@ -1204,7 +1204,7 @@
         //Search using regex
         const regexSearcher = new RegExp(`uniform.*${uniformKey}.*;?`);
         let searchResult =
-          this.shaders[shaderName].projectData.vertShader.match(
+          this.shaders[shaderName].projectData.fragShader.match(
             regexSearcher
           )[0];
 
