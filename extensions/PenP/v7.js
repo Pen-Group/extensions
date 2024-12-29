@@ -4071,7 +4071,7 @@
       if (costIndex >= 0) {
         const curCostume =
           curTarget.sprite.costumes[costIndex].asset.encodeDataURI();
-        return curCostume;
+        return curCostume || 0;
       }
     }
 
@@ -4079,7 +4079,7 @@
       //Just a simple thing to allow for pen drawing
       const costIndex = this.penPlusCostumeLibrary[costume];
       if (costIndex) {
-        return costIndex[dimension];
+        return costIndex[dimension] || "";
       }
     }
 
@@ -4140,7 +4140,7 @@
               R: textureData[colorIndex] / 2.55,
               G: textureData[colorIndex + 1] / 2.55,
               B: textureData[colorIndex + 2] / 2.55,
-            });
+            }) || "0";
           }
           return this.colorLib.rgbtoSColor({ R: 100, G: 100, B: 100 });
         }
@@ -4156,7 +4156,7 @@
           curCostume.height
         );
         if (textureData) {
-          return textureData;
+          return textureData || "";
         }
         return "";
       }
