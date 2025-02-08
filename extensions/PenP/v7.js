@@ -1204,7 +1204,7 @@
         //Search using regex
         const regexSearcher = new RegExp(`uniform.*${uniformKey}.*;?`);
         let searchResult =
-          this.shaders[shaderName].projectData.vertShader.match(
+          this.shaders[shaderName].projectData.fragShader.match(
             regexSearcher
           )[0];
 
