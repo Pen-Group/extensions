@@ -532,7 +532,8 @@
         (this.triPointCount < TRIANGLES_PER_BUFFER * 3) &&
         (shader == this.triShader &&
         isDefault == this.triIsDefault &&
-        texture == this.triTexture) &&
+        texture == this.triTexture,
+        uniforms == this.triUniforms) &&
         (!forceDraw)
       ) {
         return;
@@ -560,6 +561,9 @@
           penPlusShaders[this.triShader].ProgramInf,
           bufferInfo
         );
+
+        console.log(bufferInfo);
+        console.log(this.triDefaultAttributes);
 
         //? Bind Positional Data
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -3501,7 +3505,8 @@
     //!Useless square blocks
     squareDown(arg, util) {
       // prettier-ignore
-      if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
+
+      this.tryFinalizeDraw("untextured",true,null,{});
       checkForPen(util);
 
       //Make sure we have the triangle data updating accordingly
@@ -3629,7 +3634,8 @@
     }
     squareTexDown({ tex }, util) {
       // prettier-ignore
-      if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
+
+      this.tryFinalizeDraw("untextured",true,null,{});
       checkForPen(util);
 
       //Make sure we have the triangle data updating accordingly
@@ -6575,6 +6581,8 @@
     }
 
     targetRenderTexture({ name }) {
+      this.tryFinalizeDraw(null,null,null,null,true);
+
       //Check for the scratch stage
       if (name == "Scratch Stage") {
         this.currentRenderTexture = triBufferInfo;
@@ -6606,7 +6614,6 @@
         this.currentRenderTexture = triBufferInfo;
         this.currentAttachmentInfo = triBufferAttachments;
       }
-      this.tryFinalizeDraw(null,null,null,null,true);
 
       //Do some fixes if we are already in the pen+ draw region!
       if (this.inDrawRegion) {
