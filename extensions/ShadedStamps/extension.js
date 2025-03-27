@@ -520,20 +520,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
             acceptReporters:true
           },
           extraTargets: {
-            items: [
-              {
-                text:"pen layer",
-                value:"pen"
-              },
-              {
-                text:"stage",
-                value:"stage"
-              },
-              {
-                text:"camera",
-                value:"camera"
-              }
-            ]
+            items: "extraTargets"
           },
           dimensions: {
             items:["width","height"],
@@ -746,7 +733,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
       let DesiredID = -1;
       switch(target) {
         case "pen":
-          if (!runtime.ext_videoSensing) break;
+          if (!runtime.ext_pen) break;
           DesiredID = runtime.ext_pen._penDrawableId;
           break;
 
@@ -761,6 +748,13 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           break;
         
         default:
+          for(let drawableID in renderer._allDrawables) {
+            const drawable = renderer._allDrawables[+drawableID];
+            if (drawable && drawable.customDrawableName && drawable.customDrawableName+"_custom" === target) {
+              DesiredID = +drawableID;
+              break;
+            }
+          }
           break;
       }
 
@@ -799,6 +793,33 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         default:
           break;
       }
+    }
+
+    extraTargets() {
+      const out = [
+        {
+          text: "pen layer",
+          value: "pen"
+        },
+        {
+          text: "stage",
+          value: "stage"
+        },
+        {
+          text: "camera",
+          value: "camera"
+        }
+      ];
+      for(let drawableID in renderer._allDrawables) {
+        const drawable = renderer._allDrawables[+drawableID];
+        if (drawable && drawable.customDrawableName !== undefined) {
+          out.push({
+            text: drawable.customDrawableName,
+            value: drawable.customDrawableName+"_custom"
+          });
+        }
+      }
+      return out;
     }
   }
 
