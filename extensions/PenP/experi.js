@@ -4997,7 +4997,7 @@
       )
         return;
       this.tryFinalizeDraw(null,null,null,null,true);
-      item -= (item - 1) * 2;
+      item = (item - 1) * 2;
       this.programs[shader].uniformDat[uniformName][item] = numberX;
       this.programs[shader].uniformDat[uniformName][item + 1] = numberY;
     }
