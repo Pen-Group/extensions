@@ -846,6 +846,34 @@
         });
       },
 
+      createPenPlusTextureInfoFromRenderTexture: function (renderTexture, name) {
+        if (!renderTexture) return;
+        const texture = parentExtension.penPlusCostumeLibrary[name]
+          ? parentExtension.penPlusCostumeLibrary[name].texture
+          : gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        twgl.bindFramebufferInfo(gl, renderTexture);
+        // Fill the texture with a copy of the texture from the render texture.
+        gl.copyTexImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA,
+          0,
+          0,
+          renderTexture.width,
+          renderTexture.height,
+          0
+        );
+        // Let's assume all images are not a power of 2
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        parentExtension.penPlusCostumeLibrary[name] = {
+          texture: texture,
+          width: renderTexture.width,
+          height: renderTexture.height,
+        };
+      },
+
       getTextureData: (texture, width, height) => {
         //?Initilize the temp framebuffer and assign it
         const readBuffer = gl.createFramebuffer();
@@ -2861,6 +2889,21 @@
               },
             },
           },
+          {
+            opcode: "addImageFromRenderTexture",
+            blockType: Scratch.BlockType.COMMAND,
+            text: Scratch.translate("add image named [imageName] from render texture [renderTextureName] to pen+ library"),
+            arguments: {
+              imageName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Image",
+              },
+              renderTextureName:{
+                type: Scratch.ArgumentType.STRING,
+                menu: "renderTexturesOnly",
+              },
+            },
+          },
 
           {
             blockType: Scratch.BlockType.LABEL,
@@ -4202,6 +4245,11 @@
       );
     }
 
+
+    addImageFromRenderTexture({imageName, renderTextureName}) {
+      this.textureFunctions.createPenPlusTextureInfoFromRenderTexture(this.renderTextures[this.prefixes.renderTextures+renderTextureName], imageName)
+    }
+    
     addIMGfromDURI({ dataURI, name }) {
       //Just a simple thing to allow for pen drawing
       this.textureFunctions.createPenPlusTextureInfo(
