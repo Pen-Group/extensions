@@ -6021,14 +6021,16 @@
               curCostume.width,
               curCostume.height
             );
-  
+            
+            // don't assume the image is square
+            const maxDimension = Math.max(curCostume.width, curCostume.height);
             gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.penPlusCubemap[name]);
             gl.texImage2D(
-              cubemapSetup[faceID].texture.side,
+              cubemapSetup[faceID].side,
               0,
               gl.RGBA,
-              curCostume.width,
-              curCostume.height,
+              maxDimension,
+              maxDimension,
               0,
               gl.RGBA,
               gl.UNSIGNED_BYTE,
@@ -6053,31 +6055,55 @@
               //Only used for images we got permission to fetch before. Don't need this.
               // eslint-disable-next-line
               const image = new Image();
-              image.onload = () => {
-                gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.penPlusCubemap[name]);
-                gl.texImage2D(
-                  cubemapSetup[faceID].texture.side,
-                  0,
-                  gl.RGBA,
-                  gl.RGBA,
-                  gl.UNSIGNED_BYTE,
-                  image
-                );
-  
-                gl.texParameteri(
-                  gl.TEXTURE_CUBE_MAP,
-                  gl.TEXTURE_MIN_FILTER,
-                  this.currentFilter
-                );
-                gl.texParameteri(
-                  gl.TEXTURE_CUBE_MAP,
-                  gl.TEXTURE_MAG_FILTER,
-                  this.currentFilter
-                );
-              };
-  
+                image.onload = () => {
+                  const maxDimension = Math.max(image.width, image.height);
+                  if (image.width!=image.height) {
+                    // I don't know if there's a better way to do this.
+                    const canvas = document.createElement("canvas");
+                    canvas.width = maxDimension;
+                    canvas.height = maxDimension;
+
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(
+                      image,
+                      (maxDimension - image.width) / 2,
+                      (maxDimension - image.height) / 2
+                    );
+
+                    gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.penPlusCubemap[name]);
+                    gl.texImage2D(
+                      cubemapSetup[faceID].side,
+                      0,
+                      gl.RGBA,
+                      gl.RGBA,
+                      gl.UNSIGNED_BYTE,
+                      canvas
+                    );
+                  } else {
+                    gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.penPlusCubemap[name]);
+                    gl.texImage2D(
+                      cubemapSetup[faceID].side,
+                      0,
+                      gl.RGBA,
+                      gl.RGBA,
+                      gl.UNSIGNED_BYTE,
+                      image
+                    );
+                  }
+                  gl.texParameteri(
+                    gl.TEXTURE_CUBE_MAP,
+                    gl.TEXTURE_MIN_FILTER,
+                    this.currentFilter
+                  );
+                  gl.texParameteri(
+                    gl.TEXTURE_CUBE_MAP,
+                    gl.TEXTURE_MAG_FILTER,
+                    this.currentFilter
+                  );
+              }
               image.src = costumeURI;
             }
+
           }
         }
       }
