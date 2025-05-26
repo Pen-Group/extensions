@@ -4346,7 +4346,7 @@
             x = Math.floor(x - 1);
             y = Math.floor(y - 1);
             const colorIndex = (y * curCostume.width + x) * 4;
-            if (textureData[colorIndex] && x < curCostume.width && x >= 0) {
+            if ((textureData[colorIndex]!==undefined) && x < curCostume.width && x >= 0) {
               return this.colorLib.rgbtoSColor({
                 R: textureData[colorIndex] / 2.55,
                 G: textureData[colorIndex + 1] / 2.55,
