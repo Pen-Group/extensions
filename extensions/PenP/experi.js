@@ -3529,18 +3529,22 @@
       }
   
       _getDefaultTriAttributes() {
+        // prettier-ignore
         return [
-          // U V  TINT R G B  Z W transparency U V  TINT R G B  Z W transparency U V  TINT R G B  Z W transparency
-          0,
-          0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1,
-          1, 1,
+          // U V  TINT R G B  Z W transparency
+             0,0,      1,1,1, 0,1,1,
+             1,1,      1,1,1, 0,1,1, 
+             1,0,      1,1,1, 0,1,1, 
+             //Oh no?
+             1, 1, 1,
         ];
       }
   
       _getDefaultSquareAttributes() {
+        // prettier-ignore
         return [
-          // width* height*  rotation  u-mul u     v-mul   v    r g b transparency
-          1, 1, 90, 1, 0, 1, 0, 1, 1, 1, 1, 1,
+          // width* height*  rotation  u-mul u     v-mul   v    r g b transparency  Z
+          1,        1,       90,       1,    0,    1,      0,   1,1,1,1,            0,
         ];
       }
   
@@ -3582,32 +3586,32 @@
             width * -0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * -0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * -0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
           ]),
           a_color: new Float32Array([
             penColor[0] * myAttributes[7],
@@ -3713,32 +3717,32 @@
             width * -0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * -0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * -0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
           ]),
           a_color: new Float32Array([
             //Wow that was very cool
@@ -4717,32 +4721,32 @@
             width * -0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * -0.5,
             height * 0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * -0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
   
             width * 0.5,
             height * -0.5,
             myAttributes[11],
-            myAttributes[11],
+            myAttributes[11] + 1,
           ]),
           a_color: new Float32Array([
             penColor[0] * myAttributes[7],
