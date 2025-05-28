@@ -528,7 +528,6 @@
   
         //console.log(this.triUniforms,uniforms,uniforms == this.triUniforms)
         if (
-          (this.triPointCount < TRIANGLES_PER_BUFFER * 3) &&
           (shader == this.triShader &&
           isDefault == this.triIsDefault &&
           texture == this.triTexture,
@@ -539,7 +538,7 @@
         }
   
         // prettier-ignore
-        if ((!this.inDrawRegion) && (!forceDraw)) renderer.enterDrawRegion(this.penPlusDrawRegion);
+        if ((!this.inDrawRegion) || (!forceDraw)) renderer.enterDrawRegion(this.penPlusDrawRegion);
   
         //if (!this.triShader) {return};
   
@@ -561,9 +560,6 @@
             bufferInfo
           );
   
-          console.log(bufferInfo);
-          console.log(this.triDefaultAttributes);
-  
           //? Bind Positional Data
           gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   
@@ -572,7 +568,7 @@
           twgl.setUniforms(penPlusShaders[this.triShader].ProgramInf, this.triDefaultAttributes);
           twgl.drawBufferInfo(gl, bufferInfo);
         }
-        else {
+        else if (this.triShader != null) {
           if (this.programs[this.triShader]) {
             //Safe to assume they have a buffer;
             const shaderBufferInfo = this.programs[this.triShader].buffer;
@@ -1138,8 +1134,6 @@
           };
           this.programs[shaderName].attribDat[name] = declaration;
         }
-  
-        console.log(dataInitilizer);
   
         this.programs[shaderName].data = dataInitilizer;
         this.programs[shaderName].buffer = twgl.createBufferInfoFromArrays(
@@ -6579,8 +6573,6 @@
         this.renderTextures[renderTexture].attachmentInfo.push(this.frameBufferAttachmentSettings[0]);
         this.renderTextures[renderTexture].extraChannels[name] = this.renderTextures[renderTexture].colorBuffers;
         this.renderTextures[renderTexture].colorBuffers += 1;
-  
-        console.log(this.renderTextures[renderTexture]);
       }
   
       getIdOfBuffer({ name, renderTexture }) {
