@@ -523,11 +523,21 @@
       triPointCount = 0;
   
       tryFinalizeDraw(shader,isDefault,texture,uniforms,forceDraw) {
-        //trying my best to reduce memory usage
-        gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
+        //Return if both is null
+        if (!this.triShader) {
+          this.triShader = shader;
+          this.triIsDefault = isDefault;
+          this.triTexture = texture;
+          this.triUniforms = uniforms;
+  
+          this.triPointCount = 0;
+
+          return;
+        }
   
         //console.log(this.triUniforms,uniforms,uniforms == this.triUniforms)
         if (
+          (this.triPointCount < TRIANGLES_PER_BUFFER * 3) &&
           (shader == this.triShader &&
           isDefault == this.triIsDefault &&
           texture == this.triTexture,
@@ -536,11 +546,12 @@
         ) {
           return;
         }
-  
+
         // prettier-ignore
-        if ((!this.inDrawRegion) || (!forceDraw)) renderer.enterDrawRegion(this.penPlusDrawRegion);
-  
-        //if (!this.triShader) {return};
+        if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
+
+        //trying my best to reduce memory usage
+        gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
   
         if (this.triIsDefault) {
           const attributeKeys = Object.keys(bufferInfo.attribs);
@@ -549,22 +560,22 @@
             const key = attributeKeys[keyID];
             
             gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo.attribs[key].buffer);
-            gl.bufferData(gl.ARRAY_BUFFER, defaultBufferDat[key].data, gl.STREAM_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, defaultBufferDat[key].data, gl.STATIC_DRAW);
           }
   
           bufferInfo.numElements = this.triPointCount;
-  
-          twgl.setBuffersAndAttributes(
-            gl,
-            penPlusShaders[this.triShader].ProgramInf,
-            bufferInfo
-          );
   
           //? Bind Positional Data
           gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   
           gl.useProgram(penPlusShaders[this.triShader].ProgramInf.program);
   
+          twgl.setBuffersAndAttributes(
+            gl,
+            penPlusShaders[this.triShader].ProgramInf,
+            bufferInfo
+          );
+
           twgl.setUniforms(penPlusShaders[this.triShader].ProgramInf, this.triDefaultAttributes);
           twgl.drawBufferInfo(gl, bufferInfo);
         }
@@ -4174,9 +4185,6 @@
   
         this.triPointCount += 3;
   
-        this.triShader = "textured"
-        this.triIsDefault = true;
-  
         this.triDefaultAttributes.u_transform = transform_Matrix;
         if (currentTexture != null) this.triDefaultAttributes.u_texture = currentTexture;
       }
@@ -4300,6 +4308,7 @@
             curCostume.width,
             curCostume.height
           );
+          
           if (textureData) {
             x = Math.floor(x - 1);
             y = Math.floor(y - 1);
@@ -4309,6 +4318,8 @@
               x < curCostume.width &&
               x >= 0
             ) {
+              //if (penPlusD)this.tryFinalizeDraw(null,null,null,null, true);
+
               const retColor = Scratch.Cast.toRgbColorObject(color);
               textureData[colorIndex] = retColor.r;
               textureData[colorIndex + 1] = retColor.g;
