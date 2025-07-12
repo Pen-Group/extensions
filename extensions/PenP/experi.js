@@ -4302,68 +4302,73 @@
   
       setpixelcolor({ x, y, color, costume }) {
         const curCostume = this.penPlusCostumeLibrary[costume];
-        if (curCostume) {
-          const textureData = this.textureFunctions.getTextureData(
-            curCostume.texture,
-            curCostume.width,
-            curCostume.height
+        if (curCostume && x > 0 && y > 0 && x <= curCostume.width && y <= curCostume.height && x % 1 === 0 && y % 1 === 0) {
+          const retColor = Scratch.Cast.toRgbColorObject(color);
+          const pixelData = new Uint8Array(4);
+          gl.bindTexture(gl.TEXTURE_2D, curCostume.texture);
+          pixelData[0] = retColor.r;
+          pixelData[1] = retColor.g;
+          pixelData[2] = retColor.b;
+          pixelData[3] = 255;
+          gl.texSubImage2D(
+            gl.TEXTURE_2D,
+            0,
+            x-1,
+            y-1,
+            1,
+            1,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            pixelData,
+            0
           );
-          
-          if (textureData) {
-            x = Math.floor(x - 1);
-            y = Math.floor(y - 1);
-            const colorIndex = (y * curCostume.width + x) * 4;
-            if (
-              textureData[colorIndex] != undefined &&
-              x < curCostume.width &&
-              x >= 0
-            ) {
-              //if (penPlusD)this.tryFinalizeDraw(null,null,null,null, true);
-
-              const retColor = Scratch.Cast.toRgbColorObject(color);
-              textureData[colorIndex] = retColor.r;
-              textureData[colorIndex + 1] = retColor.g;
-              textureData[colorIndex + 2] = retColor.b;
-              textureData[colorIndex + 3] = 255;
-  
-              gl.bindTexture(gl.TEXTURE_2D, curCostume.texture);
-              gl.texImage2D(
-                gl.TEXTURE_2D,
-                0,
-                gl.RGBA,
-                curCostume.width,
-                curCostume.height,
-                0,
-                gl.RGBA,
-                gl.UNSIGNED_BYTE,
-                textureData
-              );
-            }
-          }
         }
       }
   
       getpixelcolor({ x, y, costume }) {
         const curCostume = this.penPlusCostumeLibrary[costume];
         if (curCostume) {
-          const textureData = this.textureFunctions.getTextureData(
+          const readBuffer = gl.createFramebuffer();
+  
+          lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+
+          gl.bindFramebuffer(gl.FRAMEBUFFER, readBuffer);
+
+          gl.framebufferTexture2D(
+            gl.FRAMEBUFFER,
+            gl.COLOR_ATTACHMENT0,
+            gl.TEXTURE_2D,
             curCostume.texture,
-            curCostume.width,
-            curCostume.height
+            0
           );
-          if (textureData) {
-            x = Math.floor(x - 1);
-            y = Math.floor(y - 1);
-            const colorIndex = (y * curCostume.width + x) * 4;
-            if ((textureData[colorIndex]!==undefined) && x < curCostume.width && x >= 0) {
-              return this.colorLib.rgbtoSColor({
-                R: textureData[colorIndex] / 2.55,
-                G: textureData[colorIndex + 1] / 2.55,
-                B: textureData[colorIndex + 2] / 2.55,
-              });
-            }
-            return this.colorLib.rgbtoSColor({ R: 100, G: 100, B: 100 });
+
+          const removeBuffer = () => {
+            gl.deleteFramebuffer(readBuffer);
+          };
+
+          if (
+            gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE
+          ) {
+            const pixel = new Uint8Array(4);
+            gl.readPixels(
+              x - 1,
+              y - 1,
+              1,
+              1,
+              gl.RGBA,
+              gl.UNSIGNED_BYTE,
+              pixel
+            );
+
+            removeBuffer();
+
+            return this.colorLib.rgbtoSColor({
+              R: pixel[0] / 2.55,
+              G: pixel[1] / 2.55,
+              B: pixel[2] / 2.55,
+            });
           }
+          removeBuffer();
         }
       }
   
