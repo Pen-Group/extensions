@@ -1,6 +1,6 @@
-// Name: Pen Plus 3D Addon
-// ID: penP3D
-// Description: 3d Rendering for pen+
+// Name: Shaded
+// ID: OACShaded
+// Description: Sprite shaders for pen+
 // By: ObviousAlexC <https://scratch.mit.edu/users/pinksheep2917/>
 // License: MIT
 
@@ -443,6 +443,17 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
             },
           },
           {
+            opcode: "shaderCompiledForSprites",
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: "is [shader] compiled for sprite use?",
+            arguments: {
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shadersAndStageALT",
+              },
+            },
+          },
+          {
             opcode: "setSpriteShader",
             blockType: Scratch.BlockType.COMMAND,
             text: "use [shader] on myself",
@@ -563,6 +574,13 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
                 event.fragShader
             ]);
         }
+    }
+
+    shaderCompiledForSprites({ shader }) {
+        if (penPlus) {
+            if (recompiledShaders[shader]) return true;
+        }
+        return false;
     }
 
     setAutoReRender({value}) {
