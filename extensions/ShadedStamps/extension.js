@@ -349,29 +349,6 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
       }
     }
 
-    saveThingExists = false;
-
-    addSaveListeners() {
-      if (this.saveThingExists) return;
-
-      if (penPlus) {
-        console.log("Shaded : Adding Save Listener")
-        this.saveThingExists = true;
-        penPlus.addEventListener("shaderSaved", (event) => {
-          console.log(`converting shader ${event.name} to sprite format!`);
-
-          let convertedVertex = event.vertexShader.replaceAll(GL_POS_FINDER,"gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position,0,1);");
-          convertedVertex = convertedVertex.replaceAll(GL_POS_VAR,"vec2 a_position;");
-          convertedVertex = "uniform highp mat4 u_projectionMatrix; uniform highp mat4 u_modelMatrix;\n" + convertedVertex;
-          
-          recompiledShaders[event.name] = twgl.createProgramInfo(gl,[
-            convertedVertex,
-            event.fragmentShader
-          ]);
-        });
-      }
-    }
-
     autoReRender = true;
 
     constructor() {
@@ -389,8 +366,6 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           delete spriteShaders[cloneID];
         }
       });
-
-      Scratch.vm.runtime.on("EXTENSION_ADDED", this.addSaveListeners);
 
       window.addEventListener("message", (event) => {
         let eventType = event.data.type;
@@ -482,6 +457,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
               },
             },
           },
+          "---",
           {
             opcode: "setSpriteShader",
             blockType: Scratch.BlockType.COMMAND,
@@ -508,6 +484,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
               },
             },
           },
+          "---",
           {
             opcode: "getDescrepency",
             blockType: Scratch.BlockType.REPORTER,
