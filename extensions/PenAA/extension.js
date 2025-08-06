@@ -183,6 +183,7 @@ varying vec2 v_texCoord;
 // Add this to divisors to prevent division by 0, which results in NaNs propagating through calculations.
 // Smaller values can cause problems on some mobile devices.
 const float epsilon = 1e-3;
+uniform sampler2D ditherTex;
 
 #if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))
 // Branchless color conversions based on code from:
