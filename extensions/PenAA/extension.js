@@ -7,6 +7,36 @@
 (function (Scratch) {
     "use strict";
 
+    //New draw modes
+    const drawModes = {
+        normal: "gl_FragColor = v_lineColor * clamp(1.0 - line, 0.0, 1.0);",
+        no_aa: `if (1.0 - line > 0.5) {
+			gl_FragColor = v_lineColor;
+		}
+		else {
+			discard;
+		}`,
+        square: "gl_FragColor = v_lineColor;",
+        outline: "gl_FragColor = v_lineColor * min(sin(clamp(0.75 - line, -0.25, 1.25) * 3.1415962) * 2.0, 1.0);",
+        outline_no_aa: `if (min(sin(clamp(0.75 - line, -0.25, 1.25) * 3.1415962) * 2.0, 1.0) > 0.0) {
+			gl_FragColor = v_lineColor;
+		}
+		else {
+			discard;
+		}`,
+        dithered: `if (1.0 - line > 0.5) {
+            if (mod(gl_FragCoord.x + gl_FragCoord.y, 2.0) >= 1.0) {
+                discard;
+            }
+            else {
+			    gl_FragColor = v_lineColor;
+            }
+		}
+		else {
+			discard;
+		}`
+    };
+
     //We need to recompile the shaders to do this.
     const newSpriteShaders = {
         vert:`
@@ -341,17 +371,7 @@ void main()
 	line -= ((v_lineThickness - 1.0) * 0.5);
 	// Because "distance to the center of the line" decreases the closer we get to the line, but we want more opacity
 	// the closer we are to the line, invert it.
-	if (u_antiAliasOffset == 1.0) {
-		gl_FragColor = v_lineColor * clamp(1.0 - line, 0.0, 1.0);
-	}
-	else {
-		if (1.0 - line > 0.5) {
-			gl_FragColor = v_lineColor;
-		}
-		else {
-			discard;
-		}
-	}
+    [REPLACE_LINE_CODE]
 	#endif // DRAW_MODE_line
 
 	#ifdef DRAW_MODE_background
@@ -368,26 +388,33 @@ void main()
     const twgl = renderer.exports.twgl;
     const shaderManager = renderer._shaderManager;
 
-    const customProgramInfo = twgl.createProgramInfo(gl,[
-        newSpriteShaders.vert,
-        newSpriteShaders.frag
-    ]);
-
-    if (shaderManager._shaderCache.line[0]) {
-        shaderManager._shaderCache.line[0] = customProgramInfo;
-    }
-    else {
-        renderer._shaderManager._shaderCache.line.push(customProgramInfo);
+    //Compile our code
+    const customProgramInfo = {};
+    for (let mode in drawModes) {
+        customProgramInfo[mode] = twgl.createProgramInfo(gl,[
+            newSpriteShaders.vert,
+            newSpriteShaders.frag.replace("[REPLACE_LINE_CODE]", drawModes[mode])
+        ]);
     }
 
-    gl.useProgram(customProgramInfo.program);
-    twgl.setUniforms(customProgramInfo,{
-        u_antiAliasOffset: 1
-    });
+
+    //Pen Mode and mode assertion
+    let penMode = "normal";
+    const assertShader = () => {
+        for (let skin in renderer._allSkins) {
+            if (renderer._allSkins[skin]._lineShader) {
+                renderer._allSkins[skin]._lineShader = customProgramInfo[penMode] || customProgramInfo["square"];
+            }
+        }
+        //vm.renderer._allSkins[2]._lineShader
+    }
 
     class ExtensionBuilder{constructor(t,n,i,l){this.internal={},this.internal.JSON={blocks:[],menus:{}},this.runtime=Scratch.vm.runtime,this.internal.defaultFunction={code(){console.log("This block has no code")},arguments:{}},this.addDocs=t=>{this.internal.JSON.docsURI=t},this.addBlock=(t,n,i,l,e,s)=>{l=l||this.internal.defaultFunction.code,this[n]=l,s=s||{};let o=s;o.disableMonitor||(o.disableMonitor=!0),o.opcode=n,o.blockType=i,o.text=t,o.arguments=e||JSON.parse(JSON.stringify(this.internal.defaultFunction.arguments));let r=this.internal.JSON.blocks.length;return this.internal.JSON.blocks.push(o),this.internal.JSON.blocks[r].addArgument=(t,i,l,e)=>{if(null==(l=l||null))switch(typeof i){case"string":default:l=Scratch.ArgumentType.STRING;break;case"boolean":l=Scratch.ArgumentType.BOOLEAN;break;case"number":case"bigint":l=Scratch.ArgumentType.NUMBER}return null==i?this.internal.JSON.blocks[r].arguments[t]={type:l}:this.internal.JSON.blocks[r].arguments[t]={type:l,defaultValue:i},(e=e||null)&&("string"==typeof e?this.internal.JSON.blocks[r].arguments[t].menu=e:"function"==typeof e||"object"==typeof e?(this.addMenu(n+"_"+t+"_Menu",e,!0),this.internal.JSON.blocks[r].arguments[t].menu=n+"_"+t+"_Menu"):console.error("Menu '"+n+"_"+t+"_Menu'is not valid!")),this.internal.JSON.blocks[r]},this.internal.JSON.blocks[r].setIcon=t=>(this.internal.JSON.blocks[r].blockIconURI=t,this.internal.JSON.blocks[r]),this.internal.JSON.blocks[r].setFilter=t=>(t=t||Scratch.TargetType.SPRITE,this.internal.JSON.blocks[r].filter=t,this.internal.JSON.blocks[r]),this.internal.JSON.blocks[r].hideBlock=()=>(this.internal.JSON.blocks[r].hideFromPalette=!0,this.internal.JSON.blocks[r]),this.internal.JSON.blocks[r].allowMonitor=()=>(this.internal.JSON.blocks[r].disableMonitor=!1,this.internal.JSON.blocks[r]),this.internal.JSON.blocks[r].stopMoniter=()=>(this.internal.JSON.blocks[r].disableMonitor=!0,this.internal.JSON.blocks[r]),this.internal.JSON.blocks[r].setEdgeActivation=t=>(this.internal.JSON.blocks[r].isEdgeActivated=t,this.internal.JSON.blocks[r]),this.internal.JSON.blocks[r].addImage=(t,n,i)=>{i=i||!1;let l={type:Scratch.ArgumentType.IMAGE,dataURI:n,flipRTL:i};return this.internal.JSON.blocks[r].arguments[t]=l,this.internal.JSON.blocks[r]},this.internal.JSON.blocks[r]},this.addMenu=(t,n,i)=>{i=i||!1,"function"==typeof n?(this[t+"Function"]=n,this.internal.JSON.menus[t]={items:t+"Function"}):this.internal.JSON.menus[t]={items:n},this.internal.JSON.menus[t].acceptReporters=i},this.addButton=(t,n,i)=>{n=n||this.internal.defaultFunction.code,i=i||"Button",this["button_"+t]=n;let l={};l.func="button_"+t,l.blockType=Scratch.BlockType.BUTTON,l.text=i;let e=this.internal.JSON.blocks.length;return this.internal.JSON.blocks[e]=l,this.internal.JSON.blocks[e]},this.addDivider=()=>{this.internal.JSON.blocks.push("---")},this.addLabel=t=>{t=t||"N/A";let n={blockType:"label",text:t};this.internal.JSON.blocks.push(n)},this.internal.createBase=()=>{if(t=t||"Extension",n=n||"extension",this.internal.JSON.name=t,this.internal.JSON.id=n,(i=i||{}).blockColor=i.blockColor||null,i.inputColor=i.inputColor||null,i.outlineColor=i.outlineColor||null,null!=i.blockColor){let e=i.blockColor;e>8947848?this.internal.colors=[e,e-197379,e-394758,]:this.internal.colors=[e,e+197379,e+394758,],i.inputColor,this.internal.colors[1]=i.inputColor,i.outlineColor,this.internal.colors[2]=i.outlineColor,this.internal.JSON.color1=this.internal.colors[0],this.internal.JSON.color2=this.internal.colors[1],this.internal.JSON.color3=this.internal.colors[2]}(l=l||{}).blockIconUri=l.blockIconUri||null,l.menuIconUri=l.menuIconUri||l.blockIconUri||null,this.menuUri=l.menuIconUri,this.blockIco=l.blockIconUri,this.docsUri=null},this.internal.createBase(),this.setColors=(t,n,i)=>{t="string"==typeof t?t:(t+0).toString(16),n="string"==typeof n?n:(n+0).toString(16),i="string"==typeof i?i:(i+0).toString(16),this.internal.colors=[0,0,0],this.internal.colors[0]=t,this.internal.colors[1]=n,this.internal.colors[2]=i,this.internal.JSON.color1=t,this.internal.JSON.color2=n,this.internal.JSON.color3=i},this.setMenuIcon=t=>{this.internal.JSON.menuIconURI=t},this.setGlobalBlockIcon=t=>{this.internal.JSON.blockIconURI=t},this.runHat=t=>{this.runtime.startHats(this.internal.JSON.id+"_"+t)},this.getInfo=()=>this.internal.JSON,this.register=()=>{Scratch.extensions.register(this)}}}
     const extension = new ExtensionBuilder("Customizable AA", "oaccaa");
     
+	let antiAliased = true;
+
+    //Old V1 block
     extension.addBlock("Set anti aliasing threshold to [value]", "saathresh", Scratch.BlockType.COMMAND,({value}) => {
 		gl.useProgram(customProgramInfo.program);
         twgl.setUniforms(customProgramInfo,{
@@ -395,8 +422,7 @@ void main()
         });
     }).addArgument("value",25).hideBlock();
 
-	let antiAliased = true;
-
+    //Old V2 blocks
 	extension.addBlock("turn anti aliasing [onoff]", "turnAAoffOn",Scratch.BlockType.COMMAND, ({onoff}) => {
 		if (onoff == "on") {
 			gl.useProgram(customProgramInfo.program);
@@ -412,14 +438,39 @@ void main()
 			});
 			antiAliased = false;
 		}
+        assertShader();
 		renderer.dirty = true;
 	}).addArgument("onoff","on",undefined,[
 		"on",
 		"off"
-	]);
-	
+	]).hideBlock();
+
 	extension.addBlock("is anti aliasing?", "isAA",Scratch.BlockType.BOOLEAN, () => {
-		return antiAliased
+		return antiAliased;
+	}).hideBlock();
+
+    //New V3 blocks
+    extension.addBlock("set pen draw mode to [mode]", "setMode",Scratch.BlockType.COMMAND, ({mode}) => {
+        //Use the program
+        gl.useProgram(customProgramInfo.program);
+		
+        penMode = Scratch.Cast.toString(mode);
+        antiAliased = (penMode == "normal" || penMode == "outline") ? true : false;
+
+        //Re-assert and dirty
+        assertShader();
+		renderer.dirty = true;
+	}).addArgument("mode","normal",undefined,[
+		{text: "normal", value: "normal"},
+		{text: "no anti-aliasing", value: "no_aa"},
+        {text: "outline", value: "outline"},
+        {text: "outline no anti-aliasing", value: "outline_no_aa"},
+        {text: "square", value: "square"},
+        {text: "dithered", value: "dithered"}
+	]);
+
+	extension.addBlock("draw mode", "getDrawMode",Scratch.BlockType.REPORTER, () => {
+		return Scratch.Cast.toString(penMode);
 	});
 
     extension.register();
