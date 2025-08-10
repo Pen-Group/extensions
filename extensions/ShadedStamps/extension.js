@@ -294,10 +294,13 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           reRenderInfo
         );
 
+        //Get viewport size
+        const viewport = vm.renderer.gl.getParameter(vm.renderer.gl.VIEWPORT);
+
         penPlus.programs[currentShader].uniformDat.u_skin = stageBuffer.attachments[0];
         penPlus.programs[currentShader].uniformDat.u_res = [
-          gl.canvas.width,
-          gl.canvas.height,
+          viewport[2],
+          viewport[3]
         ];
         penPlus.programs[currentShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
         
