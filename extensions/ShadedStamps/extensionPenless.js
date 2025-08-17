@@ -1544,6 +1544,12 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
 
       this._createAttributedatForShader(name);
     }
+  
+    deleteShader(name) {
+      //Create data in the json object
+      delete this.shaders[name];
+      delete this.programs[name];
+    }
 
     _createAttributedatForShader(shaderName) {
       const shaderDat = this.programs[shaderName];
