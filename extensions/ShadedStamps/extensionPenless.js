@@ -318,10 +318,12 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           reRenderInfo
         );
 
+        const viewport = vm.renderer.gl.getParameter(vm.renderer.gl.VIEWPORT);
+
         parentExtension.programs[currentShader].uniformDat.u_skin = stageBuffer.attachments[0];
         parentExtension.programs[currentShader].uniformDat.u_res = [
-          gl.canvas.width,
-          gl.canvas.height,
+          viewport[2],
+          viewport[3],
         ];
         parentExtension.programs[currentShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
         
@@ -1236,13 +1238,11 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
     setSpriteShader({ shader },util) {
       if (shader == "____PEN_PLUS__NO__SHADER____") {
         delete spriteShaders[util.target.drawableID];
-        this.resetBuffer();
         return;
       }
 
       if (!this.shaders[shader]) {
         delete spriteShaders[util.target.drawableID];
-        this.resetBuffer();
         return;
       }
       spriteShaders[util.target.drawableID] = shader;
@@ -1282,13 +1282,11 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
 
       if (shader == "____PEN_PLUS__NO__SHADER____") {
         delete spriteShaders[DesiredID];
-        this.resetBuffer();
         return;
       }
 
       if (!this.shaders[shader]) {
         delete spriteShaders[DesiredID];
-        this.resetBuffer();
         return;
       }
       spriteShaders[DesiredID] = shader;

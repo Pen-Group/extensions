@@ -746,13 +746,11 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
     setSpriteShader({ shader },util) {
       if (shader == "____PEN_PLUS__NO__SHADER____") {
         delete spriteShaders[util.target.drawableID];
-        this.resetBuffer();
         return;
       }
 
       if (!penPlus.shaders[shader]) {
         delete spriteShaders[util.target.drawableID];
-        this.resetBuffer();
         return;
       }
       spriteShaders[util.target.drawableID] = shader;
@@ -792,13 +790,11 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
 
       if (shader == "____PEN_PLUS__NO__SHADER____") {
         delete spriteShaders[DesiredID];
-        this.resetBuffer();
         return;
       }
 
       if (!penPlus.shaders[shader]) {
         delete spriteShaders[DesiredID];
-        this.resetBuffer();
         return;
       }
       spriteShaders[DesiredID] = shader;
