@@ -1,3 +1,4 @@
 {
-  "workbench.iconTheme": "material-icon-theme"
+  "workbench.iconTheme": "material-icon-theme",
+  "liveServer.settings.port": 8080
 }
