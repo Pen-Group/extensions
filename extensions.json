@@ -45,10 +45,15 @@
     "id": "ShadedStamps",
     "thumbnailFormat": "png",
     "description": "Custom shaders for the scratch stage. By ObviousAlexC",
+    "latestVersion": "extension.js",
     "versions": [
       {
-        "name": "version 1",
+        "name": "Add-on",
         "filename": "extension.js"
+      },
+      {
+        "name": "Independant (No-Pen+)",
+        "filename": "extensionPenless.js"
       }
     ]
   },

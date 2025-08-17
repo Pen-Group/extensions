@@ -116,8 +116,30 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
   //Should add name to the thing.
   let spriteShaders = {};
   let recompiledShaders = {};
+  
+  //* PEN+ stuff
+  //Used for the popup animation
+  const animationKeyframes = {
+    open: {
+      IFRAME: [{ top: "100%", easing: "ease-out" }, { top: "10%" }],
+      BG: [
+        { filter: "opacity(0%)", easing: "ease-out" },
+        { filter: "opacity(100%)" },
+      ],
+    },
+    close: {
+      IFRAME: [{ top: "10%", easing: "ease-in" }, { top: "-100%" }],
+      BG: [
+        { filter: "opacity(100%)", easing: "ease-in" },
+        { filter: "opacity(0%)" },
+      ],
+    },
+  };
 
   class extension {
+    shaders = Object.create(null);
+    programs = Object.create(null);
+
     //Awesome
     advDrawThese (drawables, drawMode, projection, opts = {}) {
 
@@ -164,7 +186,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           let effectBits = drawable.enabledEffects;
           effectBits &= Object.prototype.hasOwnProperty.call(opts, 'effectMask') ? opts.effectMask : effectBits;
 
-          const newShader = (spriteShaders[drawableID] && penPlus.shaders[drawableShader] && recompiledShaders[spriteShaders[drawableID]]) ? 
+          const newShader = (spriteShaders[drawableID] && parentExtension.shaders[drawableShader] && recompiledShaders[spriteShaders[drawableID]]) ? 
           recompiledShaders[spriteShaders[drawableID]] : 
           renderer._shaderManager.getShader(drawMode, effectBits);
 
@@ -192,25 +214,25 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
               Object.assign(uniforms, opts.extraUniforms);
           }
 
-          if (spriteShaders[drawableID] && penPlus.shaders[drawableShader]) {
-            penPlus.programs[drawableShader].uniformDat.u_res = [
+          if (spriteShaders[drawableID] && parentExtension.shaders[drawableShader]) {
+            parentExtension.programs[drawableShader].uniformDat.u_res = [
               gl.canvas.width,
               gl.canvas.height,
             ];
-            penPlus.programs[drawableShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
+            parentExtension.programs[drawableShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
             
-            penPlus.programs[drawableShader].uniformDat.u_transform = [
+            parentExtension.programs[drawableShader].uniformDat.u_transform = [
               1,1,0,0,
               0,1,0,0,
               0,0,0,0,
               0,0,0,0
             ]
             
-            penPlus.programs[drawableShader].uniformDat.u_skin = drawable.skin.getTexture(drawableScale);
+            parentExtension.programs[drawableShader].uniformDat.u_skin = drawable.skin.getTexture(drawableScale);
 
             shouldBeDirty = true;
 
-            uniforms = Object.assign({},uniforms, penPlus.programs[drawableShader].uniformDat);
+            uniforms = Object.assign({},uniforms, parentExtension.programs[drawableShader].uniformDat);
           }
 
           if (uniforms.u_skin) {
@@ -278,7 +300,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
 
       //Stage shaders
       if (currentFrameBuffer) {
-        if ((!penPlus.programs[currentShader])) {
+        if ((!parentExtension.programs[currentShader])) {
           parentExtension.resetBuffer();
           //re-render if no shader is found.
           renderer.dirty = true;
@@ -286,29 +308,29 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         }
 
         twgl.bindFramebufferInfo(gl, null);
-        gl.useProgram(penPlus.programs[currentShader].info.program);
+        gl.useProgram(parentExtension.programs[currentShader].info.program);
 
         twgl.setBuffersAndAttributes(
           gl,
-          penPlus.programs[currentShader].info,
+          parentExtension.programs[currentShader].info,
           reRenderInfo
         );
 
-        penPlus.programs[currentShader].uniformDat.u_skin = stageBuffer.attachments[0];
-        penPlus.programs[currentShader].uniformDat.u_res = [
+        parentExtension.programs[currentShader].uniformDat.u_skin = stageBuffer.attachments[0];
+        parentExtension.programs[currentShader].uniformDat.u_res = [
           gl.canvas.width,
           gl.canvas.height,
         ];
-        penPlus.programs[currentShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
+        parentExtension.programs[currentShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
         
-        penPlus.programs[currentShader].uniformDat.u_transform = [
+        parentExtension.programs[currentShader].uniformDat.u_transform = [
           1,1,0,0,
           0,1,0,0,
           0,0,0,0,
           0,0,0,0
         ]
 
-        twgl.setUniforms(penPlus.programs[currentShader].info, penPlus.programs[currentShader].uniformDat);
+        twgl.setUniforms(parentExtension.programs[currentShader].info, parentExtension.programs[currentShader].uniformDat);
 
         twgl.drawBufferInfo(gl, reRenderInfo);
         renderer.dirty = parentExtension.autoReRender;
@@ -320,18 +342,17 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
     }
 
     addDefaultShaders() {
-      if (penPlus) {
         Object.keys(defaultShaders).forEach(shaderName => {
-          if (!penPlus.shaders[shaderName]) {
+          if (!this.shaders[shaderName]) {
             if (defaultShaders[shaderName].projectData.projectData) {
-              penPlus.saveShader(shaderName,{
+              this.saveShader(shaderName,{
                 projectData: defaultShaders[shaderName].projectData.projectData,
                 vertShader: defaultShaders[shaderName].projectData.vertShader,
                 fragShader: defaultShaders[shaderName].projectData.fragShader
               });
             }
             else {
-              penPlus.saveShader(shaderName,{
+              this.saveShader(shaderName,{
                 projectData: defaultShaders[shaderName].projectData,
                 vertShader: defaultShaders[shaderName].vertShader,
                 fragShader: defaultShaders[shaderName].fragShader
@@ -341,16 +362,17 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
 
           setTimeout(() => {
             if (defaultParameters[shaderName]) {
-              penPlus.programs[shaderName].uniformDat = defaultParameters[shaderName];
+              this.programs[shaderName].uniformDat = defaultParameters[shaderName];
             }
           }, 33);
 
         });
-      }
+      
     }
 
     autoReRender = true;
 
+    //Our constructor is a lot bigger here
     constructor() {
       parentExtension = this;
       renderer.draw = this.customDrawFunction;
@@ -374,20 +396,71 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
 
         switch (eventType) {
           case "EXTENSION_REQUEST":
-            penPlus.IFrame.contentWindow.postMessage(
+            this.IFrame.contentWindow.postMessage(
               {
                 type: "ADD_EXTENSION",
                 URL: "https://pen-group.github.io/extensions/extensions/ShadedStamps/shaderEditorExtension.js"
               },
               //Target URL
-              penPlus.IFrame.src
+              this.IFrame.src
             );
+            break;
+          
+          case "EDITOR_CLOSE":
+            this.IFrame.closeIframe();
+            this.dispatchEvent("editorClosed");
+            break;
+
+          case "DATA_SEND":
+            this.openShaderManager("save");
+            this.savingData = {
+              projectData: event.data.projectData,
+              fragShader: event.data.fragShader,
+              vertShader: event.data.vertShader,
+            };
+            break;
+
+          case "DATA_REQUEST":
+            this.openShaderManager("load");
             break;
 
           default:
             break;
         }
       });
+
+      //Pen+ Independance
+      this.urlHandleTypes = {
+        //github... we handle github differently.
+        github: {
+          handle: (url) => {
+            //Remember github uses the [username].github.io/[reponame];
+            let githubURL = url.split("/");
+            return githubURL.length > 4
+              ? url.split("/")[3]
+              : url.split("/")[2].split(".")[0];
+          },
+        },
+        //those .app domains
+        vercel: {
+          handle: 0,
+        },
+        netlify: {
+          handle: 0,
+        },
+        web: {
+          handle: 0,
+        },
+        js: {
+          handle: 0,
+        },
+      };
+
+      vm.runtime.on("PROJECT_LOADED", this._setupExtensionStorage);
+  
+      this._setupExtensionStorage();
+
+      this._setupTheme();
     }
 
     getInfo() {
@@ -402,14 +475,6 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
             blockType: Scratch.BlockType.BUTTON,
             func: "openShaderManager",
             text: "Shader Manager",
-          },
-          {
-            blockType:Scratch.BlockType.LABEL,
-            text:"put a random pen+"
-          },
-          {
-            blockType:Scratch.BlockType.LABEL,
-            text:"block in to save shaders!"
           },
           {
             blockType:Scratch.BlockType.BUTTON,
@@ -533,14 +598,408 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
               }
             },
           },
-          
+          "---",
+          {
+            opcode: "setNumberInShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set number [uniformName] in [shader] to [number]",
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              number: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+          },
+          {
+            opcode: "setVec2InShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set vector 2 [uniformName] in [shader] to [numberX] [numberY]",
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+          },
+          {
+            opcode: "setVec3InShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set vector 3 [uniformName] in [shader] to [numberX] [numberY] [numberZ]",
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberZ: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+          },
+          {
+            opcode: "setVec4InShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set vector 4 [uniformName] in [shader] to [numberX] [numberY] [numberZ] [numberW]",
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberZ: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberW: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+          },
+          {
+            opcode: "setMatrixInShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set matrix [uniformName] in [shader] to [list]",
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              list: { type: Scratch.ArgumentType.STRING, menu: "listMenu" },
+            },
+          },
+          {
+            opcode: "setMatrixInShaderArray",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set matrix [uniformName] in [shader] to [array]",
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              array: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "[0,0,0,0]",
+              },
+            },
+          },
+          {
+            opcode: "getNumberInShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get value of number [uniformName] in [shader]",
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "getVec2InShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get value of [component] in vector 2 [uniformName] in [shader]",
+            arguments: {
+              component: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "vec2Component",
+              },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "getVec3InShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get value of [component] in vector 3 [uniformName] in [shader]",
+            arguments: {
+              component: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "vec3Component",
+              },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "getVec4InShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get value of [component] in vector 4 [uniformName] in [shader]",
+            arguments: {
+              component: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "vec4Component",
+              },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "getMatrixInShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get value of matrix [uniformName] in [shader] as an array",
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "setArrayNumberInShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set item [item] in number array [uniformName] in [shader] to [number]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              number: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+          },
+          {
+            opcode: "setArrayVec2InShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set item [item] in vector 2 array [uniformName] in [shader] to [numberX] [numberY]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+          },
+          {
+            opcode: "setArrayVec3InShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set item [item] in vector 3 array [uniformName] in [shader] to [numberX] [numberY] [numberZ]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberZ: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+          },
+          {
+            opcode: "setArrayVec4InShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set item [item] in vector 4 array [uniformName] in [shader] to [numberX] [numberY] [numberZ] [numberW]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberZ: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              numberW: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+            },
+          },
+          {
+            opcode: "setArrayMatrixInShaderList",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set item [item] in matrix array [uniformName] in [shader] to [list]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              list: { type: Scratch.ArgumentType.STRING, menu: "listMenu" },
+            },
+          },
+          {
+            opcode: "setArrayMatrixInShaderArray",
+            blockType: Scratch.BlockType.COMMAND,
+            text: "set item [item] in matrix array [uniformName] in [shader] to [array]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              array: { type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0,0]" },
+            },
+          },
+          {
+            opcode: "getArrayNumberInShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get item [item]'s value in number array [uniformName] in [shader]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "getArrayVec2InShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get item [item]'s [component] value in vector 2 array [uniformName] in [shader]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              component: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "vec2Component",
+              },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "getArrayVec3InShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get item [item]'s [component] value in vector 3 array [uniformName] in [shader]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              component: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "vec3Component",
+              },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "getArrayVec4InShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get item [item]'s [component] value in vector 4 array [uniformName] in [shader]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              component: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "vec4Component",
+              },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
+          {
+            opcode: "getArrayMatrixInShader",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "get item [item]'s value in matrix array [uniformName] in [shader]",
+            arguments: {
+              item: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+            },
+          },
         ],
         menus: {
           shaders: {
-            items:"shaderMenu"
+            items:"shaderMenu",
+            acceptReporters:true
           },
           shadersAndStage: {
-            items:"shaderMenuAndStage"
+            items:"shaderMenuAndStage",
+            acceptReporters:true
           },
           shadersAndStageALT: {
             items:"shaderMenuAndStage",
@@ -560,7 +1019,35 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           autorender: {
             items:["on","off"],
             acceptReporters:true
-          }
+          },
+          listMenu: {
+            acceptReporters: true,
+            items: "_getLists",
+          },
+          vec2Component: {
+            items: [
+              { text: "x", value: "0" },
+              { text: "y", value: "1" },
+            ],
+            acceptReporters: true,
+          },
+          vec3Component: {
+            items: [
+              { text: "x", value: "0" },
+              { text: "y", value: "1" },
+              { text: "z", value: "2" },
+            ],
+            acceptReporters: true,
+          },
+          vec4Component: {
+            items: [
+              { text: "x", value: "0" },
+              { text: "y", value: "1" },
+              { text: "z", value: "2" },
+              { text: "w", value: "3" },
+            ],
+            acceptReporters: true,
+          },
         },
         docsURI: "https://pen-group.github.io/docs/?page=extensions%2Fshaded%2Fmain",
         blockIconURI: "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIxMzguNzc2NjkiIGhlaWdodD0iMTM4Ljc3NjY5IiB2aWV3Qm94PSIwLDAsMTM4Ljc3NjY5LDEzOC43NzY2OSI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTIzMC42MTE2NiwtODAuNjExNjYpIj48ZyBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpc1BhaW50aW5nTGF5ZXImcXVvdDs6dHJ1ZX0iIGZpbGwtcnVsZT0ibm9uemVybyIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLWRhc2hhcnJheT0iIiBzdHJva2UtZGFzaG9mZnNldD0iMCIgc3R5bGU9Im1peC1ibGVuZC1tb2RlOiBub3JtYWwiPjxwYXRoIGQ9Ik0yNzMuODQwMjMsOTcuNDA3MTljMy44MzM1LC0xLjYwMDYzIDMuNjM4MjgsMS40OTgyNSAyMi4wNjIwMSw0Ni42ODA2OWMxMC40ODkxNCwyNi40NDU3NCAxOC44MDY4OSw0OC4xMTk4MiAxNS45MjI1MSw0OS4wODc4M2MtNC4yMDMxOSwxLjcxNzMzIC0xMS41NzI4NywtMjAuMjM0OTMgLTIyLjA2MjAxLC00Ni42ODA2OWMtMTYuMTE3NDUsLTQzLjIzOTQ2IC0yMC40OTI4OSwtNDcuMzMwNzMgLTE1LjkyMjUxLC00OS4wODc4M3oiIGRhdGEtcGFwZXItZGF0YT0ieyZxdW90O2luZGV4JnF1b3Q7Om51bGx9IiBmaWxsPSIjZDk5ZTgyIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMCIvPjxwYXRoIGQ9Ik0yNzIuOTQ5NzUsOTguMjE3NTJjMi4wOTk2MiwtMC44NzY2NyA4LjM1NTI4LDIyLjY1MDQ2IDEyLjAwMDQ5LDMwLjUxNTU5YzMuMDEwMjMsNi40OTUwNyAyLjYxOTAxLC01LjA4MTEgMTAuOTUyMDEsMTUuMzU0NzdjMTAuNDg5MTQsMjYuNDQ1NzQgMTguODA2ODksNDguMTE5ODIgMTUuOTIyNTEsNDkuMDg3ODNjLTQuMjAzMTksMS43MTczMyAtMTEuNTcyODcsLTIwLjIzNDkzIC0yMi4wNjIwMSwtNDYuNjgwNjljLTE2LjExNzQ1LC00My4yMzk0NiAtMTkuNDUzODYsLTQ2LjMzMTQyIC0xNi44MTI5OSwtNDguMjc3NDh6IiBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpbmRleCZxdW90OzpudWxsfSIgZmlsbC1vcGFjaXR5PSIwLjM4ODI0IiBmaWxsPSIjNDkyMDBkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMCIvPjxwYXRoIGQ9Ik0yOTIuMzg4MzgsMTU3Ljc3MTcyYy04LjI2NDQ5LDAuMTYxMDUgLTE1LjA5MTgzLC02LjI1OTczIC0xNS4yNDkzMSwtMTQuMzQxMjZjLTAuMDEzODQsLTAuNzEwMzggLTUuODcwMTksLTguMjYxODIgLTUuNDk5NTQsLTExLjU2NTE2YzAuMzE2OTksLTIuNTA0NjQgOC42MzEyMywtMC40Mzk3NSAxMC40MTM1NywtMC42OTkxN2M0LjM3NjQxLC0wLjk5MTI2IDQuODgyMTUsLTIuNTY0OTkgOS43NjUsLTIuNjYwMTVjMS40MjcxLC0wLjAyNzgxIDMuMDczMjcsLTYuNDIwNSA1LjM5MzQzLC01LjA2ODU2YzQuMjkxMjQsMi41MDA0OSA5Ljc1MzY4LDE0LjE2NDM0IDkuODU1OSwxOS40MDk4YzAuMTU3NDgsOC4wODE1MiAtNi40MTQ1NCwxNC43NjM0MiAtMTQuNjc5MDIsMTQuOTI0NDd6IiBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpbmRleCZxdW90OzpudWxsfSIgZmlsbD0iI2ZjYjFlMyIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjAiLz48cGF0aCBkPSJNMjkyLjM4ODM4LDE1Ny43NzE3MmMtOC4yNjQ0OSwwLjE2MTA1IC0xNS4wOTE4MywtNi4yNTk3MyAtMTUuMjQ5MzEsLTE0LjM0MTI2Yy0wLjAwNjk5LC0wLjM1ODgyIDMuOTM1NjksNi45NzE4NiAxMS45NzAxMSw5LjIwNTA4YzMuODAxNSwxLjA1NjY2IDE0LjA5Njg0LC0zLjYzMTUxIDE1LjAwNTExLC0yLjI5OTI5YzAuODc5ODEsMS4yOTA0NSAtOS43NjQ4MSw3LjM5NzI0IC0xMS43MjU4OSw3LjQzNTQ1eiIgZGF0YS1wYXBlci1kYXRhPSJ7JnF1b3Q7aW5kZXgmcXVvdDs6bnVsbH0iIGZpbGwtb3BhY2l0eT0iMC4zMjk0MSIgZmlsbD0iIzVkMTA0MyIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjAiLz48cGF0aCBkPSJNMzEzLjM2MjU0LDE3NC40ODg1OGMtMy41MjIzNSwyLjU1MTkyIC03LjI4MjI3LDQuMDY1ODggLTExLjI2NTg4LDQuNTI1MzhjLTQuMTA2MDEsMC40NzM2IC03LjYzNDM4LDAuODM3MDcgLTExLjEwOTUyLC0xLjk0MjM5Yy02Ljg0NjcyLC01LjQ3NjA4IC03Ljg4LC0xNy4yMTgwMSAtMi40MTM2MSwtMjIuMTUzMThjMS4yODQ5MiwtMS4xNjAzNCAyLjkxMDk3LC0yLjI3NTU5IDQuMDQxMzMsLTIuODYwNDZjMS41ODE5LC0wLjgxODUgMS43MTc4MSwtMC45MzgyNSA1LjEzMjYxLC0xLjg2MzMzYzUuNDQ2NzcsLTAuOTU0NjMgOC45NTkzNSwtMC45OTU3MiAxMy4yMDY1NSwyLjQwMTI0YzYuODQ2NzIsNS40NzYwOCA3LjkyMjIzLDE1LjEzMzk0IDIuNDA4NTMsMjEuODkyNzR6IiBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpbmRleCZxdW90OzpudWxsfSIgZmlsbD0iI2ZmZDk4MyIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjAiLz48cGF0aCBkPSJNMzEzLjM2MjU0LDE3NC40ODg1OGMtMy41MjIzNSwyLjU1MTkyIC03LjI4MjI3LDQuMDY1ODggLTExLjI2NTg4LDQuNTI1MzhjLTQuMTA2MDEsMC40NzM2IC03LjYzNDM4LDAuODM3MDcgLTExLjEwOTUyLC0xLjk0MjM5Yy02Ljg0NjcyLC01LjQ3NjA4IC03Ljg4LC0xNy4yMTgwMSAtMi40MTM2MSwtMjIuMTUzMThjMS4yODQ5MiwtMS4xNjAzNCAyLjM3NzE1LDEyLjcxNzM2IDYuNjI0MzYsMTYuMTE0MzJjNi44NDY3Miw1LjQ3NjA4IDIzLjY3ODM3LC0zLjMwMjkzIDE4LjE2NDY4LDMuNDU1ODd6IiBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpbmRleCZxdW90OzpudWxsfSIgZmlsbC1vcGFjaXR5PSIwLjMxMzczIiBmaWxsPSIjNmI0ZjBkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMCIvPjxwYXRoIGQ9Ik0yOTMuNzY4NTMsMTk3LjgwNTA0Yy0yLjQxNTI0LC01LjA5MzA5IC0xLjY3MDE5LC03LjMzNTAxIC0xLjAwNDEyLC0xMS40MzIwNWMxLjEwNzAyLC01LjY5MTAzIDMuMzgzMywtNy45NDI2IDguNzA4OTgsLTkuOTk1MzFjMS45OTc0LC0wLjc2OTg3IDYuOTU2ODEsLTIuMjkgOS43NjA1NywtMi42NjE0NmMzLjI2OTY5LC0wLjM4MjkzIDYuMTQxNzMsMC40MDU3MyA4LjU0MDMsMi4wNTI5N2MyLjE1MzExLDEuNDc4NjYgMi43ODQ4NCwxLjkxODkyIDUuODQ1NDIsNi4xMzMwMWMyLjQ0OTMsNC4wMDI0NSA0LjI1OTk0LDEwLjI1ODIzIDAuOTc1MDIsMTUuMjY4MzZjLTMuMTYyNDEsNC44MjMyNiAtOS44NTk5Myw1LjU3NTYgLTE2LjY5MzQzLDUuNzA4NzZjLTcuNTMwMywwLjE0Njc0IC0xMy42MDk3OCwtMC4zMDM2MSAtMTYuMTMyNzMsLTUuMDc0Mjh6IiBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpbmRleCZxdW90OzpudWxsfSIgZmlsbD0iI2E2ZDM4OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjAiLz48cGF0aCBkPSJNMjkyLjI2MDg0LDE0MS42NDgxN2MtMS4yNzU4OSwwLjAyNDg2IC0yLjMzMDM2LC0wLjk4OTMgLTIuMzU1MjMsLTIuMjY1MmMtMC4wMjQ4NiwtMS4yNzU5IDAuOTg5MjksLTIuMzMwMzcgMi4yNjUxOSwtMi4zNTUyM2MxLjI3NTksLTAuMDI0ODYgMi4zMzAzNywwLjk4OTI4IDIuMzU1MjMsMi4yNjUyYzAuMDI0ODYsMS4yNzU5IC0wLjk4OTI4LDIuMzMwMzcgLTIuMjY1MTksMi4zNTUyNHoiIGRhdGEtcGFwZXItZGF0YT0ieyZxdW90O2luZGV4JnF1b3Q7Om51bGx9IiBmaWxsPSIjMDAwMDAwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41Ii8+PHBhdGggZD0iTTMwMi45NTY1NiwxMzUuMzQzODF6IiBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpbmRleCZxdW90OzpudWxsfSIgZmlsbD0iIzAwMDAwMCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjAiLz48cGF0aCBkPSJNMzA0LjU3OTk2LDEzNi4xNDk1NmMwLjAyNDE0LDEuMjM4OTIgLTAuMTcwMSwxLjU3NzUzIC0xLjQwOTAyLDEuNjAxNjdjLTAuNjE5NDUsMC4wMTIwNyAtMC44NTE2NiwtMC4zMDE1OSAtMS4yNjU1MiwtMC42OTk2MmMtMC40MTM4NSwtMC4zOTgwMyAtMC43NDE1MiwtMC44ODU2OSAtMC43NTM1OSwtMS41MDUxNWMtMC4wMjQxNCwtMS4yMzg5MiAtMC4wOTc3NSwtMS41NzIzMSAxLjE0MTE4LC0xLjU5NjQ2YzEuMjM4OTIsLTAuMDI0MTQgMi4yNjI4MSwwLjk2MDYyIDIuMjg2OTUsMi4xOTk1NHoiIGRhdGEtcGFwZXItZGF0YT0ieyZxdW90O2luZGV4JnF1b3Q7Om51bGx9IiBmaWxsPSIjMDAwMDAwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41Ii8+PHBhdGggZD0iTTI5My43Njg1MywxOTcuODA1MDRjLTIuNDE1MjQsLTUuMDkzMDkgLTEuNjcwMTksLTcuMzM1MDEgLTEuMDA0MTIsLTExLjQzMjA1YzEuMTA3MDIsLTUuNjkxMDMgMy4zODMzLC03Ljk0MjYgOC43MDg5OCwtOS45OTUzMWMwLjc1NTAzLC0wLjI5MTAxIC02LjYxODc1LDEzLjA3Mjk3IC0xLjgwOTg4LDE2LjE3MzIzYzcuOTEyODQsNS4xMDEzOCAyOC45NzQzOSwxLjUwMzM3IDI2LjkzMTE4LDQuNjE5NjRjLTMuMTYyNDEsNC44MjMyNiAtOS44NTk5Myw1LjU3NTYgLTE2LjY5MzQzLDUuNzA4NzZjLTcuNTMwMywwLjE0Njc0IC0xMy42MDk3OCwtMC4zMDM2MSAtMTYuMTMyNzMsLTUuMDc0Mjh6IiBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpbmRleCZxdW90OzpudWxsfSIgZmlsbC1vcGFjaXR5PSIwLjMyOTQxIiBmaWxsPSIjM2E2YjE5IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMCIvPjxwYXRoIGQ9Ik0yOTQuMjQ5NjUsMTM4LjIzMTAxYy0wLjMxMzM3LDAuMzI1ODIgLTAuNjM5MTgsMC4wMTI0NiAtMC42MzkxOCwwLjAxMjQ2bC0wLjMzNjI1LC0wLjMyNTU0Yy0wLjc1MzE0LC0wLjUyNTYxIC0xLjIzMTU5LC0wLjI5Mzk1IC0xLjk4NjgzLDAuMTQ4NTNjMCwwIC0wLjM5MDgyLDAuMjI3MiAtMC42MTgwMSwtMC4xNjM2M2MtMC4yMjcyLC0wLjM5MDgyIDAuMTYzNjEsLTAuNjE4IDAuMTYzNjEsLTAuNjE4YzEuMTA5NjQsLTAuNjQwNjcgMS45MDcyNywtMC44MTU5MyAzLjAxMjA3LC0wLjA2OGwwLjM5MjEzLDAuMzc1MDFjMCwwIDAuMzI1ODIsMC4zMTMzNiAwLjAxMjQ2LDAuNjM5MTh6IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMC41Ii8+PHBhdGggZD0iTTMwNC4xNTA1NywxMzUuNzk5OWMtMC40MDAzMSwwLjIxIC0wLjYxMDMyLC0wLjE5MDMyIC0wLjYxMDMyLC0wLjE5MDMybDAuMDI1MDksLTAuMDAyMWMtMC40Njc4NSwtMC40NDk5NSAtMS4wMDQ2LC0xLjA5MjE0IC0xLjY4MDQ3LC0wLjc1NzAzYzAsMCAtMC40MjAxLDAuMTY2OTQgLTAuNTg3MDUsLTAuMjUzMTZjLTAuMTY2OTQsLTAuNDIwMDkgMC4yNTMxNywtMC41ODcwNCAwLjI1MzE3LC0wLjU4NzA0YzEuMTMyMjUsLTAuMzk0MzcgMS44NDI0NCwwLjE3NzQ4IDIuNjQxMDgsMC45NDU1OWwwLjE0ODgyLDAuMjMzNzNjMCwwIDAuMjEsMC40MDAzMSAtMC4xOTAzLDAuNjEwMzJ6IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMC41Ii8+PHBhdGggZD0iTTI5Mi4xMzE3OSwxMzAuMTgwNTRjMC4wOTcyOCwwLjQ0MTQ2IC0wLjM0NDE5LDAuNTM4NzQgLTAuMzQ0MTksMC41Mzg3NGwtMC4zODUsMC4wNzU4NWMtMi43MTIzMywwLjA1Mjg1IC01LjI4NjgxLDAuNTYzMjkgLTcuNzExMTEsMS42NjIyOGMwLDAgLTAuNDExOTYsMC4xODYxNSAtMC41OTgwOSwtMC4yMjU4MWMtMC4xODYxNCwtMC40MTE5NiAwLjIyNTgzLC0wLjU5ODA5IDAuMjI1ODMsLTAuNTk4MDljMi41Mzk4NywtMS4xNDM0IDUuMjM0NywtMS42ODcxNSA4LjA2NTc2LC0xLjc0MjMxbDAuMjA4MDYsLTAuMDU0ODRjMCwwIDAuNDQxNDYsLTAuMDk3MjcgMC41Mzg3NCwwLjM0NDE5eiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjAuNSIvPjxwYXRoIGQ9Ik0zMDAuODA2MzcsMTI5LjIxODc3Yy0wLjQyNTk5LDAuMTUxMjkgLTAuNTc3MjYsLTAuMjc0NzEgLTAuNTc3MjYsLTAuMjc0NzFsLTAuMDM3MzUsLTAuMTE4NzNjLTEuMDE0LC0xLjkzNDQ5IC0yLjIyNDIsLTMuMjA3MzkgLTMuOTA0NjEsLTQuNTQzNjVjMCwwIC0wLjM1Mjg0LC0wLjI4MjU3IC0wLjA3MDI2LC0wLjYzNTQyYzAuMjgyNTgsLTAuMzUyODUgMC42MzU0MiwtMC4wNzAyNyAwLjYzNTQyLC0wLjA3MDI3YzEuNzY5MzUsMS40Mjg5IDMuMDY0NCwyLjc4MDQ1IDQuMTQwMDgsNC44MjkzNWwwLjA4ODcsMC4yMzYxOGMwLDAgMC4xNTEyOCwwLjQyNTk5IC0wLjI3NDcxLDAuNTc3MjZ6IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMC41Ii8+PHBhdGggZD0iTTMxMS4zNTc1OSwxNTcuMTg1NWMtMC40MjU5OSwwLjE1MTI4IC0wLjU3NzI3LC0wLjI3NDcxIC0wLjU3NzI3LC0wLjI3NDcxbC0wLjAzNzM0LC0wLjExODczYy0wLjI5Mjg5LC0wLjU2NjkzIC0wLjc0MTYxLC0wLjk4MzkgLTEuMDY4OTMsLTEuNTMxNjNjLTIuMjE4MTgsLTIuNTU2NjUgLTQuNzE3NTgsLTMuNDAyOTMgLTcuOTE5MDgsLTQuMTMyYzAsMCAtMC40NDA2MSwtMC4xMDEwOCAtMC4zMzk1MywtMC41NDE2OGMwLjEwMTA4LC0wLjQ0MDYxIDAuNTQxNjksLTAuMzM5NTMgMC41NDE2OSwtMC4zMzk1M2MzLjQyMTksMC43OTEzNSA2LjA4MTQ3LDEuNzUwMSA4LjQ0OTM4LDQuNDgzMThjMC4zNDk2MSwwLjU4NTA3IDAuODE1MzEsMS4wMzU4NyAxLjEzNzEsMS42NDE2N2wwLjA4ODY5LDAuMjM2MThjMCwwIDAuMTUxMjgsMC40MjU5OSAtMC4yNzQ3MiwwLjU3NzI3eiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjAuNSIvPjxwYXRoIGQ9Ik0zMjEuMjAzNCwxNzguMzI3OTdjLTAuMTk0MjYsMC40MDgxOSAtMC42MDI0NCwwLjIxMzk0IC0wLjYwMjQ0LDAuMjEzOTRsLTAuMzA0OTMsLTAuMTUxOTNjLTAuMzQ4MzQsLTAuMjQ2ODMgLTAuNzI3NjEsLTAuNDY2NDEgLTEuMTM1NDksLTAuNTkyNTRjLTMuMjk1NzIsLTIuMDgxNTEgLTkuMzU4MzYsLTMuNTc0NTkgLTEyLjUyOTM4LC0wLjE5OTY2YzAsMCAtMC4zMTMzNiwwLjMyNTgyIC0wLjYzOTE3LDAuMDEyNDVjLTAuMzI1ODIsLTAuMzEzMzcgLTAuMDEyNDYsLTAuNjM5MTggLTAuMDEyNDYsLTAuNjM5MThjMy40ODk3NiwtMy41NjIyMSA5Ljg5OTgsLTIuMzY3MzYgMTMuNTYyMzQsMC4wMDY2M2MwLjQ1NzE4LDAuMTQzNzIgMC44NzY5MywwLjM5OTAyIDEuMjcxNTksMC42NzA5bDAuMTc2LDAuMDc2OTVjMCwwIDAuNDA4MTgsMC4xOTQyNCAwLjIxMzk0LDAuNjAyNDR6IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMC41Ii8+PHBhdGggZD0iTTIzMC42MTE2NiwyMTkuMzg4MzR2LTEzOC43NzY2OWgxMzguNzc2Njl2MTM4Ljc3NjY5eiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9Im5vbmUiLz48L2c+PC9nPjwvc3ZnPjwhLS1yb3RhdGlvbkNlbnRlcjo2OS4zODgzNDM5MTIyOTA4Mjo2OS4zODgzNDM5MTIyOTA3NS0tPg==",
@@ -570,10 +1057,9 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
     }
 
     compileShaderForSprite({ shader }) {
-        if (penPlus) {
             console.log(`converting shader ${shader} to sprite format!`);
 
-            const event = penPlus.shaders[shader].projectData;
+            const event = this.shaders[shader].projectData;
 
             let convertedVertex = event.vertShader.replaceAll(GL_POS_FINDER,"gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position,0,1);");
             convertedVertex = convertedVertex.replaceAll(GL_POS_VAR,"vec2 a_position;");
@@ -592,13 +1078,11 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
                 event.fragShader
             ]);
             console.log(recompiledShaders[shader]);
-        }
+        
     }
 
     shaderCompiledForSprites({ shader }) {
-        if (penPlus) {
-            if (recompiledShaders[shader]) return true;
-        }
+        if (recompiledShaders[shader]) return true;
         return false;
     }
 
@@ -703,23 +1187,20 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
     }
 
     shaderMenu() {
-      if (penPlus) {
-        return penPlus.shaderMenu();
-      }
-      return ["None Yet"];
+      //!Pain.json
+      return Object.keys(this.shaders).length == 0
+        ? ["none yet"]
+        : Object.keys(this.shaders);
     }
 
     shaderMenuAndStage() {
-      if (penPlus) {
-        let returnedShaders = [{value:"____PEN_PLUS__NO__SHADER____", text:"No Shader!"}];
-        const penPShaders = Object.keys(penPlus.shaders);
-        penPShaders.forEach(shader => {
-          returnedShaders.push({value:shader,text:shader});
-        });
+      let returnedShaders = [{value:"____PEN_PLUS__NO__SHADER____", text:"No Shader!"}];
+      const penPShaders = Object.keys(this.shaders);
+      penPShaders.forEach(shader => {
+        returnedShaders.push({value:shader,text:shader});
+      });
 
-        return returnedShaders;
-      }
-      return [{value:"____PEN_PLUS__NO__SHADER____", text:"No Shader!"}];
+      return returnedShaders;
     }
 
     resetBuffer() {
@@ -742,7 +1223,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
       }
 
       currentShader = shader;
-      if (!penPlus.shaders[shader]) {
+      if (!this.shaders[shader]) {
         this.resetBuffer();
         return;
       }
@@ -757,7 +1238,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         return;
       }
 
-      if (!penPlus.shaders[shader]) {
+      if (!this.shaders[shader]) {
         delete spriteShaders[util.target.drawableID];
         this.resetBuffer();
         return;
@@ -803,7 +1284,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         return;
       }
 
-      if (!penPlus.shaders[shader]) {
+      if (!this.shaders[shader]) {
         delete spriteShaders[DesiredID];
         this.resetBuffer();
         return;
@@ -858,6 +1339,1269 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
       }
       return out;
     }
+
+    //Give me liberty or give me death!
+
+    //Theme and hostname
+    _setupTheme() {
+      //Use a predefined pen+ theme if packaged
+      if (typeof scaffolding !== "undefined") {
+        this._menuBarBackground = "#0FBD8C";
+        this._defaultBackgroundColor = "white";
+        this._textColor = "black";
+        this._buttonShadow = "hsla(0, 0%, 0%, 0.15)";
+        this.fade = "#0FBD8CDD";
+        this._shadowBorder = "hsla(0, 100%, 100%, 0.25)";
+        return;
+      }
+
+      //Also if this looks bad it's due to prettier
+      //I support friendly competition!
+      this._menuBarBackground = Scratch.extensions.isPenguinMod
+        ? //This is penguinmod blue
+          this._handlePMvsEM("--menu-bar-background")
+        : //Turbowarp
+          "var(--menu-bar-background)";
+
+      //Of course due to the GUI version differences I need to conduct some checks on these
+      this._defaultBackgroundColor = Scratch.extensions.isPenguinMod
+        ? //Wierd old turbowarp vm thingy right here
+          document.body.getAttribute("theme") == "dark"
+          ? "var(--ui-primary)"
+          : "white"
+        : //New accent stuff me likey.
+          "var(--ui-modal-background)";
+
+      //But in general its fine
+      this._textColor = Scratch.extensions.isPenguinMod
+        ? document.body.getAttribute("theme") == "dark"
+          ? "white"
+          : "black"
+        : //Again with the accents. Me likey
+          "var(--ui-modal-foreground)";
+
+      this._buttonShadow = Scratch.extensions.isPenguinMod
+        ? "hsla(0, 0%, 0%, 0.15)"
+        : "var(--ui-black-transparent)";
+
+      this.fade = this._handlePMvsEM("--ui-modal-overlay");
+
+      this._shadowBorder = Scratch.extensions.isPenguinMod
+        ? "hsla(0, 100%, 100%, 0.25)"
+        : "var(--ui-white-transparent)";
+    }
+
+    _handlePMvsEM(variableName) {
+      switch (variableName) {
+        case "--menu-bar-background":
+          return Scratch.extensions.isElectraMod
+            ? "var(--menu-bar-background, hsla(244, 23%, 48%, 1))"
+            : "var(--menu-bar-background, #009CCC)";
+
+        case "--ui-modal-overlay":
+          return Scratch.extensions.isElectraMod
+            ? "var(--ui-modal-overlay, hsla(244, 23%, 48%, 0.9))"
+            : "var(--ui-modal-overlay, hsla(194, 100%, 65%, 0.9))";
+
+        default:
+          break;
+      }
+    }
+    __determineHostName() {
+      let returnedURL = "project";
+      const splitURL = window.location.hostname.split(".");
+      if (splitURL.length > 2) {
+        returnedURL = splitURL[1].toLowerCase();
+        if (this.urlHandleTypes[returnedURL]) {
+          //IF WE DO HAVE TO DO SOME SPECIAL HANDLING!
+          const handleType = this.urlHandleTypes[returnedURL].handle;
+          switch (typeof handleType) {
+            //If it is a number we get the split number.
+            case "number":
+              returnedURL = splitURL[handleType];
+              break;
+
+            //If it is a string use the string
+            case "string":
+              returnedURL = handleType;
+              break;
+
+            //If it is a function we run the function.
+            case "function":
+              returnedURL = handleType(window.location.href);
+              break;
+          }
+        }
+      } else {
+        returnedURL = splitURL[0];
+      }
+
+      return returnedURL;
+    }
+
+    //Still stolen from lily :3
+    _setupExtensionStorage() {
+      //Penguinmod saving support
+      if (Scratch.extensions.isPenguinMod) {
+        parentExtension.serialize = () => {
+          return JSON.stringify({
+            shaders: parentExtension.shaders,
+          });
+        };
+
+        parentExtension.deserialize = (serialized) => {
+          let deserializedData = JSON.parse(serialized);
+          this.programs = {};
+          if (deserializedData.version) {
+            parentExtension.shaders = deserializedData.shaders;
+
+            if (parentExtension.extensionVersion != deserializedData.version) {
+              parentExtension._updateRelevantInfo(deserializedData);
+            }
+          } else {
+            parentExtension.shaders = deserializedData || {};
+            parentExtension._updateRelevantInfo(deserializedData);
+          }
+          parentExtension._parseProjectShaders();
+        };
+
+        //Doing this to remedy the janky turbowarp saving system.
+        parentExtension.getShaders = () => {
+          return parentExtension.shaders;
+        };
+      } else {
+        this.programs = {};
+        if (!runtime.extensionStorage["OACShaded"]) {
+          runtime.extensionStorage["OACShaded"] = Object.create(null);
+          runtime.extensionStorage["OACShaded"].shaders = Object.create(null);
+        }
+
+        //For some reason tw saving just doesn't work lol
+        parentExtension.shaders = runtime.extensionStorage["OACShaded"].shaders;
+
+        //Remedy for the turbowarp saving system being jank.
+        parentExtension.getShaders = () => {
+          parentExtension.shaders = runtime.extensionStorage["OACShaded"].shaders;
+          return runtime.extensionStorage["OACShaded"].shaders;
+        };
+        //seems inconsistant. Should check on behavior of desired trait.
+        parentExtension._parseProjectShaders();
+      }
+
+      parentExtension.savingData = {
+        projectData: undefined,
+        fragShader: undefined,
+        vertShader: undefined,
+      };
+    }
+
+    _parseProjectShaders() {
+        Object.keys(this.shaders).forEach((shaderKey) => {
+          let shader = this.shaders[shaderKey];
+          //If we don't have webgl2 support. Don't
+          if (shader.projectData.vertShader.includes("#version 300 es") && (!isWebGL2)) return;
+  
+          this.programs[shaderKey] = {
+            info: twgl.createProgramInfo(gl, [
+              shader.projectData.vertShader,
+              shader.projectData.fragShader,
+            ]),
+            uniformDat: {},
+            uniformDec: {},
+            attribDat: {},
+          };
+  
+          this._createAttributedatForShader(shaderKey);
+        });
+    }
+
+    //?Custom Shaders
+    saveShader(name, data) {
+      //Create data in the json object
+      this.shaders[name] = {
+        projectData: data,
+        modifyDate: Date.now(),
+      };
+
+
+      //If we don't have webgl2 support. Don't
+      if (data.vertShader.includes("#version 300 es") && (!isWebGL2)) return;
+
+      this.programs[name] = {
+        info: twgl.createProgramInfo(gl, [data.vertShader, data.fragShader]),
+        uniformDat: {},
+        uniformDec: {},
+        attribDat: {},
+      };
+
+      //Dispatch events for addons to catch.
+      this.dispatchEvent("shaderSaved", {
+        projectData: data,
+        vertexShader: data.vertShader,
+        fragmentShader: data.fragShader,
+        name: name,
+      });
+
+      this._createAttributedatForShader(name);
+    }
+
+    _createAttributedatForShader(shaderName) {
+      const shaderDat = this.programs[shaderName];
+      //Make sure required info exists
+      if (!shaderDat) return;
+      if (!shaderDat.info) return;
+      if (!shaderDat.info.attribSetters) return;
+      //Store info
+      const attributeDat = shaderDat.info.attribSetters;
+      const attributes = Object.keys(attributeDat);
+
+      const bufferInitilizer = {};
+
+      //Loop through every attribute and add the appropriate data.
+      attributes.forEach((attributeKey) => {
+        //Create the array
+        this.programs[shaderName].attribDat[attributeKey] = {
+          type: "unknown",
+          data: [],
+        };
+
+        //Search using regex
+        const regexSearcher = new RegExp(`.*${attributeKey}.*\n?`);
+        let searchResult =
+          this.shaders[shaderName].projectData.vertShader.match(
+            regexSearcher
+          )[0];
+
+        //Remove whitespace at the beginning for easy extraction
+        while (searchResult.charAt(0) == " ") {
+          searchResult = searchResult.replace(" ", "");
+        }
+
+        //determine the length of the array through type
+        const split = searchResult.split(" ");
+        const type = split.length < 4 ? split[1] : split[2];
+        if (split && (split[1] || split[2])) {
+          let length = 3;
+          this.programs[shaderName].attribDat[attributeKey].type = type;
+
+          switch (type) {
+            case "vec2":
+              length = 6;
+              break;
+
+            case "vec3":
+              length = 9;
+              break;
+
+            case "vec4":
+              length = 12;
+              break;
+
+            default:
+              break;
+          }
+
+          //Add data to data array.
+          for (let i = 0; i < length; i++) {
+            this.programs[shaderName].attribDat[attributeKey].data.push(0);
+          }
+
+          //Add the data to our buffer initilizer.
+          bufferInitilizer[attributeKey] = {
+            numComponents: Math.floor(length / 3),
+            data: this.programs[shaderName].attribDat[attributeKey].data,
+          };
+        }
+      });
+
+      this.programs[shaderName].buffer = twgl.createBufferInfoFromArrays(
+        gl,
+        bufferInitilizer
+      );
+
+      this.programs[shaderName];
+      //Make sure required info exists
+      if (!shaderDat) return;
+      if (!shaderDat.info) return;
+      if (!shaderDat.info.uniformSetters) return;
+      //Store info
+      const uniformDat = shaderDat.info.uniformSetters;
+      const uniforms = Object.keys(uniformDat);
+
+      //Set this to our program
+      gl.useProgram(this.programs[shaderName].info.program);
+
+      //Loop through every uniforms and add the appropriate data.
+      uniforms.forEach((uniformKey) => {
+        //Create the data
+        this.programs[shaderName].uniformDec[uniformKey] = {
+          type: "unknown",
+          isArray: false,
+          arrayLength: 0,
+          arrayData: [],
+        };
+
+        //Search using regex
+        const regexSearcher = new RegExp(`uniform.*${uniformKey}.*;?`);
+        let searchResult =
+          this.shaders[shaderName].projectData.vertShader.match(
+            regexSearcher
+          )[0];
+
+        //Remove whitespace at the beginning for easy extraction
+        while (searchResult.charAt(0) == " ") {
+          searchResult = searchResult.replace(" ", "");
+        }
+
+        //determine the type of the uniform
+        const split = searchResult.split(" ");
+        const type = split.length < 4 ? split[1] : split[2];
+        if (split && (split[2] || split[3])) {
+          //Try to extract array data
+          const arrayLength = Scratch.Cast.toNumber(
+            (split.length < 4 ? split[2] : split[3])
+              .replace(uniformKey, "")
+              .replaceAll(/[[\];]/g, "")
+          );
+
+          this.programs[shaderName].uniformDec[uniformKey].type = type;
+          //Add data for array stuff
+          this.programs[shaderName].uniformDec[uniformKey].arrayLength =
+            arrayLength;
+          this.programs[shaderName].uniformDec[uniformKey].isArray =
+            arrayLength > 0;
+
+          if (arrayLength == 0) return;
+
+          const createArray = (lengthMul) => {
+            return Array.apply(null, Array(arrayLength * lengthMul)).map(() => {
+              return 0;
+            });
+          };
+
+          switch (type) {
+            case "float":
+              this.programs[shaderName].uniformDec[uniformKey].arrayData =
+                createArray(1);
+              break;
+
+            case "int":
+              this.programs[shaderName].uniformDec[uniformKey].arrayData =
+                createArray(1);
+              break;
+
+            case "vec2":
+              this.programs[shaderName].uniformDec[uniformKey].arrayData =
+                createArray(2);
+              break;
+
+            case "vec3":
+              this.programs[shaderName].uniformDec[uniformKey].arrayData =
+                createArray(3);
+              break;
+
+            case "vec4":
+              this.programs[shaderName].uniformDec[uniformKey].arrayData =
+                createArray(4);
+              break;
+
+            default:
+              break;
+          }
+
+          //Data that will be sent to the GPU to initilize the array
+          //But we will keep it in the declaration
+          this.programs[shaderName].uniformDat[uniformKey] =
+            this.programs[shaderName].uniformDec[uniformKey].arrayData;
+        }
+      });
+    }
+
+    events = {
+        shaderSaved: [],
+        editorClosed: [],
+    };
+
+    dispatchEvent(eventName, data) {
+      if (!this.events[eventName]) return;
+      this.events[eventName].forEach((eventFunction) => {
+        eventFunction(data || {});
+      });
+    }
+
+    //For custom events
+    addEventListener(eventName, eventFunction) {
+      if (!this.events[eventName]) return;
+      this.events[eventName].push(eventFunction);
+    }
+
+    async openShaderEditor() {
+      //Handle experimental versions
+      const frameSource =
+        "https://pen-group.github.io/penPlus-shader-editor/Source/" +
+        (this.isExperimental ? "?experimental=true" : "");
+
+      if (!(await Scratch.canEmbed(frameSource))) {
+        return;
+      }
+
+      //Styling the background and IFrame
+      const bgFade = document.createElement("div");
+      bgFade.style.width = "100%";
+      bgFade.style.height = "100%";
+
+      bgFade.style.position = "absolute";
+      bgFade.style.left = "0px";
+      bgFade.style.top = "0px";
+
+      bgFade.style.backgroundColor = this.fade;
+      bgFade.style.filter = "opacity(100%)";
+
+      bgFade.style.zIndex = "10000";
+
+      document.body.appendChild(bgFade);
+
+      this.IFrame = document.createElement("iframe");
+      this.IFrame.style.backgroundColor = this._menuBarBackground;
+      this.IFrame.style.width = "80%";
+      this.IFrame.style.height = "80%";
+      this.IFrame.style.borderRadius = "8px";
+      this.IFrame.style.borderColor = this._shadowBorder;
+      this.IFrame.style.borderWidth = "4px";
+      this.IFrame.style.borderStyle = "solid";
+
+      this.IFrame.style.position = "absolute";
+      this.IFrame.style.left = "10%";
+      this.IFrame.style.top = "10%";
+
+      this.IFrame.style.zIndex = "10001";
+
+      //Determine the Set up the initial variables
+      this.IFrame.onload = () => {
+        let hostname = this.__determineHostName();
+
+        this.IFrame.contentWindow.postMessage(
+          {
+            type: "REGISTER_PARENT",
+            exitButton: true,
+            importText: `Import from ${hostname.replace(
+              /\w\S*/g,
+              function (txt) {
+                return (
+                  txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+                );
+              }
+            )}`,
+            exportText: `Export to ${hostname.replace(/\w\S*/g, function (txt) {
+              return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+            })}`,
+          },
+          //Target URL
+          this.IFrame.src
+        );
+      };
+
+      this.IFrame.closeIframe = () => {
+        document.body.style.overflowY = "hidden";
+
+        this.IFrame.animate(animationKeyframes.close.IFRAME, 1000);
+        bgFade.animate(animationKeyframes.close.BG, 1000);
+
+        //Can't get animationend to work.
+        setTimeout(() => {
+          document.body.removeChild(this.IFrame);
+          document.body.removeChild(bgFade);
+        }, 1000);
+      };
+
+      this.IFrame.src = frameSource;
+
+      //Popup animation
+      document.body.style.overflowY = "hidden";
+      this.IFrame.animate(animationKeyframes.open.IFRAME, 1000);
+      bgFade.animate(animationKeyframes.open.BG, 1000);
+
+      //Add the IFrame to the body
+      document.body.appendChild(this.IFrame);
+    }
+  
+    //Then this decides the contents of said modal while gathering some info
+    openShaderManager(reason) {
+      const { shaderPanel, closeFunc, resizeFunc } = modalAPI.openModal("Shader Manager");
+
+      //If we don't have a reason assign a default value
+      reason = reason || "manager";
+
+      //penguin one liner support
+      //for some reason it sends the entire workspace when a button is clicked?
+      if (Scratch.extensions.isPenguinMod && typeof reason != "string")
+        reason = "manager";
+
+      //Since I'm using a switch we do this.
+      let menuSpecificVars = {};
+
+      switch (reason) {
+        case "save":
+          //The neat background color. Using a filter to limit the amount of colouring operations
+          menuSpecificVars.savePanel = document.createElement("div");
+
+          menuSpecificVars.savePanel.style.width = "60%";
+          menuSpecificVars.savePanel.style.height = "100%";
+          menuSpecificVars.savePanel.style.backgroundColor =
+            this._menuBarBackground;
+          menuSpecificVars.savePanel.style.filter = "opacity(50%)";
+          menuSpecificVars.savePanel.style.position = "absolute";
+
+          shaderPanel.appendChild(menuSpecificVars.savePanel);
+
+          //The actual container no filter to avoid buggy things
+          menuSpecificVars.saveStuffHolder = document.createElement("div");
+
+          menuSpecificVars.saveStuffHolder.style.width = "60%";
+          menuSpecificVars.saveStuffHolder.style.height = "100%";
+          menuSpecificVars.saveStuffHolder.style.backgroundColor = "#00000000";
+          menuSpecificVars.saveStuffHolder.style.position = "absolute";
+
+          shaderPanel.appendChild(menuSpecificVars.saveStuffHolder);
+
+          //A whole lotta hub jubba for the input box. Though I want it to be supported natively even in a non GUI enviornment
+          menuSpecificVars.shadername = document.createElement("input");
+          menuSpecificVars.shadername.type = "text";
+          menuSpecificVars.shadername.style.backgroundColor =
+            this._defaultBackgroundColor;
+          menuSpecificVars.shadername.style.fontSize = "1rem";
+          menuSpecificVars.shadername.style.fontWeight = "bold";
+          menuSpecificVars.shadername.style.borderRadius = "4px";
+          menuSpecificVars.shadername.style.borderWidth = "1px";
+          menuSpecificVars.shadername.style.borderStyle = "solid";
+          menuSpecificVars.shadername.style.borderColor = "#404040";
+          menuSpecificVars.shadername.style.color = "#ffffff";
+          menuSpecificVars.shadername.style.position = "absolute";
+          menuSpecificVars.shadername.style.top = "10%";
+          menuSpecificVars.shadername.style.left = "50%";
+          menuSpecificVars.shadername.style.transform = "translate(-50%,0%)";
+          menuSpecificVars.shadername.style.height = "2rem";
+          menuSpecificVars.shadername.style.color = this._textColor;
+          menuSpecificVars.shadername.style.zIndex = "10005";
+          menuSpecificVars.shadername.maxLength = 20;
+
+          menuSpecificVars.shadername.placeholder = "Shader Name";
+
+          //I dunno why prettier feels the need to do this. I feel like it makes it more unreadable.
+          menuSpecificVars.saveStuffHolder.appendChild(
+            menuSpecificVars.shadername
+          );
+
+          //Save Button
+          menuSpecificVars.saveButton = document.createElement("button");
+
+          menuSpecificVars.saveButton.innerText = "Save";
+          menuSpecificVars.saveButton.style.cursor = "pointer";
+          menuSpecificVars.saveButton.style.padding = "0.75rem 1rem";
+          menuSpecificVars.saveButton.style.borderRadius = "0.25rem";
+          menuSpecificVars.saveButton.style.boxSizing = "border-box";
+          menuSpecificVars.saveButton.style.borderStyle = "solid";
+          menuSpecificVars.saveButton.style.borderWidth = "0px";
+          menuSpecificVars.saveButton.style.position = "absolute";
+          menuSpecificVars.saveButton.style.top = "20%";
+          menuSpecificVars.saveButton.style.left = "50%";
+          menuSpecificVars.saveButton.style.backgroundColor =
+            this._menuBarBackground;
+          menuSpecificVars.saveButton.style.transform = "translate(-50%,0%)";
+
+          menuSpecificVars.saveButton.onclick = () => {
+            if (menuSpecificVars.shadername.value.length == 0) return;
+            this.saveShader(menuSpecificVars.shadername.value, this.savingData);
+            closeFunc();
+          };
+
+          menuSpecificVars.saveStuffHolder.appendChild(
+            menuSpecificVars.saveButton
+          );
+
+          //A container containing already existing shaders and some text to accompony them.
+          menuSpecificVars.existingShaderHolder = document.createElement("div");
+
+          menuSpecificVars.existingShaderHolder.style.width = "40%";
+          menuSpecificVars.existingShaderHolder.style.height = "100%";
+          menuSpecificVars.existingShaderHolder.style.left = "60%";
+          menuSpecificVars.existingShaderHolder.style.backgroundColor =
+            "#00000000";
+          menuSpecificVars.existingShaderHolder.style.position = "absolute";
+
+          shaderPanel.appendChild(menuSpecificVars.existingShaderHolder);
+
+          menuSpecificVars.existingText = document.createElement("div");
+
+          menuSpecificVars.existingText.style.width = "100%";
+          menuSpecificVars.existingText.style.height = "48px";
+          menuSpecificVars.existingText.style.top = "0px";
+          menuSpecificVars.existingText.style.left = "0px";
+          menuSpecificVars.existingText.style.position = "absolute";
+          menuSpecificVars.existingText.style.transform = "translate(0%,8px)";
+          menuSpecificVars.existingText.style.color = this._textColor;
+
+          menuSpecificVars.existingText.style.fontSize = "16px";
+
+          menuSpecificVars.existingText.textContent = "Project Shaders";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingText
+          );
+
+          //The background for existing shaders
+          menuSpecificVars.existingDivBackground =
+            document.createElement("div");
+
+          menuSpecificVars.existingDivBackground.style.backgroundColor =
+            this._menuBarBackground;
+          menuSpecificVars.existingDivBackground.style.width = "100%";
+          menuSpecificVars.existingDivBackground.style.height =
+            "calc(100% - 32px)";
+          menuSpecificVars.existingDivBackground.style.position = "absolute";
+          menuSpecificVars.existingDivBackground.style.top = "32px";
+          menuSpecificVars.existingDivBackground.style.left = "0%";
+          menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingDivBackground
+          );
+
+          //The container for existing shaders
+          menuSpecificVars.existingDiv = document.createElement("div");
+
+          menuSpecificVars.existingDiv.style.backgroundColor = "#00000000";
+          menuSpecificVars.existingDiv.style.width = "100%";
+          menuSpecificVars.existingDiv.style.height = "calc(100% - 32px)";
+          menuSpecificVars.existingDiv.style.position = "absolute";
+          menuSpecificVars.existingDiv.style.top = "32px";
+          menuSpecificVars.existingDiv.style.left = "0%";
+          menuSpecificVars.existingDiv.style.overflowY = "auto";
+          menuSpecificVars.existingDiv.style.overflowX = "hidden";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingDiv
+          );
+
+          Object.keys(this.shaders).forEach((shader) => {
+            const shaderDiv = document.createElement("div");
+            shaderDiv.style.width = "100%";
+            shaderDiv.style.height = "48px";
+            shaderDiv.style.color = "#ffffff";
+            shaderDiv.style.marginBottom = "2px";
+            shaderDiv.style.backgroundColor = this._menuBarBackground;
+
+            shaderDiv.style.cursor = "pointer";
+
+            shaderDiv.onclick = () => {
+              this.saveShader(shader, this.savingData);
+              closeFunc();
+            };
+
+            menuSpecificVars.existingDiv.appendChild(shaderDiv);
+
+            const modifyDate = new Date(this.shaders[shader].modifyDate);
+
+            const nameDiv = document.createElement("div");
+            nameDiv.style.position = "absolute";
+            nameDiv.style.width = "100%";
+            nameDiv.style.height = "48px";
+            nameDiv.style.transform = "translate(5%,5%)";
+            nameDiv.style.textAlign = "left";
+            nameDiv.innerText = `${shader}\nModified: ${modifyDate.getDate()}/${modifyDate.getMonth() + 1}/${modifyDate.getFullYear()} ${modifyDate.getHours() % 12 == 0 ? 12 : modifyDate.getHours() % 12}:${modifyDate.getMinutes()} ${modifyDate.getHours() > 11 ? "PM" : "AM"}`;
+
+            shaderDiv.appendChild(nameDiv);
+          });
+          break;
+
+        case "manager":
+          //Resize this manager to fit better
+          resizeFunc(25, 30);
+          //A container containing already existing shaders and some text to accompony them.
+          menuSpecificVars.existingShaderHolder = document.createElement("div");
+
+          menuSpecificVars.existingShaderHolder.style.width = "100%";
+          menuSpecificVars.existingShaderHolder.style.height = "100%";
+          menuSpecificVars.existingShaderHolder.style.left = "0%";
+          menuSpecificVars.existingShaderHolder.style.backgroundColor =
+            "#00000000";
+          menuSpecificVars.existingShaderHolder.style.position = "absolute";
+
+          shaderPanel.appendChild(menuSpecificVars.existingShaderHolder);
+
+          menuSpecificVars.existingText = document.createElement("div");
+
+          menuSpecificVars.existingText.style.width = "100%";
+          menuSpecificVars.existingText.style.height = "48px";
+          menuSpecificVars.existingText.style.top = "0px";
+          menuSpecificVars.existingText.style.left = "0px";
+          menuSpecificVars.existingText.style.position = "absolute";
+          menuSpecificVars.existingText.style.transform = "translate(0%,8px)";
+          menuSpecificVars.existingText.style.color = this._textColor;
+
+          menuSpecificVars.existingText.style.fontSize = "16px";
+
+          menuSpecificVars.existingText.textContent = "Project Shaders";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingText
+          );
+
+          //The background for existing shaders
+          menuSpecificVars.existingDivBackground =
+            document.createElement("div");
+
+          menuSpecificVars.existingDivBackground.style.backgroundColor =
+            this._menuBarBackground;
+          menuSpecificVars.existingDivBackground.style.width = "100%";
+          menuSpecificVars.existingDivBackground.style.height =
+            "calc(100% - 32px)";
+          menuSpecificVars.existingDivBackground.style.position = "absolute";
+          menuSpecificVars.existingDivBackground.style.top = "32px";
+          menuSpecificVars.existingDivBackground.style.left = "0%";
+          menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingDivBackground
+          );
+
+          //The container for existing shaders
+          menuSpecificVars.existingDiv = document.createElement("div");
+
+          menuSpecificVars.existingDiv.style.backgroundColor = "#00000000";
+          menuSpecificVars.existingDiv.style.width = "100%";
+          menuSpecificVars.existingDiv.style.height = "calc(100% - 32px)";
+          menuSpecificVars.existingDiv.style.position = "absolute";
+          menuSpecificVars.existingDiv.style.top = "32px";
+          menuSpecificVars.existingDiv.style.left = "0%";
+          menuSpecificVars.existingDiv.style.overflowY = "auto";
+          menuSpecificVars.existingDiv.style.overflowX = "hidden";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingDiv
+          );
+
+          Object.keys(this.shaders).forEach((shader) => {
+            const shaderDiv = document.createElement("div");
+            shaderDiv.style.width = "100%";
+            shaderDiv.style.height = "48px";
+            shaderDiv.style.color = "#ffffff";
+            shaderDiv.style.marginBottom = "2px";
+            shaderDiv.style.backgroundColor = this._menuBarBackground;
+
+            shaderDiv.style.cursor = "pointer";
+
+            menuSpecificVars.existingDiv.appendChild(shaderDiv);
+
+            const modifyDate = new Date(this.shaders[shader].modifyDate);
+
+            const nameDiv = document.createElement("div");
+            nameDiv.style.position = "relative";
+            nameDiv.style.width = "100%";
+            nameDiv.style.height = "48px";
+            nameDiv.style.top = "0px";
+            nameDiv.style.left = "0px";
+            nameDiv.style.transform = "translate(5%,5%)";
+            nameDiv.style.textAlign = "left";
+            nameDiv.innerText = `${shader}\nModified: ${modifyDate.getDate()}/${modifyDate.getMonth() + 1}/${modifyDate.getFullYear()} ${modifyDate.getHours() % 12 == 0 ? 12 : modifyDate.getHours() % 12}:${modifyDate.getMinutes()} ${modifyDate.getHours() > 11 ? "PM" : "AM"}`;
+
+            shaderDiv.appendChild(nameDiv);
+
+            //The actual container no filter to avoid buggy things
+            const closeMenu = document.createElement("div");
+
+            closeMenu.style.width = "1.75rem";
+            closeMenu.style.height = "1.75rem";
+            closeMenu.style.backgroundColor = this._buttonShadow;
+            closeMenu.style.position = "absolute";
+            closeMenu.style.left = "calc(100% - 2rem)";
+            closeMenu.style.borderRadius = "50%";
+            closeMenu.style.alignItems = "center";
+            closeMenu.style.justifyContent = "center";
+            closeMenu.style.display = "flex";
+            closeMenu.style.cursor = "pointer";
+            closeMenu.style.transition = "all 0.15s ease-out";
+            closeMenu.style.transform = "translate(-50%,-135%)";
+
+            //Animation stuffs
+            closeMenu.onmouseenter = () => {
+              closeMenu.style.transform =
+                "translate(-50%,-135%) scale(1.1,1.1)";
+            };
+
+            //More animation
+            closeMenu.onmouseleave = () => {
+              closeMenu.style.transform = "translate(-50%,-135%) scale(1,1)";
+            };
+
+            //Just the close button
+            closeMenu.onclick = () => {
+              menuSpecificVars.existingDiv.removeChild(shaderDiv);
+              this.deleteShader(shader);
+            };
+
+            shaderDiv.appendChild(closeMenu);
+
+            //The close button for the menu
+            const xImage = document.createElement("img");
+            xImage.src =
+              "data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVmcz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg==";
+
+            xImage.style.width = "0.75rem";
+            xImage.style.height = "0.75rem";
+            xImage.style.margin = "0.25rem";
+            xImage.style.transform = "rotate(45deg)";
+
+            closeMenu.appendChild(xImage);
+          });
+          break;
+
+        case "load":
+          //Resize this manager to fit better
+          resizeFunc(25, 30);
+          //A container containing already existing shaders and some text to accompony them.
+          menuSpecificVars.existingShaderHolder = document.createElement("div");
+
+          menuSpecificVars.existingShaderHolder.style.width = "100%";
+          menuSpecificVars.existingShaderHolder.style.height = "100%";
+          menuSpecificVars.existingShaderHolder.style.left = "0%";
+          menuSpecificVars.existingShaderHolder.style.backgroundColor =
+            "#00000000";
+          menuSpecificVars.existingShaderHolder.style.position = "absolute";
+
+          shaderPanel.appendChild(menuSpecificVars.existingShaderHolder);
+
+          menuSpecificVars.existingText = document.createElement("div");
+
+          menuSpecificVars.existingText.style.width = "100%";
+          menuSpecificVars.existingText.style.height = "48px";
+          menuSpecificVars.existingText.style.top = "0px";
+          menuSpecificVars.existingText.style.left = "0px";
+          menuSpecificVars.existingText.style.position = "absolute";
+          menuSpecificVars.existingText.style.transform = "translate(0%,8px)";
+          menuSpecificVars.existingText.style.color = this._textColor;
+
+          menuSpecificVars.existingText.style.fontSize = "16px";
+
+          menuSpecificVars.existingText.textContent = "Project Shaders";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingText
+          );
+
+          //The background for existing shaders
+          menuSpecificVars.existingDivBackground =
+            document.createElement("div");
+
+          menuSpecificVars.existingDivBackground.style.backgroundColor =
+            this._menuBarBackground;
+          menuSpecificVars.existingDivBackground.style.width = "100%";
+          menuSpecificVars.existingDivBackground.style.height =
+            "calc(100% - 32px)";
+          menuSpecificVars.existingDivBackground.style.position = "absolute";
+          menuSpecificVars.existingDivBackground.style.top = "32px";
+          menuSpecificVars.existingDivBackground.style.left = "0%";
+          menuSpecificVars.existingDivBackground.style.filter = "opacity(25%)";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingDivBackground
+          );
+
+          //The container for existing shaders
+          menuSpecificVars.existingDiv = document.createElement("div");
+
+          menuSpecificVars.existingDiv.style.backgroundColor = "#00000000";
+          menuSpecificVars.existingDiv.style.width = "100%";
+          menuSpecificVars.existingDiv.style.height = "calc(100% - 32px)";
+          menuSpecificVars.existingDiv.style.position = "absolute";
+          menuSpecificVars.existingDiv.style.top = "32px";
+          menuSpecificVars.existingDiv.style.left = "0%";
+          menuSpecificVars.existingDiv.style.overflowY = "auto";
+          menuSpecificVars.existingDiv.style.overflowX = "hidden";
+
+          menuSpecificVars.existingShaderHolder.appendChild(
+            menuSpecificVars.existingDiv
+          );
+
+          Object.keys(this.shaders).forEach((shader) => {
+            const shaderDiv = document.createElement("div");
+            shaderDiv.style.width = "100%";
+            shaderDiv.style.height = "48px";
+            shaderDiv.style.color = "#ffffff";
+            shaderDiv.style.marginBottom = "2px";
+            shaderDiv.style.backgroundColor = this._menuBarBackground;
+
+            shaderDiv.style.cursor = "pointer";
+
+            shaderDiv.onclick = () => {
+              this.IFrame.contentWindow.postMessage(
+                {
+                  type: "DATA_LOAD",
+                  projectData: this.shaders[shader].projectData.projectData,
+                },
+                this.IFrame.src
+              );
+              closeFunc();
+            };
+
+            menuSpecificVars.existingDiv.appendChild(shaderDiv);
+
+            const modifyDate = new Date(this.shaders[shader].modifyDate);
+
+            const nameDiv = document.createElement("div");
+            nameDiv.style.position = "relative";
+            nameDiv.style.width = "100%";
+            nameDiv.style.height = "48px";
+            nameDiv.style.top = "0px";
+            nameDiv.style.left = "0px";
+            nameDiv.style.transform = "translate(5%,5%)";
+            nameDiv.style.textAlign = "left";
+            nameDiv.innerText = `${shader}\nModified: ${modifyDate.getDate()}/${modifyDate.getMonth() + 1}/${modifyDate.getFullYear()} ${modifyDate.getHours() % 12 == 0 ? 12 : modifyDate.getHours() % 12}:${modifyDate.getMinutes()} ${modifyDate.getHours() > 11 ? "PM" : "AM"}`;
+
+            shaderDiv.appendChild(nameDiv);
+          });
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    getAllShaders() {
+      return JSON.stringify(this.shaderMenu());
+    }
+
+
+  
+      setNumberInShader({ uniformName, shader, number }) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+        
+        this.programs[shader].uniformDat[uniformName] = number;
+      }
+  
+      setVec2InShader({ uniformName, shader, numberX, numberY }) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+        
+        this.programs[shader].uniformDat[uniformName] = [numberX, numberY];
+      }
+  
+      setVec3InShader({ uniformName, shader, numberX, numberY, numberZ }) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+        
+        this.programs[shader].uniformDat[uniformName] = [
+          numberX,
+          numberY,
+          numberZ,
+        ];
+      }
+  
+      setVec4InShader({
+        uniformName,
+        shader,
+        numberX,
+        numberY,
+        numberZ,
+        numberW,
+      }) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+        
+        this.programs[shader].uniformDat[uniformName] = [
+          numberX,
+          numberY,
+          numberZ,
+          numberW,
+        ];
+      }
+  
+      setMatrixInShader({ uniformName, shader, list }, util) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+        
+        let listOBJ = this._getVarObjectFromName(list, util, "list").value;
+        let converted = listOBJ.map(function (str) {
+          return parseFloat(str);
+        });
+  
+        this.programs[shader].uniformDat[uniformName] = converted;
+      }
+  
+      setMatrixInShaderArray({ uniformName, shader, array }) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+        
+        let converted = JSON.parse(array);
+        //Make sure its an array
+        if (!Array.isArray(converted)) return;
+        converted = converted.map(function (str) {
+          return parseInt(str);
+        });
+  
+        this.programs[shader].uniformDat[uniformName] = converted;
+      }
+  
+      getNumberInShader({ uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (this._isUniformArray(shader, uniformName)) return 0;
+        if (!this.programs[shader].uniformDat[uniformName]) return 0;
+        return this.programs[shader].uniformDat[uniformName];
+      }
+  
+      getVec2InShader({ component, uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (this._isUniformArray(shader, uniformName)) return 0;
+        if (!this.programs[shader].uniformDat[uniformName]) return 0;
+        if (!this.programs[shader].uniformDat[uniformName][component]) return 0;
+        return this.programs[shader].uniformDat[uniformName][component];
+      }
+  
+      getVec3InShader({ component, uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (this._isUniformArray(shader, uniformName)) return 0;
+        if (!this.programs[shader].uniformDat[uniformName]) return 0;
+        if (!this.programs[shader].uniformDat[uniformName][component]) return 0;
+        return this.programs[shader].uniformDat[uniformName][component];
+      }
+  
+      getVec4InShader({ component, uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (this._isUniformArray(shader, uniformName)) return 0;
+        if (!this.programs[shader].uniformDat[uniformName]) return 0;
+        if (!this.programs[shader].uniformDat[uniformName][component]) return 0;
+        return this.programs[shader].uniformDat[uniformName][component];
+      }
+  
+      getMatrixInShader({ uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (this._isUniformArray(shader, uniformName)) return 0;
+        if (!this.programs[shader].uniformDat[uniformName]) return 0;
+        return JSON.stringify(this.programs[shader].uniformDat[uniformName]);
+      }
+  
+      getTextureInShader({ uniformName, shader }, util) {
+        if (!this.programs[shader]) return "";
+        if (this._isUniformArray(shader, uniformName)) return "";
+        if (!this.programs[shader].uniformDat[uniformName]) return "";
+        const text = this.programs[shader].uniformDat[uniformName];
+        let foundValue = Object.keys(this.penPlusCostumeLibrary).find(
+          (key) => this.penPlusCostumeLibrary[key] === text
+        );
+        //if we cannot find it in the pen+ library look for it in the scratch costume library
+        if (!foundValue) {
+          const curCostumes = util.target.sprite.costumes;
+          if (!curCostumes) return "";
+          for (let costumeID = 0; costumeID < curCostumes.length; costumeID++) {
+            const costume = curCostumes[costumeID];
+  
+            if (costume != util.target.currentCostume) {
+              util.target.setCostume(costume);
+            }
+  
+            const texture = renderer._allSkins[costume.skinId].getTexture();
+  
+            if (texture !== text) return costume.name;
+          }
+        }
+        return foundValue;
+      }
+  
+      _isUniformArray(shader, uniformName) {
+        if (!this.programs[shader]) return false;
+        if (!this.programs[shader].uniformDec[uniformName]) return false;
+        if (!this.programs[shader].uniformDec[uniformName].isArray) return false;
+        return true;
+      }
+  
+      //For arrays!
+      setArrayNumberInShader({ item, uniformName, shader, number }) {
+        if (!this.programs[shader]) return;
+        if (!this._isUniformArray(shader, uniformName)) return;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return;
+        
+        item = item - 1;
+        this.programs[shader].uniformDat[uniformName][item] = number;
+      }
+  
+      setArrayVec2InShader({ item, uniformName, shader, numberX, numberY }) {
+        if (!this.programs[shader]) return;
+        if (!this._isUniformArray(shader, uniformName)) return;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return;
+        
+        item = (item - 1) * 2;
+        this.programs[shader].uniformDat[uniformName][item] = numberX;
+        this.programs[shader].uniformDat[uniformName][item + 1] = numberY;
+      }
+  
+      setArrayVec3InShader({
+        item,
+        uniformName,
+        shader,
+        numberX,
+        numberY,
+        numberZ,
+      }) {
+        if (!this.programs[shader]) return;
+        if (!this._isUniformArray(shader, uniformName)) return;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return;
+        
+        item = (item - 1) * 3;
+        this.programs[shader].uniformDat[uniformName][item] = numberX;
+        this.programs[shader].uniformDat[uniformName][item + 1] = numberY;
+        this.programs[shader].uniformDat[uniformName][item + 2] = numberZ;
+      }
+  
+      setArrayVec4InShader({
+        item,
+        uniformName,
+        shader,
+        numberX,
+        numberY,
+        numberZ,
+        numberW,
+      }) {
+        if (!this.programs[shader]) return;
+        if (!this._isUniformArray(shader, uniformName)) return;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return;
+        
+        item = (item - 1) * 4;
+        this.programs[shader].uniformDat[uniformName][item] = numberX;
+        this.programs[shader].uniformDat[uniformName][item + 1] = numberY;
+        this.programs[shader].uniformDat[uniformName][item + 2] = numberZ;
+        this.programs[shader].uniformDat[uniformName][item + 3] = numberW;
+      }
+  
+      setArrayMatrixInShaderList({ item, uniformName, shader, list }) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+        if (  item < 1 ||  item > this.programs[shader].uniformDec[uniformName].arrayLength) return;
+        
+  
+        let listOBJ = this._getVarObjectFromName(list, util, "list").value;
+        let converted = listOBJ.map(function (str) {
+          return parseFloat(str);
+        });
+  
+        this.programs[shader].uniformDat[uniformName][item] = converted;
+      }
+  
+      setArrayMatrixInShaderArray({ item, uniformName, shader, array }) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+        if (  item < 1 ||  item > this.programs[shader].uniformDec[uniformName].arrayLength)  return;
+        
+  
+        let converted = JSON.parse(array);
+        //Make sure its an array
+        if (!Array.isArray(converted)) return;
+        converted = converted.map(function (str) {
+          return parseInt(str);
+        });
+  
+        this.programs[shader].uniformDat[uniformName][item] = converted;
+      }
+  
+      getArrayNumberInShader({ item, uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (!this._isUniformArray(shader, uniformName)) return 0;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return "";
+        item -= 1;
+        return this.programs[shader].uniformDat[uniformName][item];
+      }
+  
+      getArrayVec2InShader({ item, component, uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (!this._isUniformArray(shader, uniformName)) return 0;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return "";
+        item = (item - 1) * 2;
+        return (
+          this.programs[shader].uniformDat[uniformName][item + component] || 0
+        );
+      }
+  
+      getArrayVec3InShader({ item, component, uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (!this._isUniformArray(shader, uniformName)) return 0;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return "";
+        item = (item - 1) * 3;
+        return (
+          this.programs[shader].uniformDat[uniformName][item + component] || 0
+        );
+      }
+  
+      getArrayVec4InShader({ item, component, uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (!this._isUniformArray(shader, uniformName)) return 0;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return "";
+        item = (item - 1) * 4;
+        return (
+          this.programs[shader].uniformDat[uniformName][item + component] || 0
+        );
+      }
+  
+      getArrayMatrixInShader({ item, uniformName, shader }) {
+        if (!this.programs[shader]) return 0;
+        if (!this._isUniformArray(shader, uniformName)) return 0;
+        if (
+          item < 1 ||
+          item > this.programs[shader].uniformDec[uniformName].arrayLength
+        )
+          return 0;
+        item -= 1;
+        return JSON.stringify(this.programs[shader].uniformDat[uniformName][item]);
+      }
+
+      //From lily's list tools... With permission of course.
+      _getLists() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+  
+        const lists =
+          typeof Blockly === "undefined"
+            ? []
+            : Blockly.getMainWorkspace()
+                .getVariableMap()
+                .getVariablesOfType("list")
+                .map((model) => model.name);
+        if (lists.length > 0) {
+          return lists;
+        } else {
+          return [""];
+        }
+      }
   }
 
   Scratch.extensions.register(new extension());

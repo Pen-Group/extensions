@@ -1,4 +1,5 @@
 {
   "workbench.iconTheme": "material-icon-theme",
-  "liveServer.settings.port": 8080
+  "liveServer.settings.port": 8000,
+  "liveServer.settings.host": "localhost"
 }
