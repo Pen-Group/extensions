@@ -116,6 +116,8 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
   //Should add name to the thing.
   let spriteShaders = {};
   let recompiledShaders = {};
+
+  const isWebGL2 = gl.getParameter(gl.VERSION).includes("2.0");
   
   //* PEN+ stuff
   //Used for the popup animation
