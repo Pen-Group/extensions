@@ -64,7 +64,7 @@
     ]
   },
   {
-    "name": "Customizable AA",
+    "name": "Customizable\nAnti-Aliasing",
     "id": "PenAA",
     "thumbnailFormat": "png",
     "description": "Configure how scratch uses Anti-Aliasing on the pen.",
