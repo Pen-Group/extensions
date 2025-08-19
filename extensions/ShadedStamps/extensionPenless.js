@@ -1457,16 +1457,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         parentExtension.deserialize = (serialized) => {
           let deserializedData = JSON.parse(serialized);
           this.programs = {};
-          if (deserializedData.version) {
-            parentExtension.shaders = deserializedData.shaders;
-
-            if (parentExtension.extensionVersion != deserializedData.version) {
-              parentExtension._updateRelevantInfo(deserializedData);
-            }
-          } else {
-            parentExtension.shaders = deserializedData || {};
-            parentExtension._updateRelevantInfo(deserializedData);
-          }
+          parentExtension.shaders = deserializedData.shaders;
           parentExtension._parseProjectShaders();
         };
 
