@@ -67,6 +67,7 @@ uniform lowp int u_blur;
 
 uniform bool u_oldColor;
 uniform bool u_repeat;
+uniform bool u_stretchyWaves;
 
 varying vec2 v_texCoord;
 
@@ -138,11 +139,13 @@ void main()
 	vec2 texcoord0 = v_texCoord;
 
     if (u_waveAmpX != 0.0) {
-        texcoord0.x += sin(u_waveProgress + texcoord0.x * u_waveSizeX) * u_waveAmpX;
+        if (u_stretchyWaves) { texcoord0.x += sin(u_waveProgress + texcoord0.x * u_waveSizeX) * u_waveAmpX; }
+        else { texcoord0.y += sin(u_waveProgress + texcoord0.x * u_waveSizeX) * u_waveAmpX; }
     }
 
     if (u_waveAmpY != 0.0) {
-        texcoord0.y += sin(u_waveProgress + texcoord0.y * u_waveSizeY) * u_waveAmpY;
+        if (u_stretchyWaves) { texcoord0.y += sin(u_waveProgress + texcoord0.y * u_waveSizeY) * u_waveAmpY; }
+        else { texcoord0.x += sin(u_waveProgress + texcoord0.y * u_waveSizeY) * u_waveAmpY; }
     }
 
     if (!u_repeat && (texcoord0.x < 0.0 || texcoord0.y < 0.0 || texcoord0.x > 1.0 || texcoord0.y > 1.0)) { discard; }
@@ -327,7 +330,8 @@ void main()
         u_skewY: 0,
 
         u_oldColor: true,
-        u_repeat: false
+        u_repeat: false,
+        u_stretchyWaves: false,
     }
 
     maxRanges = {
@@ -513,7 +517,8 @@ void main()
             options: {
                 items: [
                     { text: "use old color functions", value: "u_oldColor" },
-                    { text: "repeat costumes", value: "u_repeat" }
+                    { text: "repeat costumes", value: "u_repeat" },
+                    { text: "stretchy waves", value: "u_stretchyWaves" }
                 ],
                 acceptReporters: true
             },
