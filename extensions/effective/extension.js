@@ -58,9 +58,9 @@ uniform float u_waveProgress;
 uniform float u_saturation;
 uniform float u_sepia;
 
-uniform float u_red;
-uniform float u_green;
-uniform float u_blue;
+uniform float u_red_e;
+uniform float u_green_e;
+uniform float u_blue_e;
 
 uniform float u_unfocus;
 uniform lowp int u_blur;
@@ -242,7 +242,7 @@ void main()
 	// Add epsilon to avoid dividing by 0 for fully transparent pixels
 	gl_FragColor.rgb = clamp(gl_FragColor.rgb / (gl_FragColor.a + epsilon), 0.0, 1.0);
 
-    gl_FragColor.rgb *= vec3(u_red / 100.0, u_green / 100.0, u_blue / 100.0);
+    gl_FragColor.rgb *= vec3(u_red_e / 100.0, u_green_e / 100.0, u_blue_e / 100.0);
 
     //Colour
     if (u_color != 0.0)
@@ -310,9 +310,9 @@ void main()
 
     defaultValues = {
         u_saturation: 0,
-        u_red: 100,
-        u_green: 100,
-        u_blue: 100,
+        u_red_e: 100,
+        u_green_e: 100,
+        u_blue_e: 100,
 
         u_waveAmpX: 0,
         u_waveAmpY: 0,
@@ -332,9 +332,9 @@ void main()
 
     maxRanges = {
         u_saturation: [-100, 100],
-        u_red: [0, 100],
-        u_green: [0, 100],
-        u_blue: [0, 100],
+        u_red_e: [0, 100],
+        u_green_e: [0, 100],
+        u_blue_e: [0, 100],
         
         u_waveAmpX: [-1, 1],
         u_waveAmpY: [-1, 1],
@@ -380,7 +380,7 @@ void main()
         for (let targetID in runtime.targets) {
             const target = runtime.targets[targetID];
 
-            renderer._allDrawables[target.drawableID]._uniforms = {...renderer._allDrawables[target.sprite.clones[0].drawableID]._uniforms};
+            renderer._allDrawables[target.drawableID]._uniforms = {...renderer._allDrawables[target.sprite.clones[0].drawableID]._uniforms, ...this.defaultValues};
         }
     }
 
@@ -441,15 +441,15 @@ void main()
                     },
                     {
                         text: "red amount",
-                        value: "u_red"
+                        value: "u_red_e"
                     },
                     {
                         text: "green amount",
-                        value: "u_green"
+                        value: "u_green_e"
                     },
                     {
                         text: "blue amount",
-                        value: "u_blue"
+                        value: "u_blue_e"
                     },
                     {
                         text: "fisheye",
