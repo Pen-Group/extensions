@@ -44,7 +44,7 @@
     "name": "Shaded",
     "id": "ShadedStamps",
     "thumbnailFormat": "png",
-    "description": "Custom shaders for the scratch stage. By ObviousAlexC",
+    "description": "Custom shaders for the scratch stage. By ObviousAlexC (Incompatible with Effective)",
     "latestVersion": "extension.js",
     "versions": [
       {
@@ -72,7 +72,19 @@
     "name": "Customizable\nAnti-Aliasing",
     "id": "PenAA",
     "thumbnailFormat": "png",
-    "description": "Configure how scratch uses Anti-Aliasing on the pen.",
+    "description": "Configure how scratch uses Anti-Aliasing on the pen. By ObviousAlexC",
+    "versions": [
+      {
+        "name": "version 1",
+        "filename": "extension.js"
+      }
+    ]
+  },
+  {
+    "name": "Effective",
+    "id": "effective",
+    "thumbnailFormat": "svg",
+    "description": "More effects for your sprites. By ObviousAlexC (Incompatible with Shaded)",
     "versions": [
       {
         "name": "version 1",
