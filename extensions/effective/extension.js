@@ -24,6 +24,7 @@ uniform float u_skewY;
 
 uniform float u_waveAmpX;
 uniform float u_waveAmpY;
+
 uniform bool u_repeat;
 
 uniform float u_flipX;
@@ -118,6 +119,7 @@ uniform float u_saturation;
 uniform float u_posterize;
 uniform float u_contrast;
 uniform float u_sepia;
+uniform float u_chromatic;
 
 uniform float u_red_e;
 uniform float u_green_e;
@@ -276,6 +278,19 @@ void main()
 
 	gl_FragColor = texture2D(u_skin, texcoord0);
 
+    if (u_chromatic > 0.0) {
+        vec4 left = texture2D(u_skin, texcoord0 - vec2(u_chromatic / 800.0, 0));
+        vec4 right = texture2D(u_skin, texcoord0 + vec2(u_chromatic / 800.0, 0));
+        
+        gl_FragColor.xyz = vec3(
+            left.x, 
+            gl_FragColor.y, 
+            right.z
+        );
+
+        gl_FragColor.w = (left.w + gl_FragColor.w + right.w) * 0.33333;
+    }
+
     if (u_unfocus > 0.0) {
         float blurDist =  u_unfocus / 1000.0;
         for (int i = 0; i<4; i++) {
@@ -415,6 +430,7 @@ void main()
         u_saturation: 0,
         u_posterize: 100,
         u_contrast: 100,
+        u_chromatic: 0,
         u_sepia: 0,
         u_red_e: 100,
         u_green_e: 100,
@@ -449,6 +465,7 @@ void main()
         u_saturation: [-100, 100],
         u_posterize: [1, 100],
         u_contrast: [0, 200],
+        u_chromatic: [0, 100],
         u_sepia: [0, 100],
         u_red_e: [0, 100],
         u_green_e: [0, 100],
@@ -580,6 +597,10 @@ void main()
                     {
                         text: "contrast",
                         value: "u_contrast"
+                    },
+                    {
+                        text: "chromatic abberation",
+                        value: "u_chromatic"
                     },
                     {
                         text: "sepia",
