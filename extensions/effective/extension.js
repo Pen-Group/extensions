@@ -22,19 +22,78 @@ uniform mat4 u_modelMatrix;
 uniform float u_skewX;
 uniform float u_skewY;
 
+uniform float u_waveAmpX;
+uniform float u_waveAmpY;
+uniform bool u_repeat;
+
+uniform float u_flipX;
+uniform float u_flipY;
+uniform float u_flipZ;
+
 attribute vec2 a_texCoord;
 attribute vec2 a_position;
 
 varying vec2 v_texCoord;
 
 void main() {
-	gl_Position = u_projectionMatrix * u_modelMatrix * (mat4(
-        1, u_skewY / 100.0, 0, 0,
-        u_skewX / 100.0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    ) * vec4(a_position, 0, 1));
+	gl_Position = vec4(a_position, 0, 0);
 	v_texCoord = a_texCoord;
+
+    if ((u_waveAmpX != 0.0 || u_waveAmpY != 0.0) && !u_repeat) {
+        //Calculate
+        float highest = u_waveAmpX;
+        if (u_waveAmpY > highest) { highest = u_waveAmpY; }
+        highest = abs(highest * 2.0) + 1.0;
+
+        gl_Position.xyz *= highest;
+        v_texCoord = ((v_texCoord - 0.5) * highest) + 0.5;
+    }
+
+    if (u_skewX != 0.0 || u_skewY != 0.0) {
+        gl_Position = mat4(
+            1, u_skewY / 100.0, 0, 0,
+            u_skewX / 100.0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        ) * gl_Position;
+    }
+    
+
+    if (u_flipX != 0.0 || u_flipY != 0.0) {
+        //The result of 100 / 3.1415962
+        mat4 mulMat = mat4(
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+        if (u_flipX != 0.0) {
+            float radians = u_flipX / 31.8309526858;
+            mulMat = mat4(
+                cos(radians), 0, 0, sin(radians),
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                sin(radians), 0, 0, cos(radians)
+            ) * mulMat;
+        }
+
+        if (u_flipY != 0.0) {
+            float radians = u_flipY / 31.8309526858;
+            mulMat = mat4(
+                1, 0, 0, 0,
+                0, cos(radians), 0, sin(radians),
+                0, 0, 1, 0,
+                0, sin(radians), 0, cos(radians)
+            ) * mulMat;
+        }
+
+        gl_Position = gl_Position * mulMat;
+    }
+
+    //Move it up
+    gl_Position.w = (gl_Position.w * u_flipZ * 0.01) + 1.0;
+    gl_Position = u_projectionMatrix * u_modelMatrix * gl_Position;
 }`;
 
     const fragment = `precision mediump float;
@@ -56,6 +115,8 @@ uniform float u_waveSizeY;
 uniform float u_waveProgress;
 
 uniform float u_saturation;
+uniform float u_posterize;
+uniform float u_contrast;
 uniform float u_sepia;
 
 uniform float u_red_e;
@@ -68,6 +129,10 @@ uniform lowp int u_blur;
 uniform bool u_oldColor;
 uniform bool u_repeat;
 uniform bool u_stretchyWaves;
+
+uniform float u_jumbleX;
+uniform float u_jumbleY;
+uniform float u_jumbleSeed;
 
 varying vec2 v_texCoord;
 
@@ -132,6 +197,18 @@ vec3 convertHSV2RGB(vec3 hsv)
 	return rgb * c + hsv.z - c;
 }
 
+highp vec4 daveRandomRange(float lowR, float highR, vec2 coordinates)
+{
+    lowp float r = (coordinates.x * 50.25313532) + (coordinates.y * 21.5453) + u_jumbleSeed;
+    highp float randomizer = r*r/u_jumbleSeed/5398932.234523;
+    return mod(vec4(
+    fract(sin(mod(randomizer*(91.3458), 1440.0)) * 47453.5453),
+    fract(sin(mod(randomizer*(80.3458), 1440.0)) * 48456.5453),
+    fract(sin(mod(randomizer*(95.3458), 1440.0)) * 42457.5453),
+    fract(sin(mod(randomizer*(85.3458), 1440.0)) * 47553.5453)
+    ) - lowR, highR - lowR);
+}
+
 const vec2 kCenter = vec2(0.5, 0.5);
 
 void main()
@@ -146,6 +223,15 @@ void main()
     if (u_waveAmpY != 0.0) {
         if (u_stretchyWaves) { texcoord0.y += sin(u_waveProgress + texcoord0.y * u_waveSizeY) * u_waveAmpY; }
         else { texcoord0.x += sin(u_waveProgress + texcoord0.y * u_waveSizeY) * u_waveAmpY; }
+    }
+
+    if (u_jumbleX != 0.0 || u_jumbleY != 0.0) {
+        vec2 costumePixel = floor(texcoord0 * u_skinSize);
+        vec4 jumbleCoords = daveRandomRange(0.0, 1.0, costumePixel);
+        vec2 offsets = vec2(u_jumbleX / 100.0, u_jumbleY / 100.0);
+
+        texcoord0.x = mix(texcoord0.x, jumbleCoords.x, offsets.x);
+        texcoord0.y = mix(texcoord0.y, jumbleCoords.y, offsets.y);
     }
 
     if (!u_repeat && (texcoord0.x < 0.0 || texcoord0.y < 0.0 || texcoord0.x > 1.0 || texcoord0.y > 1.0)) { discard; }
@@ -284,6 +370,20 @@ void main()
 		gl_FragColor.rgb = convertHSV2RGB(hsv);
     }
 
+    if (u_posterize != 100.0) {
+        vec3 hsv = convertRGB2HSV(gl_FragColor.xyz);
+        float blend = 1.0 / u_posterize;
+
+        hsv.y = ceil(hsv.y * u_posterize) * blend;
+        hsv.z = ceil(hsv.z * u_posterize) * blend;
+        gl_FragColor.xyz = convertHSV2RGB(hsv);
+    }
+
+    if (u_contrast != 100.0) {
+        gl_FragColor.rgb = (gl_FragColor.rgb - 0.5) * (u_contrast / 100.0) + 0.5;
+    }
+
+    //Sepia
     if (u_sepia >= 0.0) {
         float brightest = gl_FragColor.x;
         if (gl_FragColor.y > brightest) { brightest = gl_FragColor.y; }
@@ -313,6 +413,9 @@ void main()
 
     defaultValues = {
         u_saturation: 0,
+        u_posterize: 100,
+        u_contrast: 100,
+        u_sepia: 0,
         u_red_e: 100,
         u_green_e: 100,
         u_blue_e: 100,
@@ -323,11 +426,19 @@ void main()
         u_waveSizeY: 3.1415962,
         u_waveProgress: 0,
 
+        u_jumbleX: 0,
+        u_jumbleY: 0,
+        u_jumbleSeed: 1,
+
         u_blur: 0,
         u_unfocus: 0,
         
         u_skewX: 0,
         u_skewY: 0,
+        
+        u_flipX: 0,
+        u_flipY: 0,
+        u_flipZ: 25,
 
         u_oldColor: true,
         u_repeat: false,
@@ -336,6 +447,9 @@ void main()
 
     maxRanges = {
         u_saturation: [-100, 100],
+        u_posterize: [1, 100],
+        u_contrast: [0, 200],
+        u_sepia: [0, 100],
         u_red_e: [0, 100],
         u_green_e: [0, 100],
         u_blue_e: [0, 100],
@@ -345,12 +459,28 @@ void main()
         u_waveSizeX: [-6.28318, 6.28318],
         u_waveSizeY: [-6.28318, 6.28318],
         u_waveProgress: [-Infinity, Infinity],
+
+        u_jumbleX: [-100, 100],
+        u_jumbleY: [-100, 100],
+        u_jumbleSeed: [1, Infinity],
         
         u_blur: [0, 128],
         u_unfocus: [0, 100],
         
-        u_skewX: [-1, 1],
-        u_skewY: [-1, 1],
+        u_skewX: [-100, 100],
+        u_skewY: [-100, 100],
+        u_flipX: [-Infinity, Infinity],
+        u_flipY: [-Infinity, Infinity],
+        u_flipZ: [0, 100]
+    }
+
+    resetAll() {
+        //Load default values
+        for (let targetID in runtime.targets) {
+            const target = runtime.targets[targetID];
+
+            renderer._allDrawables[target.drawableID]._uniforms = {...renderer._allDrawables[target.sprite.clones[0].drawableID]._uniforms, ...this.defaultValues};
+        }
     }
 
     constructor() {
@@ -380,12 +510,8 @@ void main()
             }
         });
 
-        //Load default values
-        for (let targetID in runtime.targets) {
-            const target = runtime.targets[targetID];
-
-            renderer._allDrawables[target.drawableID]._uniforms = {...renderer._allDrawables[target.sprite.clones[0].drawableID]._uniforms, ...this.defaultValues};
-        }
+        runtime.on("PROJECT_START", this.resetAll);
+        runtime.on("PROJECT_LOADED", this.resetAll);
     }
 
     getInfo() {
@@ -421,7 +547,15 @@ void main()
                 },
                 opcode: "setOption",
                 extensions: ["colours_looks"],
-            }
+            },
+            "---",
+            {
+                blockType: Scratch.BlockType.COMMAND,
+                text: "clear graphic effects",
+                arguments: {},
+                opcode: "clearEffects",
+                extensions: ["colours_looks"],
+            },
         ],
 
         menus: {
@@ -438,6 +572,14 @@ void main()
                     {
                         text: "brightness",
                         value: "u_brightness"
+                    },
+                    {
+                        text: "posterization",
+                        value: "u_posterize"
+                    },
+                    {
+                        text: "contrast",
+                        value: "u_contrast"
                     },
                     {
                         text: "sepia",
@@ -488,6 +630,18 @@ void main()
                         value: "u_waveSizeY"
                     },
                     {
+                        text: "jumble x",
+                        value: "u_jumbleX"
+                    },
+                    {
+                        text: "jumble y",
+                        value: "u_jumbleY"
+                    },
+                    {
+                        text: "jumble seed",
+                        value: "u_jumbleSeed"
+                    },
+                    {
                         text: "wave offset",
                         value: "u_waveProgress"
                     },
@@ -510,6 +664,18 @@ void main()
                     {
                         text: "skew y",
                         value: "u_skewY"
+                    },
+                    {
+                        text: "flip x",
+                        value: "u_flipX"
+                    },
+                    {
+                        text: "flip y",
+                        value: "u_flipY"
+                    },
+                    {
+                        text: "flip depth",
+                        value: "u_flipZ"
                     }
                 ],
                 acceptReporters: true
@@ -530,6 +696,8 @@ void main()
 
         name: "Effective",
         id: "OACEffective",
+        
+        blockIconURI: "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIzNy43MzQ0OCIgaGVpZ2h0PSIzOC4xMjIyNCIgdmlld0JveD0iMCwwLDM3LjczNDQ4LDM4LjEyMjI0Ij48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjIxLjEzMjc2LC0xNjAuNzc0NDEpIj48ZyBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiPjxwYXRoIGQ9Ik0yMzcuODgwNDQsMTk3LjgxNjI1Yy04LjkyMzQ5LC0xLjk5MDM4IC0xNC41Nzk2LC0xMC42Nzc2MyAtMTIuNjMzMjgsLTE5LjQwMzU2YzAuMTcxMDksLTAuNzY3MDIgLTQuMTQ1NTcsLTEwLjQxNTE0IC0yLjg4MjUyLC0xMy44NjhjMC45OTYzMSwtMi42MDg2IDkuMzkwNTUsMS43ODY4OCAxMS4zNzM4MywxLjk3NDY3YzQuOTYyNTQsMC4wODA0IDUuOTE3OTksLTEuNDc4NCAxMS4xOTAxOSwtMC4zMDI0NGMxLjU0MDksMC4zNDM2OSA0Ljk4MzM4LC02LjA5NTIgNy4xMjI4LC00LjAzNDk5YzMuOTU2OTYsMy44MTA0NiA2Ljc3Mzc5LDE3Ljc3NDggNS41MTA1LDIzLjQzODUzYy0xLjk0NjMxLDguNzI1OTMgLTEwLjc1ODAyLDE0LjE4NjE1IC0xOS42ODE0OSwxMi4xOTU3N3oiIGZpbGw9IiNmY2IxZTMiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIwIi8+PHBhdGggZD0iTTI0My44MzM4MSwxNjQuMDMwODh6IiBmaWxsPSIjMDAwMDAwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMCIvPjxwYXRoIGQ9Ik0yMzcuODgwNDMsMTk3LjgxNjI0Yy0zLjA2NDA5LC0wLjY4MzQ0IDQuNTI4MzQsLTQuMzgwNDQgNC44MDM5OSwtOS4zMTg0MWMwLjUyNzEyLC05LjQ0Mjc2IC0zLjIyNTAyLC0yMi42NjU4NyAtMS43MDA3OSwtMjIuNzE1MjVjMS4wNjE0MywtMC4wMzQzOSAyLjI5MDcxLDAuMDY1MzQgMy45NDUwMSwwLjQzNDMzYzEuNTQwOSwwLjM0MzY5IDQuOTgzMzgsLTYuMDk1MiA3LjEyMjgsLTQuMDM0OTljMy45NTY5NiwzLjgxMDQ2IDYuNzczNzksMTcuNzc0OCA1LjUxMDUsMjMuNDM4NTNjLTEuOTQ2MzIsOC43MjU5MyAtMTAuNzU4MDIsMTQuMTg2MTUgLTE5LjY4MTQ5LDEyLjE5NTc3eiIgZmlsbD0iI2ZjM2ZiZCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjAiLz48cGF0aCBkPSJNMjM3Ljg4MDQzLDE5Ny44MTYyNGMtOC45MjM0OSwtMS45OTAzOCAtMTQuNTc5NTksLTEwLjY3NzYzIC0xMi42MzMyOCwtMTkuNDAzNTZjMC4xNzEwOSwtMC43NjcwMiAtNC4xNDU1NywtMTAuNDE1MTQgLTIuODgyNTIsLTEzLjg2OGMwLjk5NjMxLC0yLjYwODYgOS4zOTA1NSwxLjc4Njg4IDExLjM3MzgzLDEuOTc0NjdjNC45NjI1NCwwLjA4MDQgNS45MTc5OSwtMS40Nzg0IDExLjE5MDE5LC0wLjMwMjQ0YzEuNTQwODksMC4zNDM2OSA0Ljk4MzM4LC02LjA5NTIgNy4xMjI4LC00LjAzNDk5YzMuOTU2OTYsMy44MTA0NiA2Ljc3Mzc4LDE3Ljc3NDggNS41MTA0OSwyMy40Mzg1M2MtMS45NDYzMiw4LjcyNTkzIC0xMC43NTgwMiwxNC4xODYxNSAtMTkuNjgxNDksMTIuMTk1Nzd6IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPjwvZz48L2c+PC9zdmc+PCEtLXJvdGF0aW9uQ2VudGVyOjE4Ljg2NzI0MjExNzgyMDQ5NjoxOS4yMjU1OTE2NTY0Njg3MS0tPg==",
 
         color1: "#9966FF",
         color2: "#855CD6",
@@ -572,6 +740,14 @@ void main()
 
         renderer._allDrawables[target.drawableID]._uniforms[variable] = Scratch.Cast.toBoolean(value);
         vm.renderer.dirty = true;
+    }
+
+    clearEffects(args, { target }) {
+        target.clearEffects();
+        renderer._allDrawables[target.drawableID]._uniforms = {
+            ...renderer._allDrawables[target.drawableID]._uniforms,
+            ...this.defaultValues
+        }
     }
   }
 
