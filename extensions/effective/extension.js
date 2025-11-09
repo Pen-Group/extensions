@@ -516,14 +516,15 @@ void main()
         }
 
         runtime.on("targetWasCreated", (target) => {
+            const drawable = renderer._allDrawables[target.drawableID];
             if (target.isOriginal) {
-                renderer._allDrawables[target.drawableID]._uniforms = {
-                    ...renderer._allDrawables[target.drawableID]._uniforms,
+                if (drawable) drawable._uniforms = {
+                    ...drawable._uniforms,
                     ...this.defaultValues
-                }
+                };
             }
             else {
-                renderer._allDrawables[target.drawableID]._uniforms = {...renderer._allDrawables[target.sprite.clones[0].drawableID]._uniforms};
+                if (drawable) drawable._uniforms = {...renderer._allDrawables[target.sprite.clones[0].drawableID]._uniforms};
             }
         });
 
