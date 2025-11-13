@@ -530,6 +530,7 @@ void main()
 
         runtime.on("PROJECT_START", this.resetAll);
         runtime.on("PROJECT_LOADED", this.resetAll);
+        this.resetAll();
     }
 
     getInfo() {
