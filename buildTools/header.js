@@ -41,9 +41,15 @@
     extension.prototype.blocks = [];
     extension.prototype.menus = {};
 
-    //For adding more functions to the extension
-    const addExtensionFunction = (name, code) => { extension.prototype[name] = code; }
-    
+    //For data management in the extension
+    const addFunction = (name, code) => { extension.prototype[name] = code; };
+    const callFunction = (name, args) => { extension.prototype[name](...args); };
+    const addData = (dataObject) => {
+        for (let dataKey in dataObject) {
+            extension.prototype[dataKey] = dataObject[dataKey];
+        }
+    }
+
     //Do this in a for as to not hit the limit
     const defineBlocks = (blockArray) => {
         for (let blockID in blockArray) {
@@ -54,12 +60,6 @@
     const defineMenus = (menuObject) => {
         for (let menuKey in menuObject) {
             extension.prototype.menus[menuKey] = menuObject[menuKey];
-        }
-    }
-
-    const addData = (dataObject) => {
-        for (let dataKey in dataObject) {
-            extension.prototype[dataKey] = dataObject[dataKey];
         }
     }
 

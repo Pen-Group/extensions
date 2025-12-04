@@ -8,6 +8,7 @@
     "Header": "header.txt",
 
     "Files": [
-        "init.js"
+        "init.js",
+        "buffers.js"
     ]
 }
