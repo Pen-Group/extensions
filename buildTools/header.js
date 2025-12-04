@@ -23,6 +23,8 @@
         getInfo() {
             return {
                 //These are here for failsafes
+                name: this._name || "extension",
+                id: this._id || "extension",
                 blocks: this._blocks || [],
                 menus: this._menus || {},
 
