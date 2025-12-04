@@ -98,6 +98,7 @@
   
         transform_Matrix[0] = 2 / renderer._nativeSize[0];
         transform_Matrix[1] = -2 / renderer._nativeSize[1];
+        
         let lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
         twgl.resizeFramebufferInfo(
           gl,
@@ -106,6 +107,7 @@
           Scratch.Cast.toNumber(nativeSize[0]),
           Scratch.Cast.toNumber(nativeSize[1])
         );
+
         gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);
       };
   

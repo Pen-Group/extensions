@@ -42,8 +42,8 @@
     extension.prototype.menus = {};
 
     //For data management in the extension
-    const addFunction = (name, code) => { extension.prototype[name] = code; };
-    const callFunction = (name, args) => { extension.prototype[name](...args); };
+    const addFunction = (name, code) => extension.prototype[name] = code;
+    const callFunction = (name, args) => extension.prototype[name].call(extension.prototype, ...(args || {}));
     const addData = (dataObject) => {
         for (let dataKey in dataObject) {
             extension.prototype[dataKey] = dataObject[dataKey];
