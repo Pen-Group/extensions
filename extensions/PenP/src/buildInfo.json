@@ -9,6 +9,7 @@
 
     "Files": [
         "init.js",
-        "buffers.js"
+        "buffers.js",
+        "menus.js"
     ]
 }
