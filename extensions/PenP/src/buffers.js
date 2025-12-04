@@ -1,18 +1,21 @@
-addData({drawBuffer: twgl.createFramebufferInfo(gl, [{
-    internalFormat: (isWebGL2) ? gl.RGBA32F : gl.RGBA,
-    format: gl.RGBA,
-    type: (isWebGL2) ? gl.FLOAT : gl.UNSIGNED_BYTE,
-    wrap: gl.CLAMP_TO_EDGE,
-    premultiplyAlpha: true,
+addData({ drawBufferAttachments: [
+    {
+        internalFormat: (isWebGL2) ? gl.RGBA32F : gl.RGBA,
+        format: gl.RGBA,
+        type: (isWebGL2) ? gl.FLOAT : gl.UNSIGNED_BYTE,
+        wrap: gl.CLAMP_TO_EDGE,
+        premultiplyAlpha: true,
 
-    //Texture
-    min: gl.LINEAR
+        //Texture
+        min: gl.LINEAR
     },
     { format: gl.DEPTH_STENCIL },
-])});
+]});
+
+addData({drawBuffer: twgl.createFramebufferInfo(gl, readData("drawBufferAttachments"))});
 
 addFunction("updateBufferSize", () => {
-    nativeSize = renderer.useHighQualityRender
+    this.nativeSize = renderer.useHighQualityRender
         ? [canvas.width, canvas.height]
         : renderer._nativeSize;
 
@@ -22,10 +25,10 @@ addFunction("updateBufferSize", () => {
     let lastFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
     twgl.resizeFramebufferInfo(
         gl,
-        triBufferInfo,
-        triBufferAttachments,
-        Scratch.Cast.toNumber(nativeSize[0]),
-        Scratch.Cast.toNumber(nativeSize[1])
+        this.drawBuffer,
+        this.drawBufferAttachments,
+        Scratch.Cast.toNumber(this.nativeSize[0]),
+        Scratch.Cast.toNumber(this.nativeSize[1])
     );
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, lastFB);

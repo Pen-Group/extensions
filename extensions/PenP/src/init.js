@@ -4,9 +4,6 @@ if (!Scratch.extensions.unsandboxed) {
     throw new Error("Pen+ must run unsandboxed");
 }
 
-/* EXTENSION SETTINGS */
-const TRIANGLES_PER_BUFFER = 10000;
-
 //?some smaller optimizations just store the multiplacation for later
 const d2r = 0.0174533;
 
@@ -21,21 +18,25 @@ const gl = renderer._gl;
 
 const isWebGL2 = gl.getParameter(gl.VERSION).includes("2.0");
 
-//Native size. The size of the pen-layer.
-let nativeSize = renderer.useHighQualityRender
-    ? [canvas.width, canvas.height]
-    : renderer._nativeSize;
-
-//If we have webGL2 add the float color buffer extension!
-if (isWebGL2) {
-    const ext = gl.getExtension("EXT_color_buffer_float");
-}
-
 //?Neato uniform for universally transforming triangles to fit the screen
 let transform_Matrix = [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 //Finally lets add data we need!
 addData({
+    /* EXTENSION SETTINGS */
+    TRIANGLES_PER_BUFFER: 10000,
+
+    //Our color buffer float extension, only needed in webgl1
+    colorBufferExtender: (isWebGL2) ? undefined : gl.getExtension("EXT_color_buffer_float"),
+
+    //And various pieces of data addons may want to read
+    isWebGL2: isWebGL2,
+    //This is the size of the pen layer
+    nativeSize: renderer.useHighQualityRender
+    ? [canvas.width, canvas.height]
+    : renderer._nativeSize,
+
+    //For the actual extension icon
     _name: "Pen+ Experimental",
     _id: "penP",
     _docsURI:
