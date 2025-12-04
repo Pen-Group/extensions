@@ -30,3 +30,7 @@ let nativeSize = renderer.useHighQualityRender
 if (isWebGL2) {
     const ext = gl.getExtension("EXT_color_buffer_float");
 }
+
+//?Neato uniform for universally transforming triangles to fit the screen
+let transform_Matrix = [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  

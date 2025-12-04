@@ -53,7 +53,13 @@
 
     const defineMenus = (menuObject) => {
         for (let menuKey in menuObject) {
-            extension.prototype.menus[menuID] = menuObject[menuKey];
+            extension.prototype.menus[menuKey] = menuObject[menuKey];
+        }
+    }
+
+    const addData = (dataObject) => {
+        for (let dataKey in dataObject) {
+            extension.prototype[dataKey] = dataObject[dataKey];
         }
     }
 
