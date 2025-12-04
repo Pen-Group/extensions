@@ -51,5 +51,11 @@
         }
     }
 
+    const defineMenus = (menuObject) => {
+        for (let menuKey in menuObject) {
+            extension.prototype.menus[menuID] = menuObject[menuKey];
+        }
+    }
+
 //END
 })(Scratch);
