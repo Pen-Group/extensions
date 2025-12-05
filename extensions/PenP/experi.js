@@ -111,18 +111,13 @@
   
       //?Call it to have it consistant
       updateCanvasSize();
-  
-      //?Call every frame because I don't know of a way to detect when the stage is resized through window resizing (2/7/24) thought I should clarify
-  
+
+      vm.renderer.on('UseHighQualityRenderChanged', updateCanvasSize);
       window.addEventListener("resize", updateCanvasSize);
       canvas.addEventListener("resize", updateCanvasSize);
-      vm.runtime.on("STAGE_SIZE_CHANGED", () => {
-        updateCanvasSize();
-      });
+      vm.runtime.on("STAGE_SIZE_CHANGED", updateCanvasSize);
   
-      const resizeObserver = new ResizeObserver(() => {
-        updateCanvasSize();
-      });
+      const resizeObserver = new ResizeObserver(updateCanvasSize);
   
       resizeObserver.observe(canvas);
   
