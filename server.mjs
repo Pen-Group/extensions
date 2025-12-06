@@ -74,7 +74,7 @@ function runServer(startingPath) {
 
         //If we are getting the extension for something we need to build build it, otherwise just return the base object
         if (startingPath && url == "extension.js") {
-            res.writeHead(200, { "Content-Type": "text/plain" });
+            res.writeHead(200, { "Content-Type": extensionToType["js"] });
             res.end(buildTools.build(startingPath));
         }
         else if (fs.existsSync(fullPath)) {

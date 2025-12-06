@@ -14,6 +14,8 @@
     //Make the extension class before anything
     class extensionClass {
         constructor() {
+            instance = this;
+            
             //Make sure we initilize our extension
             if (this.init) this.init();
         }
@@ -42,6 +44,13 @@
     //Get this out of the way.
     extension.blocks = [];
     extension.menus = {};
+
+    //For quickly adding bulk info to the extension class
+    const addData = (dataObject) => {
+        for (let dataKey in dataObject) {
+            extension[dataKey] = dataObject[dataKey];
+        }
+    }
 
     //Do this in a for as to not hit the limit
     const defineBlocks = (blockArray) => {

@@ -1,5 +1,5 @@
 (function (Scratch) {
 //START
 
-    Scratch.extensions.register(new extension());
+    Scratch.extensions.register(new extensionClass());
 })(Scratch);
