@@ -1,6 +1,8 @@
+import * as buildTools from "./buildTools/build.mjs";
 import * as http from "http";
 import * as fs from "fs";
 import * as readlineLib from "readline";
+import { start } from "repl";
 
 const readline = readlineLib.createInterface({
     input: process.stdin,
@@ -71,8 +73,9 @@ function runServer(startingPath) {
         let fullPath = startingPath + url;
 
         //If we are getting the extension for something we need to build build it, otherwise just return the base object
-        if (startingPath && url == "/extension.js") {
+        if (startingPath && url == "extension.js") {
             res.writeHead(200, { "Content-Type": "text/plain" });
+            res.end(buildTools.build(startingPath));
         }
         else if (fs.existsSync(fullPath)) {
             //Get the file extension

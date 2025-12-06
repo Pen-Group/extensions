@@ -3,9 +3,7 @@
 // Description: [DESCRIPTION]
 // By: [AUTHOR] <[URL]>
 // License: [LICENSE]
-
 [HEADER]
-
 (function (Scratch) {
     "use strict";
   
@@ -14,7 +12,7 @@
     let buildDate = "BUILD_DATE";
     
     //Make the extension class before anything
-    class extension {
+    class extensionClass {
         constructor() {
             //Make sure we initilize our extension
             if (this.init) this.init();
@@ -38,32 +36,23 @@
             }
         }
     }
+    
+    const extension = extensionClass.prototype;
 
     //Get this out of the way.
-    extension.prototype.blocks = [];
-    extension.prototype.menus = {};
-
-    //For data management in the extension
-    const addFunction = (name, code) => extension.prototype[name] = code;
-    const callFunction = (name, args) => extension.prototype[name].call(extension.prototype, ...(args || {}));
-   
-    const addData = (dataObject) => {
-        for (let dataKey in dataObject) {
-            extension.prototype[dataKey] = dataObject[dataKey];
-        }
-    }
-    const readData = (key) => extension.prototype[key];
+    extension.blocks = [];
+    extension.menus = {};
 
     //Do this in a for as to not hit the limit
     const defineBlocks = (blockArray) => {
         for (let blockID in blockArray) {
-            extension.prototype.blocks.push(blockArray[blockID]);
+            extension.blocks.push(blockArray[blockID]);
         }
     }
 
     const defineMenus = (menuObject) => {
         for (let menuKey in menuObject) {
-            extension.prototype.menus[menuKey] = menuObject[menuKey];
+            extension.menus[menuKey] = menuObject[menuKey];
         }
     }
 
