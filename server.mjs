@@ -72,7 +72,7 @@ function runServer(startingPath) {
 
         //If we are getting the extension for something we need to build build it, otherwise just return the base object
         if (startingPath && url == "/extension.js") {
-            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.writeHead(200, { "Content-Type": "text/plain" });
         }
         else if (fs.existsSync(fullPath)) {
             //Get the file extension
@@ -81,20 +81,18 @@ function runServer(startingPath) {
 
             fs.readFile(fullPath, null, (err, data) => {
                 //Return the base file;
-                res.writeHead(200, { 'Content-Type': extensionToType[fileExtension] || "text/plain" });
+                res.writeHead(200, { "Content-Type": extensionToType[fileExtension] || "text/plain", "Access-Control-Allow-Origin": true });
                 res.end(data, "binary");
             });
         }
         else {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.writeHead(404, { "Content-Type": "text/plain" });
             res.end("404 not found");
         }
-
-        // Send the response body as 'Hello, World!'
     });
 
     // Start the server and listen on the specified port
-    server.listen(port, 'localhost', () => {
+    server.listen(port, "localhost", () => {
         console.log(`\x1b[34mServer running at "http://localhost:${port}/" starting from "./${startingPath}"`);
     });
 }
