@@ -81,7 +81,7 @@ function runServer(startingPath) {
 
             fs.readFile(fullPath, null, (err, data) => {
                 //Return the base file;
-                res.writeHead(200, { "Content-Type": extensionToType[fileExtension] || "text/plain", "Access-Control-Allow-Origin": true });
+                res.writeHead(200, { "Content-Type": extensionToType[fileExtension] || "text/plain", "Access-Control-Allow-Origin": "*" });
                 res.end(data, "binary");
             });
         }
