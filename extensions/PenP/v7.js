@@ -4777,7 +4777,7 @@
           item > this.programs[shader].uniformDec[uniformName].arrayLength
         )
           return;
-        item -= (item - 1) * 2;
+        item = (item - 1) * 2;
         this.programs[shader].uniformDat[uniformName][item] = numberX;
         this.programs[shader].uniformDat[uniformName][item + 1] = numberY;
       }
