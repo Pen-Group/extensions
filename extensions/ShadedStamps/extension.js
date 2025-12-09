@@ -193,13 +193,14 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           }
 
           if (spriteShaders[drawableID] && penPlus.shaders[drawableShader]) {
-            //Get viewport size
-            const viewport = vm.renderer.gl.getParameter(vm.renderer.gl.VIEWPORT);
+            const sizeSource = (vm.renderer.useHighQualityRender) ? [renderer.canvas.width, renderer.canvas.height] : vm.renderer._nativeSize;
 
+            //Get viewport size
             penPlus.programs[drawableShader].uniformDat.u_res = [
-              viewport[2],
-              viewport[3]
+              sizeSource[0],
+              sizeSource[1]
             ];
+
             penPlus.programs[drawableShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
             
             penPlus.programs[drawableShader].uniformDat.u_transform = [
