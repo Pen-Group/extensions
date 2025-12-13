@@ -496,7 +496,7 @@ void main()
         for (let targetID in runtime.targets) {
             const target = runtime.targets[targetID];
 
-            renderer._allDrawables[target.drawableID]._uniforms = {...renderer._allDrawables[target.sprite.clones[0].drawableID]._uniforms, ...this.defaultValues};
+            this.clearEffects({}, { target });
         }
     }
 
