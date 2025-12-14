@@ -1386,141 +1386,8 @@
       getInfo() {
         return {
           blocks: [
-            {
-              blockType: Scratch.BlockType.LABEL,
-              text: "Pen Properties",
-            },
-            {
-              disableMonitor: true,
-              opcode: "isPenDown",
-              blockType: Scratch.BlockType.BOOLEAN,
-              text: "pen is down?",
-              arguments: {},
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "getPenHSV",
-              blockType: Scratch.BlockType.REPORTER,
-              text: "pen [HSV]",
-              arguments: {
-                HSV: {
-                  type: Scratch.ArgumentType.STRING,
-                  defaultValue: "color",
-                  menu: "hsvMenu",
-                },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "drawDot",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "draw dot at [x] [y]",
-              arguments: {
-                x: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-                y: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "drawLine",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "draw line from [x1] [y1] to [x2] [y2]",
-              arguments: {
-                x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-                y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-                x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
-                y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "stampSprite",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "stamp [sprite]",
-              arguments: {
-                sprite: {
-                  type: Scratch.ArgumentType.STRING,
-                  menu: "spriteMenu",
-                },
-              },
-            },
-  
-            {
-              blockType: Scratch.BlockType.LABEL,
-              text: "Square Pen Blocks",
-            },
-            {
-              disableMonitor: true,
-              opcode: "squareDown",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "stamp pen square",
-              arguments: {},
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "squareTexDown",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "stamp pen square with the texture of [tex]",
-              arguments: {
-                tex: { type: Scratch.ArgumentType.STRING, menu: "costumeMenu" },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "setStampAttribute",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "set pen square's [target] to [number]",
-              arguments: {
-                target: {
-                  type: Scratch.ArgumentType.NUMBER,
-                  defaultValue: 0,
-                  menu: "stampSquare",
-                },
-                number: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "getStampAttribute",
-              blockType: Scratch.BlockType.REPORTER,
-              text: "get pen square's [target]",
-              arguments: {
-                target: {
-                  type: Scratch.ArgumentType.NUMBER,
-                  defaultValue: 0,
-                  menu: "stampSquare",
-                },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "tintSquare",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "tint pen square to [color]",
-              arguments: {
-                color: {
-                  type: Scratch.ArgumentType.COLOR,
-                  defaultValue: "#0000ff",
-                },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "resetSquareAttributes",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "reset square Attributes",
-              arguments: {},
-              filter: "sprite",
-            },
+            ...this.BLOCKS_PEN_PROPERTIES,
+            ...this.BLOCKS_PEN_SQUARE,
   
             {
               blockType: Scratch.BlockType.LABEL,
@@ -3205,6 +3072,230 @@
             "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+cGVuLWljb248L3RpdGxlPjxnIHN0cm9rZT0iIzU3NUU3NSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik04Ljc1MyAzNC42MDJsLTQuMjUgMS43OCAxLjc4My00LjIzN2MxLjIxOC0yLjg5MiAyLjkwNy01LjQyMyA1LjAzLTcuNTM4TDMxLjA2NiA0LjkzYy44NDYtLjg0MiAyLjY1LS40MSA0LjAzMi45NjcgMS4zOCAxLjM3NSAxLjgxNiAzLjE3My45NyA0LjAxNUwxNi4zMTggMjkuNTljLTIuMTIzIDIuMTE2LTQuNjY0IDMuOC03LjU2NSA1LjAxMiIgZmlsbD0iI0ZGRiIvPjxwYXRoIGQ9Ik0yOS40MSA2LjExcy00LjQ1LTIuMzc4LTguMjAyIDUuNzcyYy0xLjczNCAzLjc2Ni00LjM1IDEuNTQ2LTQuMzUgMS41NDYiLz48cGF0aCBkPSJNMzYuNDIgOC44MjVjMCAuNDYzLS4xNC44NzMtLjQzMiAxLjE2NGwtOS4zMzUgOS4zYy4yODItLjI5LjQxLS42NjguNDEtMS4xMiAwLS44NzQtLjUwNy0xLjk2My0xLjQwNi0yLjg2OC0xLjM2Mi0xLjM1OC0zLjE0Ny0xLjgtNC4wMDItLjk5TDMwLjk5IDUuMDFjLjg0NC0uODQgMi42NS0uNDEgNC4wMzUuOTYuODk4LjkwNCAxLjM5NiAxLjk4MiAxLjM5NiAyLjg1NU0xMC41MTUgMzMuNzc0Yy0uNTczLjMwMi0xLjE1Ny41Ny0xLjc2NC44M0w0LjUgMzYuMzgybDEuNzg2LTQuMjM1Yy4yNTgtLjYwNC41My0xLjE4Ni44MzMtMS43NTcuNjkuMTgzIDEuNDQ4LjYyNSAyLjEwOCAxLjI4Mi42Ni42NTggMS4xMDIgMS40MTIgMS4yODcgMi4xMDIiIGZpbGw9IiM0Qzk3RkYiLz48cGF0aCBkPSJNMzYuNDk4IDguNzQ4YzAgLjQ2NC0uMTQuODc0LS40MzMgMS4xNjVsLTE5Ljc0MiAxOS42OGMtMi4xMyAyLjExLTQuNjczIDMuNzkzLTcuNTcyIDUuMDFMNC41IDM2LjM4bC45NzQtMi4zMTYgMS45MjUtLjgwOGMyLjg5OC0xLjIxOCA1LjQ0LTIuOSA3LjU3LTUuMDFsMTkuNzQzLTE5LjY4Yy4yOTItLjI5Mi40MzItLjcwMi40MzItMS4xNjUgMC0uNjQ2LS4yNy0xLjQtLjc4LTIuMTIyLjI1LjE3Mi41LjM3Ny43MzcuNjE0Ljg5OC45MDUgMS4zOTYgMS45ODMgMS4zOTYgMi44NTYiIGZpbGw9IiM1NzVFNzUiIG9wYWNpdHk9Ii4xNSIvPjxwYXRoIGQ9Ik0xOC40NSAxMi44M2MwIC41LS40MDQuOTA1LS45MDQuOTA1cy0uOTA1LS40MDUtLjkwNS0uOTA0YzAtLjUuNDA3LS45MDMuOTA2LS45MDMuNSAwIC45MDQuNDA0LjkwNC45MDR6IiBmaWxsPSIjNTc1RTc1Ii8+PC9nPjwvc3ZnPg==",
         };
       }
+
+      // -- PEN PROPERTIES -- //
+      BLOCKS_PEN_PROPERTIES = [
+            {
+              blockType: Scratch.BlockType.LABEL,
+              text: "Pen Properties",
+            },
+            {
+              disableMonitor: true,
+              opcode: "isPenDown",
+              blockType: Scratch.BlockType.BOOLEAN,
+              text: "pen is down?",
+              arguments: {},
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "getPenHSV",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "pen [HSV]",
+              arguments: {
+                HSV: {
+                  type: Scratch.ArgumentType.STRING,
+                  defaultValue: "color",
+                  menu: "hsvMenu",
+                },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "drawDot",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "draw dot at [x] [y]",
+              arguments: {
+                x: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+                y: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "drawLine",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "draw line from [x1] [y1] to [x2] [y2]",
+              arguments: {
+                x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+                y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+                x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+                y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "stampSprite",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "stamp [sprite]",
+              arguments: {
+                sprite: {
+                  type: Scratch.ArgumentType.STRING,
+                  menu: "spriteMenu",
+                },
+              },
+            }
+        ];
+                          
+      isPenDown(args, util) {
+        checkForPen(util);
+        const curTarget = util.target;
+        return curTarget["_customState"]["Scratch.pen"].penDown;
+      }
+
+    getPenHSV({ HSV }, util) {
+        checkForPen(util);
+        const curTarget = util.target;
+        switch (HSV) {
+          case "size":
+            return curTarget["_customState"]["Scratch.pen"].penAttributes
+              .diameter;
+  
+          case "hex code": {
+            //convert the rgb to hex
+            let r = Math.floor(
+              curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[0] *
+                255
+            ).toString(16);
+            r = r.length == 1 ? "0" + r : r;
+            let g = Math.floor(
+              curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[1] *
+                255
+            ).toString(16);
+            g = g.length == 1 ? "0" + g : g;
+            let b = Math.floor(
+              curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[2] *
+                255
+            ).toString(16);
+            b = b.length == 1 ? "0" + b : b;
+            let a = Math.floor(
+              curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[3] *
+                255
+            ).toString(16);
+            a = a.length == 1 ? "0" + a : a;
+  
+            return `#${r}${g}${b}${a}`;
+          }
+  
+          default:
+            return curTarget["_customState"]["Scratch.pen"][HSV];
+        }
+      }
+
+      drawDot({ x, y }, util) {
+        checkForPen(util);
+        const curTarget = util.target;
+        const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
+        Scratch.vm.renderer.penPoint(
+          Scratch.vm.renderer._penSkinId,
+          attrib,
+          x,
+          y
+        );
+      }
+
+      drawLine({ x1, y1, x2, y2 }, util) {
+        checkForPen(util);
+        const curTarget = util.target;
+        const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
+  
+        Scratch.vm.renderer.penLine(
+          Scratch.vm.renderer._penSkinId,
+          attrib,
+          x1,
+          y1,
+          x2,
+          y2
+        );
+      }
+
+      stampSprite({ sprite }) {
+        const originalTarget = vm.runtime.getSpriteTargetByName(sprite);
+        if (!originalTarget) {
+          return;
+        }
+        runtime.ext_pen._stamp(originalTarget);
+      }
+
+
+    // -- PEN SQUARE -- //
+    this.BLOCKS_PEN_SQUARE = [
+        {
+              blockType: Scratch.BlockType.LABEL,
+              text: "Square Pen Blocks",
+            },
+            {
+              disableMonitor: true,
+              opcode: "squareDown",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "stamp pen square",
+              arguments: {},
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "squareTexDown",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "stamp pen square with the texture of [tex]",
+              arguments: {
+                tex: { type: Scratch.ArgumentType.STRING, menu: "costumeMenu" },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "setStampAttribute",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "set pen square's [target] to [number]",
+              arguments: {
+                target: {
+                  type: Scratch.ArgumentType.NUMBER,
+                  defaultValue: 0,
+                  menu: "stampSquare",
+                },
+                number: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "getStampAttribute",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "get pen square's [target]",
+              arguments: {
+                target: {
+                  type: Scratch.ArgumentType.NUMBER,
+                  defaultValue: 0,
+                  menu: "stampSquare",
+                },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "tintSquare",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "tint pen square to [color]",
+              arguments: {
+                color: {
+                  type: Scratch.ArgumentType.COLOR,
+                  defaultValue: "#0000ff",
+                },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "resetSquareAttributes",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "reset square Attributes",
+              arguments: {},
+              filter: "sprite",
+            },
+    ];
+      
       //Menus
       costumeMenuFunction() {
         if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
@@ -3449,83 +3540,6 @@
         }
   
         return currentTexture;
-      }
-  
-      //?Default pen helpers
-      isPenDown(args, util) {
-        checkForPen(util);
-        const curTarget = util.target;
-        return curTarget["_customState"]["Scratch.pen"].penDown;
-      }
-      getPenHSV({ HSV }, util) {
-        checkForPen(util);
-        const curTarget = util.target;
-        switch (HSV) {
-          case "size":
-            return curTarget["_customState"]["Scratch.pen"].penAttributes
-              .diameter;
-  
-          case "hex code": {
-            //convert the rgb to hex
-            let r = Math.floor(
-              curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[0] *
-                255
-            ).toString(16);
-            r = r.length == 1 ? "0" + r : r;
-            let g = Math.floor(
-              curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[1] *
-                255
-            ).toString(16);
-            g = g.length == 1 ? "0" + g : g;
-            let b = Math.floor(
-              curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[2] *
-                255
-            ).toString(16);
-            b = b.length == 1 ? "0" + b : b;
-            let a = Math.floor(
-              curTarget["_customState"]["Scratch.pen"].penAttributes.color4f[3] *
-                255
-            ).toString(16);
-            a = a.length == 1 ? "0" + a : a;
-  
-            return `#${r}${g}${b}${a}`;
-          }
-  
-          default:
-            return curTarget["_customState"]["Scratch.pen"][HSV];
-        }
-      }
-      drawDot({ x, y }, util) {
-        checkForPen(util);
-        const curTarget = util.target;
-        const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
-        Scratch.vm.renderer.penPoint(
-          Scratch.vm.renderer._penSkinId,
-          attrib,
-          x,
-          y
-        );
-      }
-      drawLine({ x1, y1, x2, y2 }, util) {
-        checkForPen(util);
-        const curTarget = util.target;
-        const attrib = curTarget["_customState"]["Scratch.pen"].penAttributes;
-  
-        Scratch.vm.renderer.penLine(
-          Scratch.vm.renderer._penSkinId,
-          attrib,
-          x1,
-          y1,
-          x2,
-          y2
-        );
-      }
-      stampSprite({ sprite }) {
-        const originalTarget = vm.runtime.getSpriteTargetByName(sprite);
-        if (!originalTarget) {
-          return;
-        }
-        runtime.ext_pen._stamp(originalTarget);
       }
   
       _getDefaultTriAttributes() {
