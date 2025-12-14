@@ -1388,140 +1388,7 @@
           blocks: [
             ...this.BLOCKS_PEN_PROPERTIES,
             ...this.BLOCKS_PEN_SQUARE,
-  
-            {
-              blockType: Scratch.BlockType.LABEL,
-              text: "Triangle Blocks",
-            },
-            {
-              disableMonitor: true,
-              opcode: "setTrianglePointAttribute",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "set triangle point [point]'s [attribute] to [value]",
-              arguments: {
-                point: {
-                  type: Scratch.ArgumentType.STRING,
-                  defaultValue: "1",
-                  menu: "pointMenu",
-                },
-                attribute: {
-                  type: Scratch.ArgumentType.NUMBER,
-                  defaultValue: "2",
-                  menu: "triAttribute",
-                },
-                value: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "setWholeTrianglePointAttribute",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "set triangle's [wholeAttribute] to [value]",
-              arguments: {
-                wholeAttribute: {
-                  type: Scratch.ArgumentType.NUMBER,
-                  defaultValue: "2",
-                  menu: "wholeTriAttribute",
-                },
-                value: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "tintTriPoint",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "tint triangle point [point] to [color]",
-              arguments: {
-                point: {
-                  type: Scratch.ArgumentType.STRING,
-                  defaultValue: "1",
-                  menu: "pointMenu",
-                },
-                color: {
-                  type: Scratch.ArgumentType.COLOR,
-                  defaultValue: "#0000ff",
-                },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "tintTri",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "tint triangle to [color]",
-              arguments: {
-                point: {
-                  type: Scratch.ArgumentType.STRING,
-                  defaultValue: "1",
-                  menu: "pointMenu",
-                },
-                color: {
-                  type: Scratch.ArgumentType.COLOR,
-                  defaultValue: "#0000ff",
-                },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "getTrianglePointAttribute",
-              blockType: Scratch.BlockType.REPORTER,
-              text: "get triangle point [point]'s [attribute]",
-              arguments: {
-                point: {
-                  type: Scratch.ArgumentType.STRING,
-                  defaultValue: "1",
-                  menu: "pointMenu",
-                },
-                attribute: {
-                  type: Scratch.ArgumentType.NUMBER,
-                  defaultValue: 2,
-                  menu: "triAttribute",
-                },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "resetWholeTriangleAttributes",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "reset triangle attributes",
-              arguments: {},
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "drawSolidTri",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "draw triangle between [x1] [y1], [x2] [y2] and [x3] [y3]",
-              arguments: {
-                x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-                y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-                x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
-                y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
-                x3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
-                y3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-              },
-              filter: "sprite",
-            },
-            {
-              disableMonitor: true,
-              opcode: "drawTexTri",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "draw textured triangle between [x1] [y1], [x2] [y2] and [x3] [y3] with the texture [tex]",
-              arguments: {
-                x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-                y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-                x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
-                y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
-                x3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
-                y3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
-                tex: { type: Scratch.ArgumentType.STRING, menu: "costumeMenu" },
-              },
-              filter: "sprite",
-            },
+            ...this.BLOCKS_PEN_TRIANGLE,
   
             {
               blockType: Scratch.BlockType.LABEL,
@@ -3295,275 +3162,8 @@
               filter: "sprite",
             },
     ];
-      
-      //Menus
-      costumeMenuFunction() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        if (!runtime) return ["no costumes?"];
-        if (!runtime._editingTarget) return ["no costumes?"];
-        if (!runtime._editingTarget.sprite) return ["no costumes?"];
-  
-        const myCostumes = runtime._editingTarget.sprite.costumes;
-  
-        let readCostumes = [];
-        for (
-          let curCostumeID = 0;
-          curCostumeID < myCostumes.length;
-          curCostumeID++
-        ) {
-          const currentCostume = myCostumes[curCostumeID].name;
-          readCostumes.push(currentCostume);
-        }
-  
-        let penPlusCostumes = this.penPlusCostumesFunction();
-  
-        if (penPlusCostumes[0] != "no pen+ costumes!") {
-          readCostumes = readCostumes.concat(penPlusCostumes);
-        }
-  
-        let penplusRenderTextures = this.getRenderTexturesMenu();
-  
-        if (penplusRenderTextures.length > 0) {
-          readCostumes = readCostumes.concat(penplusRenderTextures);
-          Object.keys(this.renderTextures).forEach(texture => {
-            const textureDef = this.renderTextures[texture];
-            Object.keys(textureDef.extraChannels).forEach(channel => {
-              readCostumes.push(`${texture}█${channel}`);
-            })
-          })
-        }
-  
-        //For custom addons to be able to add their own texture lists.
-        this.addonTextureFunctions.forEach((func) => {
-          let functionTextures = func();
-          if (functionTextures.length > 0) {
-            readCostumes = readCostumes.concat(functionTextures);
-          }
-        });
-  
-        return readCostumes;
-      }
-  
-      penPlusCostumesFunction() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        const keys = Object.keys(this.penPlusCostumeLibrary);
-        if (keys.length > 0) {
-          return keys;
-        }
-  
-        return ["no pen+ costumes!"];
-      }
-  
-      shaderMenu() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        //!Pain.json
-        return Object.keys(this.shaders).length == 0
-          ? ["none yet"]
-          : Object.keys(this.shaders);
-      }
-      getCostumeDataURI_costume_MenuFunction() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        if (!runtime) return ["No costumes?"];
-        if (!runtime._editingTarget) return ["No costumes?"];
-  
-        const myCostumes = runtime._editingTarget.sprite.costumes;
-  
-        let readCostumes = [];
-        for (
-          let curCostumeID = 0;
-          curCostumeID < myCostumes.length;
-          curCostumeID++
-        ) {
-          const currentCostume = myCostumes[curCostumeID].name;
-          readCostumes.push(currentCostume);
-        }
-  
-        return readCostumes;
-      }
-      _getCubemaps() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        if (Object.keys(this.penPlusCubemap).length == 0)
-          return ["No cubemaps yet!"];
-        return Object.keys(this.penPlusCubemap);
-      }
-      getRenderTexturesMenu() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        return Object.keys(this.renderTextures);
-      }
-      getRenderTexturesWarning() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        return Object.keys(this.renderTextures).length > 0
-          ? Object.keys(this.renderTextures)
-          : ["No Render Textures Yet!"];
-      }
-      getRenderTexturesAndStage() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        let renderTextures = ["Scratch Stage"];
-        renderTextures.push(...Object.keys(this.renderTextures));
-        return renderTextures;
-      }
-      getPenlayers() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        const keys = ["Default"];
-        keys.push(...Object.keys(this.penPlusLayers));
-        return keys;
-      }
-      getSprites() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        const sprites = [];
-        for (const target of vm.runtime.targets) {
-          if (target.isOriginal && !target.isStage) {
-            sprites.push(target.getName());
-          }
-        }
-        if (sprites.length === 0) {
-          return [
-            {
-              text: "No sprites exist!",
-              value: " ",
-            },
-          ];
-        }
-        return sprites;
-      }
-      _textureTypeMenu() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        const returned = [
-          {text:"Standard",value:`[${gl.RGBA},${gl.UNSIGNED_BYTE},${gl.RGBA}]`},
-          {text:"No Alpha",value:`[${gl.RGB},${gl.UNSIGNED_BYTE},${gl.RGB}]`}
-        ]
-  
-        if (isWebGL2) {
-          returned.push(
-            {text:"Higher Range",value:`[${gl.RGBA32F},${gl.FLOAT},${gl.RGBA}]`},
-            {text:"Red Only",value:`[${gl.R8},${gl.UNSIGNED_BYTE},${gl.RED}]`},
-            {text:"Higher Range Red Only",value:`[${gl.R32F},${gl.FLOAT},${gl.RED}]`},
-          )
-        }
-        return returned;
-      }
-      _get3DTextures() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-        const keys = Object.keys(this.penPlus3DTextures);
-        return (keys.length > 0) ? keys : ["No 3D Textures yet"];
-      }
-      //From lily's list tools... With permission of course.
-      _getLists() {
-        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
-  
-        const lists =
-          typeof Blockly === "undefined"
-            ? []
-            : Blockly.getMainWorkspace()
-                .getVariableMap()
-                .getVariablesOfType("list")
-                .map((model) => model.name);
-        if (lists.length > 0) {
-          return lists;
-        } else {
-          return [""];
-        }
-      }
-  
-      //And the associated helper function
-      _getVarObjectFromName(name, util, type) {
-        const stageTarget = runtime.getTargetForStage();
-        const target = util.target;
-        let listObject = Object.create(null);
-  
-        listObject = stageTarget.lookupVariableByNameAndType(name, type);
-        if (listObject) return listObject;
-        listObject = target.lookupVariableByNameAndType(name, type);
-        if (listObject) return listObject;
-      }
-      _deleteFramebuffer(fbi) {
-        for (const attachment of fbi.attachments) {
-          if (attachment instanceof WebGLTexture) {
-            gl.deleteTexture(attachment);
-          } else {
-            gl.deleteRenderbuffer(attachment);
-          }
-        }
-        gl.deleteFramebuffer(fbi.framebuffer);
-      }
-  
-      _locateTextureObject(name, util) {
-        //Get the current target
-        const curTarget = util.target;
-  
-        //Set current texture to null
-        let currentTexture = null;
-  
-        //Look for it in the pen+ costume library
-        if (this.penPlusCostumeLibrary[name]) {
-          currentTexture = this.penPlusCostumeLibrary[name].texture;
-        }
-  
-        //Look for it in render textures
-        else if (
-          this.renderTextures[name] &&
-          name != this.currentRenderTexture.name
-        ) {
-          currentTexture = this.renderTextures[name].attachments[0];
-        }
-  
-        else if (
-          this.renderTextures[name.split("█")[0]] &&
-          name != this.currentRenderTexture.name
-        ) {
-          const RTName = name.split("█")[0];
-          const subTexName = name.split("█")[1];
-          currentTexture = this.renderTextures[RTName].attachments[this.renderTextures[RTName].extraChannels[subTexName] + 1];
-        }
-  
-        //Hopefully it is in the costumes
-        else {
-          const costIndex = curTarget.getCostumeIndexByName(
-            Scratch.Cast.toString(name)
-          );
-          if (costIndex >= 0) {
-            const curCostume = curTarget.sprite.costumes[costIndex];
-  
-            currentTexture =
-              renderer._allSkins[curCostume.skinId]._texture;
-  
-            if (!currentTexture) currentTexture = renderer._allSkins[curCostume.skinId].getTexture();
-          }
-        }
-  
-        //If so edit the attributes of said texture.
-        if (currentTexture) {
-          //Set the filter mode
-          gl.bindTexture(gl.TEXTURE_2D, currentTexture);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.currentFilter);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.currentFilter);
-        }
-  
-        return currentTexture;
-      }
-  
-      _getDefaultTriAttributes() {
-        // prettier-ignore
-        return [
-          // U V  TINT R G B  Z W transparency
-             0,0,      1,1,1, 0,1,1,
-             1,1,      1,1,1, 0,1,1, 
-             1,0,      1,1,1, 0,1,1, 
-             //Oh no?
-             1, 1, 1,
-        ];
-      }
-  
-      _getDefaultSquareAttributes() {
-        // prettier-ignore
-        return [
-          // width* height*  rotation  u-mul u     v-mul   v    r g b transparency  Z
-          1,        1,       90,       1,    0,    1,      0,   1,1,1,1,            0,
-        ];
-      }
-  
-      //!Useless square blocks
-      squareDown(arg, util) {
+    
+    squareDown(arg, util) {
         // prettier-ignore
   
         this.tryFinalizeDraw("untextured",true,null,{});
@@ -3897,8 +3497,145 @@
         this.squareAttributesOfAllSprites[curTarget.id] =
           this._getDefaultSquareAttributes();
       }
-  
-      //?Triangle stuffs
+    
+    // -- PEN TRIANGLE -- //
+    this.BLOCKS_PEN_TRIANGLE = [
+        {
+              blockType: Scratch.BlockType.LABEL,
+              text: "Triangle Blocks",
+            },
+            {
+              disableMonitor: true,
+              opcode: "setTrianglePointAttribute",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "set triangle point [point]'s [attribute] to [value]",
+              arguments: {
+                point: {
+                  type: Scratch.ArgumentType.STRING,
+                  defaultValue: "1",
+                  menu: "pointMenu",
+                },
+                attribute: {
+                  type: Scratch.ArgumentType.NUMBER,
+                  defaultValue: "2",
+                  menu: "triAttribute",
+                },
+                value: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "setWholeTrianglePointAttribute",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "set triangle's [wholeAttribute] to [value]",
+              arguments: {
+                wholeAttribute: {
+                  type: Scratch.ArgumentType.NUMBER,
+                  defaultValue: "2",
+                  menu: "wholeTriAttribute",
+                },
+                value: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "tintTriPoint",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "tint triangle point [point] to [color]",
+              arguments: {
+                point: {
+                  type: Scratch.ArgumentType.STRING,
+                  defaultValue: "1",
+                  menu: "pointMenu",
+                },
+                color: {
+                  type: Scratch.ArgumentType.COLOR,
+                  defaultValue: "#0000ff",
+                },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "tintTri",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "tint triangle to [color]",
+              arguments: {
+                point: {
+                  type: Scratch.ArgumentType.STRING,
+                  defaultValue: "1",
+                  menu: "pointMenu",
+                },
+                color: {
+                  type: Scratch.ArgumentType.COLOR,
+                  defaultValue: "#0000ff",
+                },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "getTrianglePointAttribute",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "get triangle point [point]'s [attribute]",
+              arguments: {
+                point: {
+                  type: Scratch.ArgumentType.STRING,
+                  defaultValue: "1",
+                  menu: "pointMenu",
+                },
+                attribute: {
+                  type: Scratch.ArgumentType.NUMBER,
+                  defaultValue: 2,
+                  menu: "triAttribute",
+                },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "resetWholeTriangleAttributes",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "reset triangle attributes",
+              arguments: {},
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "drawSolidTri",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "draw triangle between [x1] [y1], [x2] [y2] and [x3] [y3]",
+              arguments: {
+                x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+                y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+                x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+                y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+                x3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+                y3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+              },
+              filter: "sprite",
+            },
+            {
+              disableMonitor: true,
+              opcode: "drawTexTri",
+              blockType: Scratch.BlockType.COMMAND,
+              text: "draw textured triangle between [x1] [y1], [x2] [y2] and [x3] [y3] with the texture [tex]",
+              arguments: {
+                x1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+                y1: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+                x2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+                y2: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+                x3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 10 },
+                y3: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0 },
+                tex: { type: Scratch.ArgumentType.STRING, menu: "costumeMenu" },
+              },
+              filter: "sprite",
+            },
+    ];
+    
+    //?Triangle stuffs
       setTriangleFilterMode({ filter }) {
         this.currentFilter = filter;
       }
@@ -4196,6 +3933,272 @@
   
         this.triDefaultAttributes.u_transform = transform_Matrix;
         if (currentTexture != null) this.triDefaultAttributes.u_texture = currentTexture;
+      }
+      
+      //Menus
+      costumeMenuFunction() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        if (!runtime) return ["no costumes?"];
+        if (!runtime._editingTarget) return ["no costumes?"];
+        if (!runtime._editingTarget.sprite) return ["no costumes?"];
+  
+        const myCostumes = runtime._editingTarget.sprite.costumes;
+  
+        let readCostumes = [];
+        for (
+          let curCostumeID = 0;
+          curCostumeID < myCostumes.length;
+          curCostumeID++
+        ) {
+          const currentCostume = myCostumes[curCostumeID].name;
+          readCostumes.push(currentCostume);
+        }
+  
+        let penPlusCostumes = this.penPlusCostumesFunction();
+  
+        if (penPlusCostumes[0] != "no pen+ costumes!") {
+          readCostumes = readCostumes.concat(penPlusCostumes);
+        }
+  
+        let penplusRenderTextures = this.getRenderTexturesMenu();
+  
+        if (penplusRenderTextures.length > 0) {
+          readCostumes = readCostumes.concat(penplusRenderTextures);
+          Object.keys(this.renderTextures).forEach(texture => {
+            const textureDef = this.renderTextures[texture];
+            Object.keys(textureDef.extraChannels).forEach(channel => {
+              readCostumes.push(`${texture}█${channel}`);
+            })
+          })
+        }
+  
+        //For custom addons to be able to add their own texture lists.
+        this.addonTextureFunctions.forEach((func) => {
+          let functionTextures = func();
+          if (functionTextures.length > 0) {
+            readCostumes = readCostumes.concat(functionTextures);
+          }
+        });
+  
+        return readCostumes;
+      }
+  
+      penPlusCostumesFunction() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        const keys = Object.keys(this.penPlusCostumeLibrary);
+        if (keys.length > 0) {
+          return keys;
+        }
+  
+        return ["no pen+ costumes!"];
+      }
+  
+      shaderMenu() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        //!Pain.json
+        return Object.keys(this.shaders).length == 0
+          ? ["none yet"]
+          : Object.keys(this.shaders);
+      }
+      getCostumeDataURI_costume_MenuFunction() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        if (!runtime) return ["No costumes?"];
+        if (!runtime._editingTarget) return ["No costumes?"];
+  
+        const myCostumes = runtime._editingTarget.sprite.costumes;
+  
+        let readCostumes = [];
+        for (
+          let curCostumeID = 0;
+          curCostumeID < myCostumes.length;
+          curCostumeID++
+        ) {
+          const currentCostume = myCostumes[curCostumeID].name;
+          readCostumes.push(currentCostume);
+        }
+  
+        return readCostumes;
+      }
+      _getCubemaps() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        if (Object.keys(this.penPlusCubemap).length == 0)
+          return ["No cubemaps yet!"];
+        return Object.keys(this.penPlusCubemap);
+      }
+      getRenderTexturesMenu() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        return Object.keys(this.renderTextures);
+      }
+      getRenderTexturesWarning() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        return Object.keys(this.renderTextures).length > 0
+          ? Object.keys(this.renderTextures)
+          : ["No Render Textures Yet!"];
+      }
+      getRenderTexturesAndStage() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        let renderTextures = ["Scratch Stage"];
+        renderTextures.push(...Object.keys(this.renderTextures));
+        return renderTextures;
+      }
+      getPenlayers() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        const keys = ["Default"];
+        keys.push(...Object.keys(this.penPlusLayers));
+        return keys;
+      }
+      getSprites() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        const sprites = [];
+        for (const target of vm.runtime.targets) {
+          if (target.isOriginal && !target.isStage) {
+            sprites.push(target.getName());
+          }
+        }
+        if (sprites.length === 0) {
+          return [
+            {
+              text: "No sprites exist!",
+              value: " ",
+            },
+          ];
+        }
+        return sprites;
+      }
+      _textureTypeMenu() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        const returned = [
+          {text:"Standard",value:`[${gl.RGBA},${gl.UNSIGNED_BYTE},${gl.RGBA}]`},
+          {text:"No Alpha",value:`[${gl.RGB},${gl.UNSIGNED_BYTE},${gl.RGB}]`}
+        ]
+  
+        if (isWebGL2) {
+          returned.push(
+            {text:"Higher Range",value:`[${gl.RGBA32F},${gl.FLOAT},${gl.RGBA}]`},
+            {text:"Red Only",value:`[${gl.R8},${gl.UNSIGNED_BYTE},${gl.RED}]`},
+            {text:"Higher Range Red Only",value:`[${gl.R32F},${gl.FLOAT},${gl.RED}]`},
+          )
+        }
+        return returned;
+      }
+      _get3DTextures() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+        const keys = Object.keys(this.penPlus3DTextures);
+        return (keys.length > 0) ? keys : ["No 3D Textures yet"];
+      }
+      //From lily's list tools... With permission of course.
+      _getLists() {
+        if (this.hideTexturesInMenus) return [this.MENUS_DISABLED_MESSAGE];
+  
+        const lists =
+          typeof Blockly === "undefined"
+            ? []
+            : Blockly.getMainWorkspace()
+                .getVariableMap()
+                .getVariablesOfType("list")
+                .map((model) => model.name);
+        if (lists.length > 0) {
+          return lists;
+        } else {
+          return [""];
+        }
+      }
+  
+      //And the associated helper function
+      _getVarObjectFromName(name, util, type) {
+        const stageTarget = runtime.getTargetForStage();
+        const target = util.target;
+        let listObject = Object.create(null);
+  
+        listObject = stageTarget.lookupVariableByNameAndType(name, type);
+        if (listObject) return listObject;
+        listObject = target.lookupVariableByNameAndType(name, type);
+        if (listObject) return listObject;
+      }
+      _deleteFramebuffer(fbi) {
+        for (const attachment of fbi.attachments) {
+          if (attachment instanceof WebGLTexture) {
+            gl.deleteTexture(attachment);
+          } else {
+            gl.deleteRenderbuffer(attachment);
+          }
+        }
+        gl.deleteFramebuffer(fbi.framebuffer);
+      }
+  
+      _locateTextureObject(name, util) {
+        //Get the current target
+        const curTarget = util.target;
+  
+        //Set current texture to null
+        let currentTexture = null;
+  
+        //Look for it in the pen+ costume library
+        if (this.penPlusCostumeLibrary[name]) {
+          currentTexture = this.penPlusCostumeLibrary[name].texture;
+        }
+  
+        //Look for it in render textures
+        else if (
+          this.renderTextures[name] &&
+          name != this.currentRenderTexture.name
+        ) {
+          currentTexture = this.renderTextures[name].attachments[0];
+        }
+  
+        else if (
+          this.renderTextures[name.split("█")[0]] &&
+          name != this.currentRenderTexture.name
+        ) {
+          const RTName = name.split("█")[0];
+          const subTexName = name.split("█")[1];
+          currentTexture = this.renderTextures[RTName].attachments[this.renderTextures[RTName].extraChannels[subTexName] + 1];
+        }
+  
+        //Hopefully it is in the costumes
+        else {
+          const costIndex = curTarget.getCostumeIndexByName(
+            Scratch.Cast.toString(name)
+          );
+          if (costIndex >= 0) {
+            const curCostume = curTarget.sprite.costumes[costIndex];
+  
+            currentTexture =
+              renderer._allSkins[curCostume.skinId]._texture;
+  
+            if (!currentTexture) currentTexture = renderer._allSkins[curCostume.skinId].getTexture();
+          }
+        }
+  
+        //If so edit the attributes of said texture.
+        if (currentTexture) {
+          //Set the filter mode
+          gl.bindTexture(gl.TEXTURE_2D, currentTexture);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.currentFilter);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.currentFilter);
+        }
+  
+        return currentTexture;
+      }
+  
+      _getDefaultTriAttributes() {
+        // prettier-ignore
+        return [
+          // U V  TINT R G B  Z W transparency
+             0,0,      1,1,1, 0,1,1,
+             1,1,      1,1,1, 0,1,1, 
+             1,0,      1,1,1, 0,1,1, 
+             //Oh no?
+             1, 1, 1,
+        ];
+      }
+  
+      _getDefaultSquareAttributes() {
+        // prettier-ignore
+        return [
+          // width* height*  rotation  u-mul u     v-mul   v    r g b transparency  Z
+          1,        1,       90,       1,    0,    1,      0,   1,1,1,1,            0,
+        ];
       }
   
       //?Color Stuff
