@@ -414,6 +414,7 @@ void main()
 	gl_FragColor *= u_ghost;
 }`;
 
+  let instance;
   class extension {
 
     defaultEffects = {
@@ -496,7 +497,7 @@ void main()
         for (let targetID in runtime.targets) {
             const target = runtime.targets[targetID];
 
-            this.clearEffects({}, { target });
+            instance.clearEffects({}, { target });
         }
     }
 
@@ -530,10 +531,10 @@ void main()
 
         runtime.on("PROJECT_START", this.resetAll);
         runtime.on("PROJECT_LOADED", this.resetAll);
-        this.resetAll();
     }
 
     getInfo() {
+      this.resetAll();
       return {
         blocks: [
             {
@@ -774,5 +775,7 @@ void main()
     }
   }
 
-  Scratch.extensions.register(new extension());
+  instance = new extension();
+
+  Scratch.extensions.register(instance);
 })(Scratch);
