@@ -3501,8 +3501,8 @@
         Scratch.vm.renderer.penPoint(
           Scratch.vm.renderer._penSkinId,
           attrib,
-          x,
-          y
+          Scratch.Cast.toNumber(x),
+          Scratch.Cast.toNumber(y)
         );
       }
       drawLine({ x1, y1, x2, y2 }, util) {
@@ -3513,10 +3513,10 @@
         Scratch.vm.renderer.penLine(
           Scratch.vm.renderer._penSkinId,
           attrib,
-          x1,
-          y1,
-          x2,
-          y2
+          Scratch.Cast.toNumber(x1),
+          Scratch.Cast.toNumber(y1),
+          Scratch.Cast.toNumber(x2),
+          Scratch.Cast.toNumber(y2)
         );
       }
       stampSprite({ sprite }) {
