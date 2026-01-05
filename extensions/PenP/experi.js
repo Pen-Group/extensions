@@ -4030,10 +4030,6 @@
             this._getDefaultTriAttributes();
         }
   
-        nativeSize = renderer.useHighQualityRender
-          ? [canvas.width, canvas.height]
-          : renderer._nativeSize;
-  
         //if (this.triangleAttributesOfAllSprites[curTarget.id]) {
         //  this.triangleAttributesOfAllSprites[curTarget.id][5] = 1;
         //  this.triangleAttributesOfAllSprites[curTarget.id][13] = 1;
@@ -4115,11 +4111,6 @@
           this.triangleAttributesOfAllSprites[targetID] =
             this._getDefaultTriAttributes();
         }
-  
-        //Get the resolution
-        nativeSize = renderer.useHighQualityRender
-          ? [canvas.width, canvas.height]
-          : renderer._nativeSize;
   
         //?Renderer Freaks out if we don't do this so do it.
         //Paratheses because I know some obscure browser will screw this up.
