@@ -534,7 +534,7 @@
           (this.triPointCount < TRIANGLES_PER_BUFFER * 3) &&
           (shader == this.triShader &&
           isDefault == this.triIsDefault &&
-          texture == this.triTexture,
+          texture == this.triTexture &&
           uniforms == this.triUniforms) &&
           (!forceDraw)
         ) {
