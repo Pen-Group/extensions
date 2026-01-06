@@ -6498,7 +6498,11 @@
       createRenderTexture({ name }) {
         //If it is named scratch stage get that stuff out of here
         if (name == "Scratch Stage") return;
-  
+        
+        // finalize pending draws and preserve GL binding
+        this.tryFinalizeDraw(null, null, null, null, true);
+        const prevFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+       
         //if the render texture exists delete it
         name = this.prefixes.renderTextures + name
         if (this.renderTextures[name]) {
@@ -6506,6 +6510,9 @@
             this.renderTextures[name]
           );
         }
+       
+        // restore GL framebuffer binding
+        gl.bindFramebuffer(gl.FRAMEBUFFER, prevFB);
   
         //Add it
         this.renderTextures[name] =
@@ -6521,6 +6528,9 @@
         //If it is named scratch stage get that stuff out of here
         if (name == "Scratch Stage") return;
   
+        // finalize pending draws and preserve GL binding
+        this.tryFinalizeDraw(null, null, null, null, true);
+        const prevFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
         //if the render texture exists delete it
         name = this.prefixes.renderTextures + name
         if (this.renderTextures[name]) {
@@ -6539,6 +6549,10 @@
           width,
           height
         );
+
+        // restore GL framebuffer binding
+        gl.bindFramebuffer(gl.FRAMEBUFFER, prevFB);
+       
         this.renderTextures[name].resizing = false;
         this.renderTextures[name].name = name;
         this.renderTextures[name].colorBuffers = 1;
