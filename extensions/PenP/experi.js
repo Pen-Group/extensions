@@ -2485,30 +2485,6 @@
               },
             },
             {
-              opcode: "setVec4AttributeInShader",
-              blockType: Scratch.BlockType.COMMAND,
-              text: "set vector 4 attribute [attributeName] of point [pointID] in [shader] to [numberX] [numberY] [numberZ] [numberW]",
-              arguments: {
-                attributeName: {
-                  type: Scratch.ArgumentType.STRING,
-                  defaultValue: "attribute",
-                },
-                pointID: {
-                  type: Scratch.ArgumentType.STRING,
-                  defaultValue: "1",
-                  menu: "pointMenu",
-                },
-                shader: {
-                  type: Scratch.ArgumentType.STRING,
-                  menu: "penPlusShaders",
-                },
-                numberX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
-                numberY: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
-                numberZ: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
-                numberW: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 },
-              },
-            },
-            {
               blockType: Scratch.BlockType.LABEL,
               text: "Cubemaps",
             },
