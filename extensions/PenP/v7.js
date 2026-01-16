@@ -5779,12 +5779,12 @@
                   gl.texParameteri(
                     gl.TEXTURE_CUBE_MAP,
                     gl.TEXTURE_MIN_FILTER,
-                    this.currentFilter
+                    currentFilter
                   );
                   gl.texParameteri(
                     gl.TEXTURE_CUBE_MAP,
                     gl.TEXTURE_MAG_FILTER,
-                    this.currentFilter
+                    currentFilter
                   );
               };
   
