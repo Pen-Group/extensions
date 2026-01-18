@@ -6138,8 +6138,8 @@
         //If it is named scratch stage get that stuff out of here
         if (name == "Scratch Stage") return;
         
-        // finalize pending draws and preserve GL binding
-        this.tryFinalizeDraw(null, null, null, null, true);
+        // preserve GL binding
+        if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
         const prevFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
        
   
@@ -6164,8 +6164,8 @@
         //If it is named scratch stage get that stuff out of here
         if (name == "Scratch Stage") return;
         
-        // finalize pending draws and preserve GL binding
-        this.tryFinalizeDraw(null, null, null, null, true);
+        // preserve GL binding
+        if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
         const prevFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
        
   
