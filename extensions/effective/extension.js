@@ -376,13 +376,15 @@ void main()
     }
 
     //Brightness
-    if (u_oldColor) {
-        gl_FragColor.rgb = clamp(gl_FragColor.rgb + vec3(u_brightness), vec3(0), vec3(1));
-    }
-    else {
-		vec3 hsv = convertRGB2HSV(gl_FragColor.xyz);
-        hsv.z += u_brightness;
-		gl_FragColor.rgb = convertHSV2RGB(hsv);
+    if (u_brightness != 0.0) {
+        if (u_oldColor) {
+            gl_FragColor.rgb = clamp(gl_FragColor.rgb + vec3(u_brightness), vec3(0), vec3(1));
+        }
+        else {
+            vec3 hsv = convertRGB2HSV(gl_FragColor.xyz);
+            hsv.z += u_brightness;
+            gl_FragColor.rgb = convertHSV2RGB(hsv);
+        }
     }
 
     if (u_posterize != 100.0) {
@@ -494,7 +496,7 @@ void main()
 
     resetAll() {
         //Load default values
-        for (let targetID in runtime.targets) {
+        for (let targetID = 0; targetID < runtime.targets.length; targetID++) {
             const target = runtime.targets[targetID];
 
             instance.clearEffects({}, { target });
