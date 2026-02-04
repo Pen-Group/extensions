@@ -218,7 +218,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
             const sizeSource = (vm.renderer.useHighQualityRender) ? [renderer.canvas.width, renderer.canvas.height] : vm.renderer._nativeSize;
 
             //Get viewport size
-            penPlus.programs[drawableShader].uniformDat.u_res = [
+            parentExtension.programs[drawableShader].uniformDat.u_res = [
               sizeSource[0],
               sizeSource[1]
             ];
