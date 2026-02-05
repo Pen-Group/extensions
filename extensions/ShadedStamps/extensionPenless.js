@@ -215,12 +215,10 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           }
 
           if (spriteShaders[drawableID] && parentExtension.shaders[drawableShader]) {
-            const sizeSource = (vm.renderer.useHighQualityRender) ? [renderer.canvas.width, renderer.canvas.height] : vm.renderer._nativeSize;
-
             //Get viewport size
+            const [_x, _y, width, height] = vm.renderer.gl.getParameter(vm.renderer.gl.VIEWPORT);
             parentExtension.programs[drawableShader].uniformDat.u_res = [
-              sizeSource[0],
-              sizeSource[1]
+              width, height
             ];
             
             parentExtension.programs[drawableShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
@@ -327,8 +325,9 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         );
 
         parentExtension.programs[currentShader].uniformDat.u_skin = stageBuffer.attachments[0];
+        const [_x, _y, width, height] = vm.renderer.gl.getParameter(vm.renderer.gl.VIEWPORT);
         parentExtension.programs[currentShader].uniformDat.u_res = [
-          gl.canvas.width, gl.canvas.height
+          width, height
         ];
         parentExtension.programs[currentShader].uniformDat.u_timer = runtime.ioDevices.clock.projectTimer();
         
