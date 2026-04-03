@@ -517,6 +517,10 @@
       triPointCount = 0;
   
       tryFinalizeDraw(shader,isDefault,texture,uniforms,forceDraw) {
+
+        
+        // prettier-ignore
+        if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
         //Return if both is null
         if (!this.triShader) {
           this.triShader = shader;
@@ -528,8 +532,6 @@
 
           return;
         }
-  
-        //console.log(this.triUniforms,uniforms,uniforms == this.triUniforms)
         if (
           (this.triPointCount < TRIANGLES_PER_BUFFER * 3) &&
           (shader == this.triShader &&
@@ -541,8 +543,6 @@
           return;
         }
 
-        // prettier-ignore
-        if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
 
         //trying my best to reduce memory usage
         gl.viewport(0, 0, nativeSize[0], nativeSize[1]);
@@ -6794,3 +6794,4 @@
     Scratch.extensions.register(new extension());
   })(Scratch);
   
+
