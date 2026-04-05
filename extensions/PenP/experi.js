@@ -520,7 +520,7 @@
 
         
         // prettier-ignore
-        if (!this.inDrawRegion) renderer.enterDrawRegion(this.penPlusDrawRegion);
+        if (shader) renderer.enterDrawRegion(this.penPlusDrawRegion);
         //Return if both is null
         if (!this.triShader) {
           this.triShader = shader;
