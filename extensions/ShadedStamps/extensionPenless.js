@@ -610,6 +610,27 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           },
           "---",
           {
+            opcode: "setTextureInShader",
+            blockType: Scratch.BlockType.COMMAND,
+            text: Scratch.translate(
+              "set texture [uniformName] in [shader] to [texture]"
+            ),
+            arguments: {
+              uniformName: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Uniform",
+              },
+              shader: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "shaders",
+              },
+              texture: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "costumeMenu",
+              },
+            },
+          },
+          {
             opcode: "setNumberInShader",
             blockType: Scratch.BlockType.COMMAND,
             text: "set number [uniformName] in [shader] to [number]",
@@ -1003,6 +1024,7 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
           },
         ],
         menus: {
+          costumeMenu: { items: "costumeMenuFunction", acceptReporters: true },
           shaders: {
             items:"shaderMenu",
             acceptReporters:true
@@ -1064,6 +1086,58 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
         name: "Shaded",
         id: "OACShaded",
       };
+    }
+
+    costumeMenuFunction() {
+      if (!runtime) return ["no costumes?"];
+      if (!runtime._editingTarget) return ["no costumes?"];
+      if (!runtime._editingTarget.sprite) return ["no costumes?"];
+
+      const myCostumes = runtime._editingTarget.sprite.costumes;
+
+      let readCostumes = [];
+      for (
+        let curCostumeID = 0;
+        curCostumeID < myCostumes.length;
+        curCostumeID++
+      ) {
+        const currentCostume = myCostumes[curCostumeID].name;
+        readCostumes.push(currentCostume);
+      }
+
+      return readCostumes;
+    }
+
+    _locateTextureObject(name, util) {
+      //Get the current target
+      const curTarget = util.target;
+
+      //Set current texture to null
+      let currentTexture = null;
+
+      const costIndex = curTarget.getCostumeIndexByName(
+        Scratch.Cast.toString(name)
+      );
+      if (costIndex >= 0) {
+        const curCostume = curTarget.sprite.costumes[costIndex];
+
+        if (costIndex != curTarget.currentCostume) {
+          curTarget.setCostume(costIndex);
+        }
+
+        currentTexture = renderer._allSkins[curCostume.skinId]._texture;
+
+        if (!currentTexture)
+          currentTexture = renderer._allSkins[curCostume.skinId].getTexture();
+      }
+
+      //If so edit the attributes of said texture.
+      if (currentTexture) {
+        //Set the filter mode
+        gl.bindTexture(gl.TEXTURE_2D, currentTexture);
+      }
+
+      return currentTexture;
     }
 
     compileShaderForSprite({ shader }) {
@@ -2273,7 +2347,15 @@ l.style.textAlign="center",l.style.color="#ffffff",document.body.appendChild(l);
       return JSON.stringify(this.shaderMenu());
     }
 
-
+      setTextureInShader({ uniformName, shader, texture }, util) {
+        if (!this.programs[shader]) return;
+        if (this._isUniformArray(shader, uniformName)) return;
+  
+        let curCostume = this._locateTextureObject(texture, util);
+        if (!curCostume) return;
+  
+        this.programs[shader].uniformDat[uniformName] = curCostume;
+      }
   
       setNumberInShader({ uniformName, shader, number }) {
         if (!this.programs[shader]) return;
